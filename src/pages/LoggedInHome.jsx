@@ -1,10 +1,11 @@
 import React from 'react'
-import Header from '../components/Header'
+import LoggedInHeader from '../components/LoggedInHeader'
 
 function Home() {
   return (
     <div>
-        <Header />
+        <LoggedInHeader />
+
         
         {/* main-slider */}
         <section className="w3l-main-slider" id="home">

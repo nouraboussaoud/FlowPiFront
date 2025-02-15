@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
+import Dropdown from 'react-bootstrap/Dropdown'; // Import React Bootstrap Dropdown
 
-function Header() {
+function LoggedIn() {
   const currentTheme = localStorage.getItem('theme');
   const [checked, setChecked] = useState(currentTheme === 'dark');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [profileImage, setProfileImage] = useState("");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     // Check if the user is authenticated
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-      console.log("hhhhhhhhhhhhhhhh");
-      setIsAuthenticated(true);
-      setProfileImage(user.profileImage);
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) {
+      setUser(userData);
     }
   }, []);
 
@@ -26,6 +24,11 @@ function Header() {
       localStorage.setItem('theme', 'light');
       setChecked(false);
     }
+  }
+
+  function logout() {
+    localStorage.removeItem('user');
+    window.location.href = '/login'; // Redirect to login page
   }
 
   return (
@@ -43,7 +46,7 @@ function Header() {
             </h1>
 
             <button
-              className="navbar-toggler  collapsed bg-gradient"
+              className="navbar-toggler collapsed bg-gradient"
               type="button"
               data-toggle="collapse"
               data-target="#navbarTogglerDemo02"
@@ -114,22 +117,40 @@ function Header() {
                 </div>
                 {/* /search popup */}
               </div>
+
+              {/* User Components (Always Visible) */}
               <div className="top-quote mr-lg-2 text-center">
-                {isAuthenticated ? (
-                  <img
-                    src={profileImage}
-                    alt="Profile"
-                    className="rounded-circle"
-                    style={{ width: "40px", height: "40px" }}
-                  />
-                ) : (
-                  <a href="/login" className="btn login mr-2">
-                    <span className="fa fa-user"></span>
-                    Login
-                  </a>
-                )}
+                <div className="d-flex align-items-center">
+                  {/* Notifications Dropdown */}
+                  <Dropdown className="mr-2">
+                    <Dropdown.Toggle variant="outline-primary" id="notificationsDropdown">
+                      <span className="fa fa-bell"></span>
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                      <Dropdown.Item href="#">No new notifications</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+
+                  {/* User Profile and Settings Dropdown */}
+                  <Dropdown>
+                    <Dropdown.Toggle variant="outline-secondary" id="profileDropdown">
+                      <img
+                        src="/assets/images/github-mark.png"
+                        alt="Profile"
+                        className="rounded-circle mr-2"
+                        style={{ width: "40px", height: "40px" }}
+                      />
+                      <span>{user ? user.name : "Guest"}</span>
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                      <Dropdown.Item href="/account-settings">Account Settings</Dropdown.Item>
+                      <Dropdown.Item onClick={logout}>Logout</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </div>
               </div>
             </div>
+
             {/* toggle switch for light and dark theme */}
             <div className="mobile-position">
               <nav className="navigation">
@@ -153,4 +174,4 @@ function Header() {
   );
 }
 
-export default Header;
+export default LoggedIn;
