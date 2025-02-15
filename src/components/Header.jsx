@@ -125,7 +125,7 @@ function Header() {
                 ) : (
                   <a href="/login" className="btn login mr-2">
                     <span className="fa fa-user"></span>
-                    Login
+                    Logout
                   </a>
                 )}
               </div>
