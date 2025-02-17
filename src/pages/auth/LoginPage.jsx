@@ -101,8 +101,8 @@ const LoginPage = () => {
                       <input type="checkbox" className="form-check-input border mr-2" />
                       Remember me
                     </label>
-                    <a href="/">Forgot Password?</a>
-                  </div>
+                    <button onClick={() => navigate("/forgot-password")}>Forgot Password?</button>
+                    </div>
                   <div className="intro-x mt-5 text-center">
                     <button type="submit" className="btn btn-primary py-3 px-4 w-full">Login</button>
                     <button
