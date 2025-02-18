@@ -1,9 +1,39 @@
 import React, { useState } from "react";
+import  { useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
+import { useAuth0 } from "@auth0/auth0-react";
 
+
+import axios from "axios";
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { loginWithRedirect, isAuthenticated, user, getIdTokenClaims } = useAuth0();
+
+  // Vérifie si l'utilisateur Auth0 est connecté et enregistre ses infos
+  useEffect(() => {
+      if (isAuthenticated && user) {
+          console.log("Envoi des données au backend...");
+  
+          axios.post("http://localhost:5000/api/users/auth0-login", {
+              email: user.email,
+              name: user.name,
+              picture: user.picture,
+              sub: user.sub,
+              provider: "auth0"
+          })
+          .then(response => {
+              console.log("Réponse du backend :", response.data);
+              // Enregistrez le token JWT dans localStorage ou utilisez-le comme nécessaire
+              localStorage.setItem("token", response.data.token);
+              navigate("/dashboard");  // Redirection vers le dashboard ou autre page
+          })
+          .catch(error => {
+              console.error("Erreur d'enregistrement Auth0 :", error);
+              // Affichage d'un message d'erreur utilisateur si nécessaire
+          });
+      }
+  }, [isAuthenticated, user, navigate]);
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl";
   
   function loginWithGithub() {
@@ -114,11 +144,14 @@ const LoginPage = () => {
                     </button>
                   </div>
                   <hr className="intro-x mt-5 xl:mt-8 w-full xl:w-32 mx-auto" />
-                  <div className="intro-x mt-5 xl:mt-8 text-center xl:text-left">
-                    <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={() => {loginWithGithub()}}>
-                      <i className="fab fa-github mr-2"></i> Connect with GitHub
-                    </button>
-                  </div>
+  <div className="intro-x mt-5 xl:mt-8 text-center xl:text-left">
+  <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={() => loginWithRedirect({ connection: "google-oauth2" })}>
+  <i className="fab fa-google mr-2"></i> Connect with Google
+</button>
+ <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={() => {loginWithGithub()}}>
+      <i className="fab fa-github mr-2"></i> Connect with GitHub
+    </button>
+  </div>
                 </form>
                 <p className="intro-x mt-10 text-slate-600 text-center">
                   By signing up, you agree to our <a className="text-primary" href="/">Terms & Conditions</a> and <a className="text-primary" href="/">Privacy Policy</a>.
