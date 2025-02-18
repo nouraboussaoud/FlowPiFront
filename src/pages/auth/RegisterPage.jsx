@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Layout from "./Layout";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student"); // Default role
+  const [role, setRole] = useState(""); // Default role
   const [profilePic, setProfilePic] = useState(null); // To store the selected file
 
   const handleRegister = async (e) => {
@@ -40,6 +41,8 @@ const RegisterPage = () => {
   };
 
   return (
+    <Layout>
+
     <div className="container sm:px-10">
       <div className="block xl:grid grid-cols-2 gap-4">
         {/* Left Section (Illustration) */}
@@ -105,8 +108,10 @@ const RegisterPage = () => {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="intro-x form-control py-3 px-4 block border border-gray-300"
+                  className="intro-x form-control py-3 px-4 block border border-gray-300 text-gray-600"
+                  placeholder="Role"
                 >
+                  <option value="">Select Role</option>
                   <option value="student">Student</option>
                   <option value="tutor">Tutor</option>
                 </select>
@@ -139,7 +144,9 @@ const RegisterPage = () => {
         </div>
       </div>
     </div>
+  </Layout>
   );
+  
 };
 
 export default RegisterPage;
