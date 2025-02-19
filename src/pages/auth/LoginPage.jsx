@@ -1,39 +1,18 @@
 import React, { useState } from "react";
-import  { useEffect} from "react";
+
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
-import { useAuth0 } from "@auth0/auth0-react";
 
 
-import axios from "axios";
+
+
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { loginWithRedirect, isAuthenticated, user, getIdTokenClaims } = useAuth0();
-
-  // Vérifie si l'utilisateur Auth0 est connecté et enregistre ses infos
-  useEffect(() => {
-      if (isAuthenticated && user) {
-          console.log("Envoi des données au backend...");
+  const googleAuth = () => {
+    window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   
-          axios.post("http://localhost:5000/api/users/auth0-login", {
-              email: user.email,
-              name: user.name,
-              picture: user.picture,
-              sub: user.sub,
-              provider: "auth0"
-          })
-          .then(response => {
-              console.log("Réponse du backend :", response.data);
-              // Enregistrez le token JWT dans localStorage ou utilisez-le comme nécessaire
-              localStorage.setItem("token", response.data.token);
-              navigate("/dashboard");  // Redirection vers le dashboard ou autre page
-          })
-          .catch(error => {
-              console.error("Erreur d'enregistrement Auth0 :", error);
-              // Affichage d'un message d'erreur utilisateur si nécessaire
-          });
-      }
-  }, [isAuthenticated, user, navigate]);
+    } ;
+  
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl";
   
   function loginWithGithub() {
@@ -47,6 +26,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
+      console.log("Données envoyées :", { email, password });
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,9 +125,9 @@ const LoginPage = () => {
                   </div>
                   <hr className="intro-x mt-5 xl:mt-8 w-full xl:w-32 mx-auto" />
   <div className="intro-x mt-5 xl:mt-8 text-center xl:text-left">
-  <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={() => loginWithRedirect({ connection: "google-oauth2" })}>
-  <i className="fab fa-google mr-2"></i> Connect with Google
-</button>
+  <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={googleAuth}>
+      <i className="fab fa-google mr-2"></i> Connect with Google
+    </button>
  <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={() => {loginWithGithub()}}>
       <i className="fab fa-github mr-2"></i> Connect with GitHub
     </button>
