@@ -17,15 +17,26 @@ import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import UsersList from "./pages/UsersList";
 import Logout from "./pages/auth/Logout";
-import EditProfile from "./pages/auth/EditProfile";
-import UserSettings from "./pages/auth/UserSettings";
-import NoursDashboar from "./pages/test/NoursDashboar";
-import DouaaComp from "./pages/test/DouaaComp";
- 
- 
-
+import {Navigate} from "react-router-dom";
+import { useEffect ,useState } from "react";
+import axios from "axios";
 
 function App() {
+  const [user, setUser] = useState(null);
+  const getUser = async () => {
+    try {
+      const url = `${process.env.REACT_APP_API_URL}/auth/login/success`;
+    const { data } = await axios.get(url, { withCredentials: true });
+    setUser(data.user);
+    }
+    catch (error) {
+      console.error("Error getting user:", error);}
+    };
+    useEffect(() => {
+      getUser();
+    }, []);
+
+  
   return (
     <div>
       <BrowserRouter>
@@ -58,4 +69,4 @@ function App() {
   );
 }
 
-export default App;
+export default App ;
