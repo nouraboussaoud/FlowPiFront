@@ -80,14 +80,68 @@ const UsersList = () => {
       <link rel="stylesheet" type="text/css" href="assets/vendor/aos/aos.css" />
       <link rel="stylesheet" type="text/css" href="assets/vendor/overlay-scrollbar/css/overlayscrollbars.min.css" />
       <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
+      <style>
+        {`
+          .ban-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+          }
+          .unban-btn {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+          }
+        `}
+      </style>
       <main>
-        <nav className="navbar sidebar navbar-expand-xl navbar-dark bg-dark">
-          {/* Sidebar content */}
+        {/* Sidebar */}
+        <nav className="sidebar navbar-dark bg-dark" style={{ width: "250px", height: "100vh", position: "fixed", left: 0, top: 0 }}>
+          <div className="sidebar-header p-3">
+            <h4 className="text-white">Eduport</h4>
+          </div>
+          <ul className="nav flex-column p-3">
+            <li className="nav-item">
+              <a className="nav-link text-white" href="#">
+                Dashboard
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link text-white" href="#">
+                Users
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link text-white" href="#">
+                Settings
+              </a>
+            </li>
+          </ul>
         </nav>
-        <div className="page-content">
+
+        {/* Page Content */}
+        <div className="page-content" style={{ marginLeft: "250px" }}>
+          {/* Top Bar */}
           <nav className="navbar top-bar navbar-light border-bottom py-0 py-xl-3">
-            {/* Top bar content */}
+            <div className="container-fluid">
+              <span className="navbar-brand">Welcome, Admin</span>
+              <div className="d-flex align-items-center">
+                <i className="fas fa-bell me-3"></i>
+                <img
+                  src="https://via.placeholder.com/40"
+                  alt="Profile"
+                  className="rounded-circle"
+                  style={{ width: "40px", height: "40px" }}
+                />
+              </div>
+            </div>
           </nav>
+
+          {/* Main Content */}
           <div className="page-content-wrapper border">
             <div className="row">
               <div className="col-12">
@@ -241,18 +295,16 @@ const UsersList = () => {
                                   >
                                     <i className="bi bi-envelope-fill" />
                                   </a>
-                                  <a
-                                    href="#"
-                                    className="btn btn-link text-body p-0 mb-0"
+                                  <button
+                                    className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="top"
-                                    title=""
-                                    data-bs-original-title="Block"
-                                    aria-label="Block"
+                                    title={user.isBanned ? "Unban" : "Ban"}
+                                    aria-label={user.isBanned ? "Unban" : "Ban"}
                                     onClick={() => handleBanUnban(user._id, user.isBanned)}
                                   >
-                                    <i className="fas fa-ban" />
-                                  </a>
+                                    {user.isBanned ? "Unban" : "Ban"}
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -323,13 +375,14 @@ const UsersList = () => {
                                   <i className="bi bi-envelope" />
                                 </a>
                                 <button
-                                  className="btn btn-light btn-round mb-0"
+                                  className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
                                   data-bs-toggle="tooltip"
                                   data-bs-placement="top"
-                                  title="Block"
+                                  title={user.isBanned ? "Unban" : "Ban"}
+                                  aria-label={user.isBanned ? "Unban" : "Ban"}
                                   onClick={() => handleBanUnban(user._id, user.isBanned)}
                                 >
-                                  <i className="fas fa-ban" />
+                                  {user.isBanned ? "Unban" : "Ban"}
                                 </button>
                               </td>
                             </tr>
