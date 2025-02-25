@@ -9,37 +9,22 @@ const GithubCallback = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
-
+  
     if (code) {
-      fetch("https://github.com/login/oauth/access_token", {
+      fetch("http://localhost:5000/github/callback", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          code: code,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
       })
         .then((response) => response.json())
         .then((data) => {
-          const accessToken = data.access_token;
-          fetch("https://api.github.com/user", {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          })
-            .then((response) => response.json())
-            .then((user) => {
-              localStorage.setItem("user", JSON.stringify(user));
-              navigate("/loggedInHome");
-            });
-        });
+          console.log("User data:", data);
+          // Save user data to localStorage or context
+        })
+        .catch((error) => console.error("Error:", error));
     }
-  }, [navigate]);
-
+  }, []);
+  
   return <div>Loading...</div>;
 };
 

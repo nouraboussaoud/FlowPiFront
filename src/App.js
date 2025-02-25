@@ -41,7 +41,8 @@ function App() {
     <div>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+         
           <Route path="/courses" element={<Courses />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
@@ -59,7 +60,7 @@ function App() {
 
         </Routes>
       </BrowserRouter>
-      <Footer />
+      
     </div>
   );
 }
