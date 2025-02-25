@@ -7,9 +7,9 @@ const LoginPage = () => {
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
   
   // Function to redirect to GitHub OAuth login
-  const loginWithGithub = () => {
-    window.location.assign(`http://localhost:5000/api/users/auth/github/callback`);
-  };
+ const handleGitHubLogin = () => {
+    window.location.href = "http://localhost:5000/api/users/auth/github";
+  };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ const LoginPage = () => {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.user.role);
-
+        localStorage.setItem("userId", data.user._id);
         alert("Login successful!");
 
         const role = data.user.role;
@@ -52,56 +52,7 @@ const LoginPage = () => {
     }
   };
 
-  // This function will handle the GitHub OAuth callback
-  const handleGithubCallback = async (code) => {
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/github", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.user.role);
-
-        alert("GitHub login successful!");
-
-        const role = data.user.role;
-        if (role === "admin") {
-          navigate("/admin-dashboard");
-        } else if (role === "student") {
-          navigate("/student-dashboard");
-        } else if (role === "tutor") {
-          navigate("/tutor-dashboard");
-        } else {
-          navigate("/home");
-        }
-      } else {
-        alert(data.message || "GitHub login failed!");
-      }
-    } catch (error) {
-      console.error("Error logging in with GitHub:", error);
-      alert("Something went wrong with GitHub login!");
-    }
-  };
-
-  // Check if the user is redirected back from GitHub OAuth and has a code
-  const checkGithubCallback = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-
-    if (code) {
-      handleGithubCallback(code); // Handle the GitHub OAuth callback
-    }
-  };
-
-  // Run the check when the component mounts
-  React.useEffect(() => {
-    checkGithubCallback();
-  }, []);
+ 
 
   return (
     <div>
@@ -215,7 +166,7 @@ const LoginPage = () => {
                         <button className="btn bg-google mb-2 mb-xxl-0" onClick={() => { /* Add Google login logic here */ }}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
                       </div>
                       <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-facebook mb-0" onClick={loginWithGithub}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
+                        <button className="btn bg-facebook mb-0" onClick={handleGitHubLogin}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
                       </div>
                     </div>
                   </div>
