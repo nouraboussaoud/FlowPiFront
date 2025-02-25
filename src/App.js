@@ -17,6 +17,8 @@ import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import UsersList from "./pages/UsersList";
 import Logout from "./pages/auth/Logout";
+import EditProfile from "./pages/auth/EditProfile";
+import UserSettings from "./pages/auth/UserSettings";
 
 
 function App() {
@@ -38,7 +40,8 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/logout" element={<Logout />} />
-
+          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/user-settings" element={<UserSettings />} />
 
         </Routes>
       </BrowserRouter>
