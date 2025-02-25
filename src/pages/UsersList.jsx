@@ -5,6 +5,14 @@ const UsersList = () => {
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [updateFormData, setUpdateFormData] = useState({
+    name: "",
+    email: "",
+    role: ""
+  });
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -64,6 +72,122 @@ const UsersList = () => {
     }
   };
 
+  // New function to handle toggling user status
+  const handleToggleStatus = async (userId, isCurrentlyActive) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/users/toggle-status/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to toggle user status");
+      }
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === userId ? { ...user, isActive: !isCurrentlyActive } : user
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+    }
+  };
+
+  // Function to delete a user
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:5000/api/users/delete/${userId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete user");
+        }
+
+        // Remove user from state
+        setUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      }
+    }
+  };
+
+  // Function to fetch user details
+  const handleViewDetails = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user details");
+      }
+
+      const userData = await response.json();
+      setSelectedUser(userData);
+      setShowDetailsModal(true);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
+
+  // Function to open update modal with user data
+  const handleOpenUpdateModal = (user) => {
+    setUpdateFormData({
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+    setSelectedUser(user);
+    setShowUpdateModal(true);
+  };
+
+  // Function to update user information
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/users/update/${selectedUser._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update user");
+      }
+
+      // Update user in state
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === selectedUser._id ? { ...user, ...updateFormData } : user
+        )
+      );
+
+      // Close modal
+      setShowUpdateModal(false);
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
+  };
+
   return (
     <>
       <title>Eduport- LMS, Education and Course Theme</title>
@@ -96,6 +220,54 @@ const UsersList = () => {
             padding: 5px 10px;
             cursor: pointer;
           }
+          .action-btn {
+            margin-right: 5px;
+            margin-bottom: 5px;
+          }
+          .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+          }
+          .modal.show {
+            display: block;
+          }
+          .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+          }
+          .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+          }
+          .close:hover {
+            color: black;
+          }
+            /* Add to your style section (around line 104) */
+.btn-danger-soft {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.btn-danger-soft:hover {
+  background-color: rgba(220, 53, 69, 0.2);
+}
         `}
       </style>
       <main>
@@ -105,11 +277,11 @@ const UsersList = () => {
             <h4 className="text-white">Eduport</h4>
           </div>
           <ul className="nav flex-column p-3">
-            <li className="nav-item">
-              <a className="nav-link text-white" href="#">
-                Dashboard
-              </a>
-            </li>
+          <li className="nav-item">
+  <a className="nav-link text-white" href="/admin-dashboard">
+    Dashboard
+  </a>
+</li>
             <li className="nav-item">
               <a className="nav-link text-white" href="#">
                 Users
@@ -247,15 +419,21 @@ const UsersList = () => {
                                   aria-labelledby="dropdownShare2"
                                 >
                                   <li>
-                                    <a className="dropdown-item" href="#">
+                                    <a className="dropdown-item" href="#" onClick={() => handleOpenUpdateModal(user)}>
                                       <i className="bi bi-pencil-square fa-fw me-2" />
                                       Edit
                                     </a>
                                   </li>
                                   <li>
-                                    <a className="dropdown-item" href="#">
+                                    <a className="dropdown-item" href="#" onClick={() => handleDeleteUser(user._id)}>
                                       <i className="bi bi-trash fa-fw me-2" />
-                                      Remove
+                                      Delete
+                                    </a>
+                                  </li>
+                                  <li>
+                                    <a className="dropdown-item" href="#" onClick={() => handleToggleStatus(user._id, user.isActive)}>
+                                      <i className="bi bi-toggle-on fa-fw me-2" />
+                                      {user.isActive ? "Deactivate" : "Activate"}
                                     </a>
                                   </li>
                                 </ul>
@@ -280,34 +458,47 @@ const UsersList = () => {
                                 </div>
                                 <span className="mb-0 fw-bold">{user.role}</span>
                               </div>
-                            </div>
-                            <div className="card-footer bg-transparent border-top">
-                              <div className="d-sm-flex justify-content-between align-items-center">
-                                <div className="text-end text-primary-hover">
-                                  <a
-                                    href="#"
-                                    className="btn btn-link text-body p-0 mb-0 me-2"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="top"
-                                    title=""
-                                    data-bs-original-title="Message"
-                                    aria-label="Message"
-                                  >
-                                    <i className="bi bi-envelope-fill" />
-                                  </a>
-                                  <button
-                                    className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="top"
-                                    title={user.isBanned ? "Unban" : "Ban"}
-                                    aria-label={user.isBanned ? "Unban" : "Ban"}
-                                    onClick={() => handleBanUnban(user._id, user.isBanned)}
-                                  >
-                                    {user.isBanned ? "Unban" : "Ban"}
-                                  </button>
+                              <div className="d-flex justify-content-between align-items-center mb-3">
+                                <div className="d-flex align-items-center">
+                                  <div className="icon-md bg-info bg-opacity-10 text-info rounded-circle flex-shrink-0">
+                                    <i className="fas fa-toggle-on fa-fw" />
+                                  </div>
+                                  <h6 className="mb-0 ms-2 fw-light">Status</h6>
                                 </div>
+                                <span className="mb-0 fw-bold">{user.isActive ? "Active" : "Inactive"}</span>
                               </div>
                             </div>
+                           {/* Inside the card-footer section of the card view (around line 377) */}
+<div className="card-footer bg-transparent border-top">
+  <div className="d-flex justify-content-between align-items-center">
+    <div>
+      <button 
+        className="btn btn-sm btn-primary-soft action-btn"
+        onClick={() => handleViewDetails(user._id)}
+      >
+        <i className="bi bi-eye me-1"></i>Details
+      </button>
+      <button 
+        className="btn btn-sm btn-danger-soft action-btn"
+        onClick={() => handleDeleteUser(user._id)}
+      >
+        <i className="bi bi-trash me-1"></i>Delete
+      </button>
+    </div>
+    <div className="text-end text-primary-hover">
+      <button
+        className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title={user.isBanned ? "Unban" : "Ban"}
+        aria-label={user.isBanned ? "Unban" : "Ban"}
+        onClick={() => handleBanUnban(user._id, user.isBanned)}
+      >
+        {user.isBanned ? "Unban" : "Ban"}
+      </button>
+    </div>
+  </div>
+</div>
                           </div>
                         </div>
                       ))}
@@ -326,6 +517,9 @@ const UsersList = () => {
                             </th>
                             <th scope="col" className="border-0">
                               Role
+                            </th>
+                            <th scope="col" className="border-0">
+                              Status
                             </th>
                             <th scope="col" className="border-0 rounded-end">
                               Action
@@ -355,25 +549,44 @@ const UsersList = () => {
                               </td>
                               <td>{user.email}</td>
                               <td>{user.role}</td>
+                              <td>{user.isActive ? "Active" : "Inactive"}</td>
                               <td>
-                                <a
-                                  href="#"
-                                  className="btn btn-light btn-round me-1 mb-1 mb-md-0"
+                                <button
+                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
                                   data-bs-toggle="tooltip"
                                   data-bs-placement="top"
-                                  title="View"
+                                  title="View Details"
+                                  onClick={() => handleViewDetails(user._id)}
                                 >
                                   <i className="bi bi-eye" />
-                                </a>
-                                <a
-                                  href="#"
-                                  className="btn btn-light btn-round me-1 mb-1 mb-md-0"
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
                                   data-bs-toggle="tooltip"
                                   data-bs-placement="top"
-                                  title="Message"
+                                  title="Edit"
+                                  onClick={() => handleOpenUpdateModal(user)}
                                 >
-                                  <i className="bi bi-envelope" />
-                                </a>
+                                  <i className="bi bi-pencil" />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="Delete"
+                                  onClick={() => handleDeleteUser(user._id)}
+                                >
+                                  <i className="bi bi-trash" />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title={user.isActive ? "Deactivate" : "Activate"}
+                                  onClick={() => handleToggleStatus(user._id, user.isActive)}
+                                >
+                                  <i className={`bi bi-toggle-${user.isActive ? "on" : "off"}`} />
+                                </button>
                                 <button
                                   className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
                                   data-bs-toggle="tooltip"
@@ -433,6 +646,103 @@ const UsersList = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* User Details Modal */}
+        <div className={`modal ${showDetailsModal ? 'show' : ''}`}>
+          <div className="modal-content">
+            <span className="close" onClick={() => setShowDetailsModal(false)}>&times;</span>
+            <h2>User Details</h2>
+            {selectedUser && (
+              <div>
+                <div className="d-flex align-items-center mb-3">
+                  <img
+                    src={selectedUser.profilePic ? `http://localhost:5000/uploads/${selectedUser.profilePic}` : "assets/images/avatar/01.jpg"}
+                    className="rounded-circle me-3"
+                    alt="User Profile"
+                    style={{ width: "60px", height: "60px" }}
+                  />
+                  <div>
+                    <h3 className="mb-0">{selectedUser.name}</h3>
+                    <p className="mb-0">{selectedUser.email}</p>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-md-6 mb-3">
+                    <p><strong>Role:</strong> {selectedUser.role}</p>
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <p><strong>Status:</strong> {selectedUser.isActive ? "Active" : "Inactive"}</p>
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <p><strong>Ban Status:</strong> {selectedUser.isBanned ? "Banned" : "Not Banned"}</p>
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <p><strong>Created:</strong> {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="d-flex justify-content-end mt-3">
+                  <button className="btn btn-secondary me-2" onClick={() => setShowDetailsModal(false)}>Close</button>
+                  <button className="btn btn-primary" onClick={() => {
+                    setShowDetailsModal(false);
+                    handleOpenUpdateModal(selectedUser);
+                  }}>Edit User</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Update User Modal */}
+        <div className={`modal ${showUpdateModal ? 'show' : ''}`}>
+          <div className="modal-content">
+            <span className="close" onClick={() => setShowUpdateModal(false)}>&times;</span>
+            <h2>Update User</h2>
+            {selectedUser && (
+              <form onSubmit={handleUpdateUser}>
+                <div className="mb-3">
+                  <label htmlFor="name" className="form-label">Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="name"
+                    value={updateFormData.name}
+                    onChange={(e) => setUpdateFormData({...updateFormData, name: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">Email</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    value={updateFormData.email}
+                    onChange={(e) => setUpdateFormData({...updateFormData, email: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="role" className="form-label">Role</label>
+                  <select
+                    className="form-select"
+                    id="role"
+                    value={updateFormData.role}
+                    onChange={(e) => setUpdateFormData({...updateFormData, role: e.target.value})}
+                    required
+                  >
+                    <option value="student">Student</option>
+                    <option value="tutor">Tutor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div className="d-flex justify-content-end mt-3">
+                  <button type="button" className="btn btn-secondary me-2" onClick={() => setShowUpdateModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Update User</button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </main>
