@@ -128,6 +128,7 @@ const LoginPage = () => {
   <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={googleAuth}>
       <i className="fab fa-google mr-2"></i> Connect with Google
     </button>
+   
  <button className="btn btn-outline-primary py-3 px-4 w-full xl:w-32 align-top" onClick={() => {loginWithGithub()}}>
       <i className="fab fa-github mr-2"></i> Connect with GitHub
     </button>
