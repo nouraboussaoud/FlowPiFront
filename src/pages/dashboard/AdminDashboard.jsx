@@ -235,15 +235,15 @@ const handleLogout = () => {
                   >
                     <i className="bi bi-globe" />
                   </a>
-                  <a
+                  <button
                     className="h5 mb-0 text-body"
-                    href="sign-in.html"
+                    onClick={handleLogout}
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Sign out"
                   >
                     <i className="bi bi-power" />
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
