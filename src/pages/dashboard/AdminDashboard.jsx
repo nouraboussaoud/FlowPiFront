@@ -49,13 +49,9 @@ const handleLogout = () => {
       <main>
         <nav className="navbar sidebar navbar-expand-xl navbar-dark bg-dark">
           <div className="d-flex align-items-center">
-            <a className="navbar-brand" href="index.html">
-              <img
-                className="navbar-brand-item"
-                src="assets/images/logo-light.svg"
-                alt=""
-              />
-            </a>
+          <div className="col-12 mb-3">
+                <h1 className="h3 mb-2 mb-sm-0" style={{ color: "white", marginBottom: 0.5 }}>FlowPI</h1>
+              </div>
           </div>
           <div
             className="offcanvas offcanvas-start flex-row custom-scrollbar h-100"
@@ -770,7 +766,7 @@ const handleLogout = () => {
                           </h6>
                           <p className="mb-0">
                             <b>Webestica</b> assign you a new ticket for{" "}
-                            <b>Eduport theme</b>
+                            <b>FlowPi theme</b>
                           </p>
                           <span className="small">5 hour ago</span>
                         </div>

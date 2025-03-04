@@ -274,7 +274,7 @@ const UsersList = () => {
         {/* Sidebar */}
         <nav className="sidebar navbar-dark bg-dark" style={{ width: "250px", height: "100vh", position: "fixed", left: 0, top: 0 }}>
           <div className="sidebar-header p-3">
-            <h4 className="text-white">Eduport</h4>
+            <h4 className="text-white">FlowPi</h4>
           </div>
           <ul className="nav flex-column p-3">
           <li className="nav-item">
