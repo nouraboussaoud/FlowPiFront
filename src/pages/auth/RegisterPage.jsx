@@ -39,7 +39,7 @@ const RegisterPage = () => {
       setShowSuggestion(false);
     };
     
-    ///////////////////
+    ///////////////////[[[]]]
 
   const handleRegister = async (e) => {
     e.preventDefault();
