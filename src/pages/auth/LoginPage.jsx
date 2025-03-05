@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/loader";
+import { Toaster, toast } from 'sonner';
+import Layout from "./Layout";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
-  
+
   // Function to redirect to GitHub OAuth login
  const handleGitHubLogin = () => {
     window.location.href = "http://localhost:5000/api/users/auth/github";
@@ -17,6 +20,7 @@ const LoginPage = () => {
   // Function to handle login (for email and password flow if needed)
   const handleLogin = async (e) => {
     e.preventDefault();
+
 
     try {
       const response = await fetch("http://localhost:5000/api/users/login", {
@@ -31,8 +35,9 @@ const LoginPage = () => {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.user.role);
         localStorage.setItem("userId", data.user._id);
-        alert("Login successful!");
-
+        localStorage.setItem("name", data.user.name);
+        localStorage.setItem("profilePic", data.user.profilePic)
+        toast.success("Welcome " + data.user.name); 
         const role = data.user.role;
         if (role === "admin") {
           navigate("/admin-dashboard");
@@ -44,11 +49,10 @@ const LoginPage = () => {
           navigate("/home");
         }
       } else {
-        alert(data.message || "Login failed!");
+        toast.error("invalid email or password")
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      alert("Something went wrong!");
     }
   };
 
@@ -140,7 +144,7 @@ const LoginPage = () => {
                       </div>
                       <div className="align-items-center mt-0">
                         <div className="d-grid">
-                          <button className="btn btn-primary mb-0" type="submit">Login</button>
+                          <button className="btn btn-primary mb-0" type="submit" >Login</button>
                         </div>
                       </div>
                       <div className="align-items-center mt-0">

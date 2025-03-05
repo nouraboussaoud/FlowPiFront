@@ -1,10 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
+import { useEffect, useState } from 'react';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate(); // Hook for navigation
-const handleLogout = () => {
+  const navigate = useNavigate();
+  const [profilePic, setProfilePic] = useState(null);
+  useEffect(() => {
+    // Get profile picture filename from local storage
+    const storedProfilePic = localStorage.getItem("profilePic");
+
+    if (storedProfilePic) {
+      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
+    }
+  }, []); const handleLogout = () => {
     // Add your logout logic here
     navigate("/logout"); // Navigate to the logout page
   };
@@ -49,13 +58,9 @@ const handleLogout = () => {
       <main>
         <nav className="navbar sidebar navbar-expand-xl navbar-dark bg-dark">
           <div className="d-flex align-items-center">
-            <a className="navbar-brand" href="index.html">
-              <img
-                className="navbar-brand-item"
-                src="assets/images/logo-light.svg"
-                alt=""
-              />
-            </a>
+            <div className="col-12 mb-3">
+              <h1 className="h3 mb-2 mb-sm-0" style={{ color: "white", marginBottom: 0.5 }}>FlowPI</h1>
+            </div>
           </div>
           <div
             className="offcanvas offcanvas-start flex-row custom-scrollbar h-100"
@@ -106,7 +111,7 @@ const handleLogout = () => {
                     </li>
                   </ul>
                 </li>
-               
+
                 <li className="nav-item">
                   <a
                     className="nav-link"
@@ -235,15 +240,13 @@ const handleLogout = () => {
                   >
                     <i className="bi bi-globe" />
                   </a>
-                  <button
-                    className="h5 mb-0 text-body"
-                    onClick={handleLogout}
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="top"
-                    title="Sign out"
-                  >
+                  <a className="h5 mb-0 text-body"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Sign out"
+                  onClick={handleLogout}>
                     <i className="bi bi-power" />
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -361,12 +364,16 @@ const handleLogout = () => {
                                   className="list-group-item-action border-0 border-bottom d-flex p-3"
                                 >
                                   <div className="me-3">
-                                    <div className="avatar avatar-md">
-                                      <img
-                                        className="avatar-img rounded-circle"
-                                        src="assets/images/avatar/08.jpg"
-                                        alt="avatar"
-                                      />
+                                    <div >
+                                      {profilePic ? (
+                                        <img
+                                          src={profilePic}
+                                          alt="Profile"
+                                          style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+                                        />
+                                      ) : (
+                                        <p>No Profile Picture</p>
+                                      )}
                                     </div>
                                   </div>
                                   <div>
@@ -384,13 +391,15 @@ const handleLogout = () => {
                                   className="list-group-item-action border-0 border-bottom d-flex p-3"
                                 >
                                   <div className="me-3">
-                                    <div className="avatar avatar-md">
+                                    {profilePic ? (
                                       <img
-                                        className="avatar-img rounded-circle"
-                                        src="assets/images/avatar/02.jpg"
-                                        alt="avatar"
+                                        src={profilePic}
+                                        alt="Profile"
+                                        style={{ width: "50px", height: "50px", borderRadius: "50%" }}
                                       />
-                                    </div>
+                                    ) : (
+                                      <p>No Profile Picture</p>
+                                    )}
                                   </div>
                                   <div>
                                     <h6 className="mb-1">
@@ -409,13 +418,15 @@ const handleLogout = () => {
                                   className="list-group-item-action border-0 border-bottom d-flex p-3"
                                 >
                                   <div className="me-3">
-                                    <div className="avatar avatar-md">
+                                    {profilePic ? (
                                       <img
-                                        className="avatar-img rounded-circle"
-                                        src="assets/images/avatar/05.jpg"
-                                        alt="avatar"
+                                        src={profilePic}
+                                        alt="Profile"
+                                        style={{ width: "50px", height: "50px", borderRadius: "50%" }}
                                       />
-                                    </div>
+                                    ) : (
+                                      <p>No Profile Picture</p>
+                                    )}
                                   </div>
                                   <div>
                                     <h6 className="mb-1">
@@ -431,13 +442,15 @@ const handleLogout = () => {
                                   className="list-group-item-action border-0 border-bottom d-flex p-3"
                                 >
                                   <div className="me-3">
-                                    <div className="avatar avatar-md">
+                                    {profilePic ? (
                                       <img
-                                        className="avatar-img rounded-circle"
-                                        src="assets/images/avatar/03.jpg"
-                                        alt="avatar"
+                                        src={profilePic}
+                                        alt="Profile"
+                                        style={{ width: "50px", height: "50px", borderRadius: "50%" }}
                                       />
-                                    </div>
+                                    ) : (
+                                      <p>No Profile Picture</p>
+                                    )}
                                   </div>
                                   <div>
                                     <h6 className="mb-1">
@@ -471,11 +484,15 @@ const handleLogout = () => {
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                       >
-                        <img
-                          className="avatar-img rounded-circle"
-                          src="assets/images/avatar/01.jpg"
-                          alt="avatar"
-                        />
+                        {profilePic ? (
+                          <img
+                            src={profilePic}
+                            alt="Profile"
+                            style={{ width: "60px", height: "40px", borderRadius: "50%" }}
+                          />
+                        ) : (
+                          <p>No Profile Picture</p>
+                        )}
                       </a>
                       <ul
                         className="dropdown-menu dropdown-animation dropdown-menu-end shadow pt-3"
@@ -704,7 +721,7 @@ const handleLogout = () => {
                     <a href="#" className="btn btn-link p-0 mb-0">
                       View all
                     </a>
-                    
+
                   </div>
                   <div className="card-body p-4">
                     <div className="d-flex justify-content-between position-relative">
@@ -770,7 +787,7 @@ const handleLogout = () => {
                           </h6>
                           <p className="mb-0">
                             <b>Webestica</b> assign you a new ticket for{" "}
-                            <b>Eduport theme</b>
+                            <b>FlowPi theme</b>
                           </p>
                           <span className="small">5 hour ago</span>
                         </div>
@@ -1117,7 +1134,7 @@ function scrollFunction() {
 }
 
 // Attach the scrollFunction to the window's onscroll event
-window.onscroll = function() {
+window.onscroll = function () {
   scrollFunction();
 };
 
