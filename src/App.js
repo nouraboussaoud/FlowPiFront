@@ -21,6 +21,7 @@ import EditProfile from "./pages/auth/EditProfile";
 import UserSettings from "./pages/auth/UserSettings";
 import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
+import { Toaster } from "sonner";
  
  
 
@@ -53,7 +54,8 @@ function App() {
 </Route>
         </Routes>
       </BrowserRouter>
-      
+      <Toaster position="top-center" />
+
     </div>
   );
 }
