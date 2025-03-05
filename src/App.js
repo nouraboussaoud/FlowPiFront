@@ -19,6 +19,11 @@ import UsersList from "./pages/UsersList";
 import Logout from "./pages/auth/Logout";
 import EditProfile from "./pages/auth/EditProfile";
 import UserSettings from "./pages/auth/UserSettings";
+import NoursDashboar from "./pages/test/NoursDashboar";
+import DouaaComp from "./pages/test/DouaaComp";
+import { Toaster } from "sonner";
+ 
+ 
 
 
 function App() {
@@ -43,9 +48,14 @@ function App() {
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
 
+    
+<Route path="/nour" element={<NoursDashboar/>} >
+<Route path="douaa" element={<DouaaComp/>} />
+</Route>
         </Routes>
       </BrowserRouter>
-      
+      <Toaster position="top-center" />
+
     </div>
   );
 }

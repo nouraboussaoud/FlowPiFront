@@ -2,15 +2,18 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import Loader from "../components/loader";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
       const response = await fetch("http://localhost:5000/api/users/forgot-password", {
         method: "POST",
@@ -21,13 +24,15 @@ const ForgotPasswordPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("A password reset link has been sent to your email.");
+        toast.success("A password reset link has been sent to your email.");
       } else {
-        setMessage(data.message || "Failed to send reset link.");
+        toast.error(data.message || "Failed to send reset link.");
       }
     } catch (error) {
       console.error("Error:", error);
-      setMessage("Something went wrong. Please try again later.");
+      toast.error("Something went wrong. Please try again later.");
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -91,12 +96,14 @@ const ForgotPasswordPage = () => {
                       </div>
                       <div className="align-items-center">
                         <div className="d-grid">
+                          {loading && (
+                            <div className="d-flex justify-content-center mb-3">
+                              <Loader />
+                            </div>
+                          )}
                           <button className="btn btn-primary mb-0" type="submit">Reset password</button>
                         </div>
                       </div>
-                      {message && (
-                        <div className="intro-x mt-4 text-center text-red-600">{message}</div>
-                      )}
                     </form>
                     <div className="intro-x mt-5 text-center">
                       <button
