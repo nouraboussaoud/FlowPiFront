@@ -22,7 +22,7 @@ const LoginPage = () => {
                 A few more clicks to <br /> sign in to your account.
               </div>
               <div className="-intro-x mt-5 text-lg text-white text-opacity-70 dark:text-slate-400">
-                Manage all your e-commerce accounts in one place
+                Manage all your e-commerce accounts in one placeeeee
               </div>
             </div>
           </div>
