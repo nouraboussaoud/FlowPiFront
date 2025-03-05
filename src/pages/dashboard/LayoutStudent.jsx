@@ -1,10 +1,19 @@
 import React from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const LayoutStudent = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [profilePic, setProfilePic] = useState(null);
+  useEffect(() => {
+    // Get profile picture filename from local storage
+    const storedProfilePic = localStorage.getItem("profilePic");
+
+    if (storedProfilePic) {
+      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
+    }
+  }, []);
   const handleEditProfile = () => {
     navigate("/edit-profile"); 
   };
@@ -970,8 +979,19 @@ const LayoutStudent = ({ children }) => {
               </ul>
             </li>
           </ul>
+          <div>
+          {profilePic ? (
+        <img 
+          src={profilePic} 
+          alt="Profile" 
+          style={{ width: "50px", height: "50px", borderRadius: "50%" }} 
+        />
+      ) : (
+        <p>No Profile Picture</p>
+      )}
+    </div>
           <div className="nav my-3 my-xl-0 px-4 flex-nowrap align-items-center">
-           <button onClick={logoutUser}>logout</button>
+           <button className='btn btn-light rounded btn-md' onClick={logoutUser}>logout</button>
           </div>
         </div>
      
