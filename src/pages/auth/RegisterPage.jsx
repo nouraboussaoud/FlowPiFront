@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
+import Loader from "../components/loader";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -9,10 +11,11 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(""); // Default role
   const [profilePic, setProfilePic] = useState(null); // To store the selected file
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     const formData = new FormData();
     formData.append("name", name);
     formData.append("email", email);
@@ -29,19 +32,18 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Registration successful! Please check your email for verification.");
+        toast.success("Registration successful! Please check your email to verify your account.");
         navigate("/login");
       } else {
-        alert(data.message || "Registration failed!");
+        toast.error("Registration failed!");
       }
     } catch (error) {
       console.error("Error registering:", error);
-      alert("Something went wrong!");
     }
+    setLoading(false);
   };
 
   return (
-    <Layout>
       <div>
         <div>
           <title>Eduport - LMS, Education and Course Theme</title>
@@ -133,8 +135,15 @@ const RegisterPage = () => {
                             </div>
                           </div>
                           <div className="align-items-center mt-0">
-                            <div className="d-grid">
-                              <button className="btn btn-primary mb-0" type="submit">Register</button>
+                            <div className="d-grid mt-3">
+                              {loading && (
+                                <div className="d-flex justify-content-center mb-3">
+                                  <Loader />
+                                </div>
+                              )}
+                              <button className="btn btn-primary py-3 px-4 w-full" type="submit" disabled={loading}>
+                                {loading ? "Registering..." : "Register"}
+                              </button>
                             </div>
                           </div>
                         </form>
@@ -167,7 +176,6 @@ const RegisterPage = () => {
           </main>
         </div>
       </div>
-    </Layout>
   );
 };
 

@@ -3,6 +3,7 @@ import Header from "../components/Header";
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
+  const [profilePic, setProfilePic] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
@@ -15,6 +16,11 @@ const UsersList = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   useEffect(() => {
+    const storedProfilePic = localStorage.getItem("profilePic");
+
+    if (storedProfilePic) {
+      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
+    }
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -274,14 +280,14 @@ const UsersList = () => {
         {/* Sidebar */}
         <nav className="sidebar navbar-dark bg-dark" style={{ width: "250px", height: "100vh", position: "fixed", left: 0, top: 0 }}>
           <div className="sidebar-header p-3">
-            <h4 className="text-white">Eduport</h4>
+            <h4 className="text-white">FlowPi</h4>
           </div>
           <ul className="nav flex-column p-3">
-          <li className="nav-item">
-  <a className="nav-link text-white" href="/admin-dashboard">
-    Dashboard
-  </a>
-</li>
+            <li className="nav-item">
+              <a className="nav-link text-white" href="/admin-dashboard">
+                Dashboard
+              </a>
+            </li>
             <li className="nav-item">
               <a className="nav-link text-white" href="#">
                 Users
@@ -302,13 +308,15 @@ const UsersList = () => {
             <div className="container-fluid">
               <span className="navbar-brand">Welcome, Admin</span>
               <div className="d-flex align-items-center">
-                <i className="fas fa-bell me-3"></i>
-                <img
-                  src="https://via.placeholder.com/40"
-                  alt="Profile"
-                  className="rounded-circle"
-                  style={{ width: "40px", height: "40px" }}
-                />
+                {profilePic ? (
+                  <img
+                    src={profilePic}
+                    alt="Profile"
+                    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+                  />
+                ) : (
+                  <p>No Profile Picture</p>
+                )}
               </div>
             </div>
           </nav>
@@ -468,37 +476,37 @@ const UsersList = () => {
                                 <span className="mb-0 fw-bold">{user.isActive ? "Active" : "Inactive"}</span>
                               </div>
                             </div>
-                           {/* Inside the card-footer section of the card view (around line 377) */}
-<div className="card-footer bg-transparent border-top">
-  <div className="d-flex justify-content-between align-items-center">
-    <div>
-      <button 
-        className="btn btn-sm btn-primary-soft action-btn"
-        onClick={() => handleViewDetails(user._id)}
-      >
-        <i className="bi bi-eye me-1"></i>Details
-      </button>
-      <button 
-        className="btn btn-sm btn-danger-soft action-btn"
-        onClick={() => handleDeleteUser(user._id)}
-      >
-        <i className="bi bi-trash me-1"></i>Delete
-      </button>
-    </div>
-    <div className="text-end text-primary-hover">
-      <button
-        className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
-        data-bs-toggle="tooltip"
-        data-bs-placement="top"
-        title={user.isBanned ? "Unban" : "Ban"}
-        aria-label={user.isBanned ? "Unban" : "Ban"}
-        onClick={() => handleBanUnban(user._id, user.isBanned)}
-      >
-        {user.isBanned ? "Unban" : "Ban"}
-      </button>
-    </div>
-  </div>
-</div>
+                            {/* Inside the card-footer section of the card view (around line 377) */}
+                            <div className="card-footer bg-transparent border-top">
+                              <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                  <button
+                                    className="btn btn-sm btn-primary-soft action-btn"
+                                    onClick={() => handleViewDetails(user._id)}
+                                  >
+                                    <i className="bi bi-eye me-1"></i>Details
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-danger-soft action-btn"
+                                    onClick={() => handleDeleteUser(user._id)}
+                                  >
+                                    <i className="bi bi-trash me-1"></i>Delete
+                                  </button>
+                                </div>
+                                <div className="text-end text-primary-hover">
+                                  <button
+                                    className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title={user.isBanned ? "Unban" : "Ban"}
+                                    aria-label={user.isBanned ? "Unban" : "Ban"}
+                                    onClick={() => handleBanUnban(user._id, user.isBanned)}
+                                  >
+                                    {user.isBanned ? "Unban" : "Ban"}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -708,7 +716,7 @@ const UsersList = () => {
                     className="form-control"
                     id="name"
                     value={updateFormData.name}
-                    onChange={(e) => setUpdateFormData({...updateFormData, name: e.target.value})}
+                    onChange={(e) => setUpdateFormData({ ...updateFormData, name: e.target.value })}
                     required
                   />
                 </div>
@@ -719,7 +727,7 @@ const UsersList = () => {
                     className="form-control"
                     id="email"
                     value={updateFormData.email}
-                    onChange={(e) => setUpdateFormData({...updateFormData, email: e.target.value})}
+                    onChange={(e) => setUpdateFormData({ ...updateFormData, email: e.target.value })}
                     required
                   />
                 </div>
@@ -729,7 +737,7 @@ const UsersList = () => {
                     className="form-select"
                     id="role"
                     value={updateFormData.role}
-                    onChange={(e) => setUpdateFormData({...updateFormData, role: e.target.value})}
+                    onChange={(e) => setUpdateFormData({ ...updateFormData, role: e.target.value })}
                     required
                   >
                     <option value="student">Student</option>
