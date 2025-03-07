@@ -1,7 +1,9 @@
-import React from 'react'
+
+import React, { useEffect, useState } from 'react';
 import Header from '../../components/Header'
 
 function StudentDashboard() {
+  const [profilePic, setProfilePic] = useState('');
   return (
     <div>
        <>
@@ -993,7 +995,8 @@ function StudentDashboard() {
           >
             <img
               className="avatar-img rounded-circle"
-              src="assets/images/avatar/01.jpg"
+              src={profilePic || "assets/images/avatar/01.jpg"}
+            
               alt="avatar"
             />
           </a>
