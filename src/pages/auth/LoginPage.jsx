@@ -1,10 +1,31 @@
-import React, { useState, useEffect } from "react";
 
+import React, { useState, useEffect,useRef } from "react";
 import { useNavigate } from "react-router-dom";
+
 import Layout from "./Layout";
+
+import ReCAPTCHA from "react-google-recaptcha";
+
 
 const LoginPage = () => {
   const navigate = useNavigate();
+
+  const recaptchaRef = useRef(null);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  const RECAPTCHA_SITE_KEY = "6Lc7CuoqAAAAAD9yIuseyTn0piS3WJ0_ptYlZ5BJ";
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://www.google.com/recaptcha/api.js?hl=en";
+    script.async = true;
+    script.defer = true;
+     script.onload = () => console.log("ReCAPTCHA script loaded successfully!");
+  script.onerror = () => console.error("ReCAPTCHA script failed to load!");
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
   const googleAuth = () => {
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   
@@ -34,7 +55,11 @@ const LoginPage = () => {
       }
     };
     useEffect(() => {
-      handleGoogleCallback();
+      const timer = setTimeout(() => {
+        handleGoogleCallback();
+      }, 10000); // Timeout de 10 secondes
+    
+      return () => clearTimeout(timer);
     }, []);
     
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
@@ -138,8 +163,50 @@ const LoginPage = () => {
     checkGithubCallback();
   }, []);
 
+
+    // CAPTCHA verification handler
+    const handleCaptchaVerify = (value) => {
+      if (value) {
+        setIsCaptchaVerified(true);
+      }
+    };
+
   return (
     <div>
+            {/* Overlay for CAPTCHA */}
+      {!isCaptchaVerified && (
+        <div 
+          style={{
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            width: '100%', 
+            height: '100%', 
+            backgroundColor: 'rgba(0,0,0,0.5)', 
+            zIndex: 1000, 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white', 
+              padding: '20px', 
+              borderRadius: '10px', 
+              textAlign: 'center',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}
+          >
+         <h2 className="mb-4">Verify you are human</h2>
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={RECAPTCHA_SITE_KEY}
+              onChange={handleCaptchaVerify}
+            />
+          </div>
+        </div>
+      )} 
       <title>FlowPi</title>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
