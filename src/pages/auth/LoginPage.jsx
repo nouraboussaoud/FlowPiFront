@@ -1,35 +1,15 @@
-
 import React, { useState, useEffect,useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Loader from "../components/loader";
+import { Toaster, toast } from 'sonner';
 import Layout from "./Layout";
-
-import ReCAPTCHA from "react-google-recaptcha";
-
 
 const LoginPage = () => {
   const navigate = useNavigate();
-
-  const recaptchaRef = useRef(null);
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
-  const RECAPTCHA_SITE_KEY = "6Lc7CuoqAAAAAD9yIuseyTn0piS3WJ0_ptYlZ5BJ";
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://www.google.com/recaptcha/api.js?hl=en";
-    script.async = true;
-    script.defer = true;
-     script.onload = () => console.log("ReCAPTCHA script loaded successfully!");
-  script.onerror = () => console.error("ReCAPTCHA script failed to load!");
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
   const googleAuth = () => {
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
-  
-    } ;
+  };
+  console.log("API URL:", process.env.REACT_APP_API_URL);
     const handleGoogleCallback = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
@@ -60,15 +40,14 @@ const LoginPage = () => {
       }, 10000); // Timeout de 10 secondes
     
       return () => clearTimeout(timer);
-    }, []);
-    
+    }, [handleGoogleCallback]); // Ajoutez handleGoogleCallback ici
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
-  
+
   // Function to redirect to GitHub OAuth login
-  const loginWithGithub = () => {
-    window.location.assign(`http://localhost:5000/api/users/auth/github/callback`);
-  };
+ const handleGitHubLogin = () => {
+    window.location.href = "http://localhost:5000/api/users/auth/github";
+  };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,8 +56,8 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+
     try {
-      console.log("Données envoyées :", { email, password });
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,9 +69,10 @@ const LoginPage = () => {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.user.role);
-
-        alert("Login successful!");
-
+        localStorage.setItem("userId", data.user._id);
+        localStorage.setItem("name", data.user.name);
+        localStorage.setItem("profilePic", data.user.profilePic)
+        toast.success("Welcome " + data.user.name); 
         const role = data.user.role;
         if (role === "admin") {
           navigate("/admin-dashboard");
@@ -104,109 +84,17 @@ const LoginPage = () => {
           navigate("/home");
         }
       } else {
-        alert(data.message || "Login failed!");
+        toast.error("invalid email or password")
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      alert("Something went wrong!");
     }
   };
 
-  // This function will handle the GitHub OAuth callback
-  const handleGithubCallback = async (code) => {
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/github", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.user.role);
-
-        alert("GitHub login successful!");
-
-        const role = data.user.role;
-        if (role === "admin") {
-          navigate("/admin-dashboard");
-        } else if (role === "student") {
-          navigate("/student-dashboard");
-        } else if (role === "tutor") {
-          navigate("/tutor-dashboard");
-        } else {
-          navigate("/home");
-        }
-      } else {
-        alert(data.message || "GitHub login failed!");
-      }
-    } catch (error) {
-      console.error("Error logging in with GitHub:", error);
-      alert("Something went wrong with GitHub login!");
-    }
-  };
-
-  // Check if the user is redirected back from GitHub OAuth and has a code
-  const checkGithubCallback = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-
-    if (code) {
-      handleGithubCallback(code); // Handle the GitHub OAuth callback
-    }
-  };
-
-  // Run the check when the component mounts
-  React.useEffect(() => {
-    checkGithubCallback();
-  }, []);
-
-
-    // CAPTCHA verification handler
-    const handleCaptchaVerify = (value) => {
-      if (value) {
-        setIsCaptchaVerified(true);
-      }
-    };
+ 
 
   return (
     <div>
-            {/* Overlay for CAPTCHA */}
-      {!isCaptchaVerified && (
-        <div 
-          style={{
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            width: '100%', 
-            height: '100%', 
-            backgroundColor: 'rgba(0,0,0,0.5)', 
-            zIndex: 1000, 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center'
-          }}
-        >
-          <div 
-            style={{
-              backgroundColor: 'white', 
-              padding: '20px', 
-              borderRadius: '10px', 
-              textAlign: 'center',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}
-          >
-         <h2 className="mb-4">Verify you are human</h2>
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={RECAPTCHA_SITE_KEY}
-              onChange={handleCaptchaVerify}
-            />
-          </div>
-        </div>
-      )} 
       <title>FlowPi</title>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -291,7 +179,7 @@ const LoginPage = () => {
                       </div>
                       <div className="align-items-center mt-0">
                         <div className="d-grid">
-                          <button className="btn btn-primary mb-0" type="submit">Login</button>
+                          <button className="btn btn-primary mb-0" type="submit" >Login</button>
                         </div>
                       </div>
                       <div className="align-items-center mt-0">
@@ -317,7 +205,7 @@ const LoginPage = () => {
                         <button className="btn bg-google mb-2 mb-xxl-0" onClick={googleAuth}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
                       </div>
                       <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-facebook mb-0" onClick={loginWithGithub}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
+                        <button className="btn bg-facebook mb-0" onClick={handleGitHubLogin}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
                       </div>
                     </div>
                   </div>
