@@ -1,6 +1,12 @@
-import React, { useState } from "react";
+import React, { useState,useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
+import { Eye, EyeOff } from "lucide-react"; // Install with `npm install lucide-react`
+
+
+import {nanoid} from "nanoid";
+import Loader from "../components/loader";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -9,10 +15,42 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(""); // Default role
   const [profilePic, setProfilePic] = useState(null); // To store the selected file
+  const [loading, setLoading] = useState(false);
+
+  //Yessine
+  const [suggestedPassword, setSuggestedPassword] = useState("");
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const passwordRef = useRef(null);
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+
+  console.log("Sugged Password ", suggestedPassword);
+  const nanoidPassword= () =>
+    {
+      return nanoid();
+    };
+    const generatedPassword = nanoid();
+    console.log(generatedPassword);
+  
+    const handleFocus = () => {
+      const newPassword = nanoidPassword();
+      setSuggestedPassword(newPassword);
+      setShowSuggestion(true);
+    };
+
+    const useSuggestedPassword = () => {
+      setPassword(generatedPassword); // Update the password state
+      setShowSuggestion(false);
+    };
+    
+    ///////////////////[[[]]]
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    
+    
 
+
+    setLoading(true);
     const formData = new FormData();
     formData.append("name", name);
     formData.append("email", email);
@@ -29,19 +67,18 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Registration successful! Please check your email for verification.");
+        toast.success("Registration successful! Please check your email to verify your account.");
         navigate("/login");
       } else {
-        alert(data.message || "Registration failed!");
+        toast.error("Registration failed!");
       }
     } catch (error) {
       console.error("Error registering:", error);
-      alert("Something went wrong!");
     }
+    setLoading(false);
   };
 
   return (
-    <Layout>
       <div>
         <div>
           <title>Eduport - LMS, Education and Course Theme</title>
@@ -111,8 +148,43 @@ const RegisterPage = () => {
                             <label htmlFor="inputPassword5" className="form-label">Password *</label>
                             <div className="input-group input-group-lg">
                               <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3"><i className="fas fa-lock" /></span>
-                              <input type="password" className="form-control border-0 bg-light rounded-end ps-1" placeholder="password" id="inputPassword5" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                              <input 
+                                type={showPassword ? "text" : "password"} // Toggle input type
+                                className="form-control border-0 bg-light rounded-end ps-1"
+                                placeholder="password"
+                                id="inputPassword5"
+                                value={password} // Use state to update input
+                                onChange={(e) => setPassword(e.target.value)}
+                                onFocus={handleFocus} // Trigger password suggestion when focused
+                                required
+                              />
+                              <span className="input-group-text bg-light border-0" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff /> : <Eye />}
+                              </span>
+                              {/* Yessine */}
+                                {showSuggestion && !password &&(
+                                  <div className="form-label mt-2 bg-gray-100 p-2 rounded-md">
+                                    <p className="text-sm mb-2">Suggested Password: <span className="font-semibold">{suggestedPassword}</span></p>
+                                    <div className="flex justify-between">
+                                      <button 
+                                        onClick={useSuggestedPassword} 
+                                        className="btn btn-outline-secondary py-3 px-4 w-full"
+                                      >
+                                        Use This Password
+                                      </button>
+                                      <button 
+                                        onClick={() => setShowSuggestion(false)} 
+                                        className="btn custom-btn-outline-danger py-3 px-4 w-full"
+                                      >
+                                        Dismiss
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/*Yessine*/}
                             </div>
+                            
                           </div>
                           <div className="mb-4">
                             <label htmlFor="inputRole" className="form-label">Role *</label>
@@ -133,8 +205,15 @@ const RegisterPage = () => {
                             </div>
                           </div>
                           <div className="align-items-center mt-0">
-                            <div className="d-grid">
-                              <button className="btn btn-primary mb-0" type="submit">Register</button>
+                            <div className="d-grid mt-3">
+                              {loading && (
+                                <div className="d-flex justify-content-center mb-3">
+                                  <Loader />
+                                </div>
+                              )}
+                              <button className="btn btn-primary py-3 px-4 w-full" type="submit" disabled={loading}>
+                                {loading ? "Registering..." : "Register"}
+                              </button>
                             </div>
                           </div>
                         </form>
@@ -167,7 +246,6 @@ const RegisterPage = () => {
           </main>
         </div>
       </div>
-    </Layout>
   );
 };
 

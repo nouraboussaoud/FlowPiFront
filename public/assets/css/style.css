@@ -22572,6 +22572,18 @@ html[dir=rtl] .choices__input {
   display: none !important;
 }
 
+.custom-btn-outline-danger {
+  color: #9a9ea4; /* Bootstrap danger color */
+  background-color: transparent;
+  border-color: #9a9ea4;
+}
+
+.custom-btn-outline-danger:hover {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
 [data-bs-theme=dark] .dark-mode-item {
   display: inline-block !important;
 }
