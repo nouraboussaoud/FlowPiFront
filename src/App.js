@@ -21,6 +21,7 @@ import EditProfile from "./pages/auth/EditProfile";
 import UserSettings from "./pages/auth/UserSettings";
 import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
+import ReturnDeliverable from "./pages/evaluation/ReturnDeliverable";
 import { Toaster } from "sonner";
  
  
@@ -47,6 +48,7 @@ function App() {
           <Route path="/logout" element={<Logout />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
+          <Route path="/return-deliverable" element={<ReturnDeliverable />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

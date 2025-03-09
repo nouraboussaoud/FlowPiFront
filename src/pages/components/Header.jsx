@@ -1,94 +1,54 @@
-import React from 'react'
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from 'react';
 
-const LayoutStudent = ({ children }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [profilePic, setProfilePic] = useState(null);
-  useEffect(() => {
-    // Get profile picture filename from local storage
-    const storedProfilePic = localStorage.getItem("profilePic");
 
-    if (storedProfilePic) {
-      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
-    }
-  }, []);
-  const handleEditProfile = () => {
-    navigate("/edit-profile"); 
-  };
 
-  const handleNavigateToDeliverables = () => {
-    navigate("/return-deliverable");
-  };
-
-  const logoutUser = async () => {
-    try {
-      // Send the POST request to the backend
-      const response = await fetch("http://localhost:5000/api/users/logout", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,  // Send the JWT token
-          "Content-Type": "application/json"
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // If the server responds with success, remove token and role from localStorage
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-
-        // Redirect to the login page
-        navigate("/login");
-      } else {
-        alert(data.message || "Logout failed!");
-      }
-    } catch (error) {
-      console.error("Error logging out:", error);
-      alert("Something went wrong during logout!");
-    }
-  };
-
-  return (
-    <div>
-       <>
-  <title>Eduport - LMS, Education and Course Theme</title>
-  <meta charSet="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
-  />
-  <meta name="author" content="Webestica.com" />
-  <meta name="description" content="Eduport- LMS, Education and Course Theme" />
-  {/* Dark mode */}
-  {/* Favicon */}
-  <link rel="shortcut icon" href="assets/images/favicon.ico" />
-  <link rel="preconnect" href="https://fonts.googleapis.com/" />
-  <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin="" />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap"
-  />
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="assets/vendor/font-awesome/css/all.min.css"
-  />
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="assets/vendor/bootstrap-icons/bootstrap-icons.css"
-  />
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="assets/vendor/choices/css/choices.min.css"
-  />
-  <link rel="stylesheet" type="text/css" href="assets/vendor/aos/aos.css" />
-  <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
-  <header className="navbar-light navbar-sticky">
+const Header = ({role, handleNavigation}) => {
+    const location = useLocation();
+      const navigate = useNavigate();
+      const [profilePic, setProfilePic] = useState(null);
+      useEffect(() => {
+        // Get profile picture filename from local storage
+        const storedProfilePic = localStorage.getItem("profilePic");
+    
+        if (storedProfilePic) {
+          setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
+        }
+      }, []);
+      const handleEditProfile = () => {
+        navigate("/edit-profile"); 
+      };
+      const logoutUser = async () => {
+        try {
+          // Send the POST request to the backend
+          const response = await fetch("http://localhost:5000/api/users/logout", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${localStorage.getItem('token')}`,  // Send the JWT token
+              "Content-Type": "application/json"
+            },
+          });
+    
+          const data = await response.json();
+    
+          if (response.ok) {
+            // If the server responds with success, remove token and role from localStorage
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+    
+            // Redirect to the login page
+            navigate("/login");
+          } else {
+            alert(data.message || "Logout failed!");
+          }
+        } catch (error) {
+          console.error("Error logging out:", error);
+          alert("Something went wrong during logout!");
+        }
+      };
+    return(
+        <header className="navbar-light navbar-sticky">
     <nav className="navbar navbar-expand-xl">
       <div className="container">
         <a className="navbar-brand" href="index.html">
@@ -737,8 +697,7 @@ const LayoutStudent = ({ children }) => {
                       {" "}
                       <a
                         className="dropdown-item"
-                        href="#"
-                        onClick={handleNavigateToDeliverables}
+                        href="student-subscription.html"
                       >
                         <i className="bi bi-card-checklist fa-fw me-1" />
                         My Deliverables
@@ -1004,96 +963,6 @@ const LayoutStudent = ({ children }) => {
       </div>
     </nav>
   </header>
- <main>
-    <section className="pt-0">
-      <div className="container">
-        <div className="row">
-          <div className="col-xl-3">
-            <div
-              className="offcanvas-xl offcanvas-end"
-              tabIndex={-1}
-              id="offcanvasSidebar"
-            >
-              <div className="offcanvas-header bg-light">
-                <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                  My profile
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  data-bs-dismiss="offcanvas"
-                  data-bs-target="#offcanvasSidebar"
-                  aria-label="Close"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {children}
-    </section>
-
-  </main>
-  <footer className="bg-dark p-3">
-    <div className="container">
-      <div className="row align-items-center">
-        <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">
-          <a href="index.html">
-            {" "}
-            <img
-              className="h-20px"
-              src="assets/images/logo-light.svg"
-              alt="logo"
-            />{" "}
-          </a>
-        </div>
-        {/* Widget */}
-        <div className="col-md-4 mb-3 mb-md-0">
-          <div className="text-center text-white text-primary-hover">
-            Copyrights ©2024 Eduport. Build by{" "}
-            <a
-              href="https://www.webestica.com/"
-              target="_blank"
-              className="text-white"
-            >
-              Webestica
-            </a>
-            .
-          </div>
-        </div>
-        <div className="col-md-4">
-          <ul className="list-inline mb-0 text-center text-md-end">
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-facebook" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-instagram" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-linkedin-in" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-twitter" />
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </footer>
-  <div className="back-top">
-    <i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" />
-  </div>
- </>
-    </div>
-  )
+    );
 }
-
-export default LayoutStudent
+export default Header;
