@@ -13,6 +13,7 @@ import GithubCallback from "./pages/GithubCallback";
 import LoginPage from "./pages/auth/LoginPage";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import CreateGroup from "./pages/dashboard/CreateGroup";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import UsersList from "./pages/UsersList";
@@ -57,6 +58,7 @@ function App() {
           <Route path="/loggedIn" element={<LoggedInHome />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/create-group" element={<CreateGroup />} />
           <Route path="/tutor-dashboard" element={<TutorDashboard />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/usersList" element={<UsersList />} />

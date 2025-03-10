@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
 import LayoutStudent from './LayoutStudent';
-
+import CreateGroup from "./CreateGroup";
 function StudentDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ function StudentDashboard() {
     const token = queryParams.get('token');
     
     if (token) {
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
       console.log('Token stored in localStorage:', token);
       navigate('/student-dashboard', { replace: true });
     }
@@ -21,7 +21,12 @@ function StudentDashboard() {
  
   
   return (
- <LayoutStudent />
+    <LayoutStudent>
+    <div>
+      <h2>Welcome to your Dashboard</h2>
+      <CreateGroup /> {/* Afficher le formulaire de création de groupe */}
+    </div>
+  </LayoutStudent>
   )
 }
 
