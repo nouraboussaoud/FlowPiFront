@@ -6,41 +6,39 @@ import Layout from "./Layout";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+ 
+
+
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const userString = urlParams.get("user");
+
+    if (token && userString) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userString));
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("profilePic", user.profilePic || "");
+
+        // Rechargement pour appliquer les modifications
+        setTimeout(() => {
+          navigate("/student-dashboard", { replace: true });
+        }, 500);
+      } catch (error) {
+        console.error("❌ Erreur de parsing `user` :", error);
+      }
+    }
+  }, []);
+  
+
+
   const googleAuth = () => {
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   };
   console.log("API URL:", process.env.REACT_APP_API_URL);
-    const handleGoogleCallback = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const user = urlParams.get('user');
-    
-      if (token && user) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", user);
-        localStorage.setItem("role", JSON.parse(user).role);
-    
-        alert("Google login successful!");
-    
-        const role = JSON.parse(user).role;
-        if (role === "admin") {
-          navigate("/admin-dashboard");
-        } else if (role === "student") {
-          navigate("/student-dashboard");
-        } else if (role === "tutor") {
-          navigate("/tutor-dashboard");
-        } else {
-          navigate("/home");
-        }
-      }
-    };
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        handleGoogleCallback();
-      }, 10000); // Timeout de 10 secondes
-    
-      return () => clearTimeout(timer);
-    }, [handleGoogleCallback]); // Ajoutez handleGoogleCallback ici
+  
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
 
@@ -71,7 +69,7 @@ const LoginPage = () => {
         localStorage.setItem("role", data.user.role);
         localStorage.setItem("userId", data.user._id);
         localStorage.setItem("name", data.user.name);
-        localStorage.setItem("profilePic", data.user.profilePic)
+        handleNormalLogin(data.user);
         toast.success("Welcome " + data.user.name); 
         const role = data.user.role;
         if (role === "admin") {
@@ -90,6 +88,26 @@ const LoginPage = () => {
       console.error("Error logging in:", error);
     }
   };
+  const handleNormalLogin = (userData) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    
+    // 🔄 Vérifier si l'utilisateur a une image de profil
+    if (userData.profilePic) {
+      localStorage.setItem("profilePic", `http://localhost:5000/uploads/${userData.profilePic}`);
+    } else {
+      localStorage.setItem("profilePic", "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+    }
+  
+    console.log("✅ Connexion normale réussie :", userData);
+    
+    // 🔄 Rafraîchir immédiatement l'image de profil
+    window.dispatchEvent(new Event("storage"));
+  };
+  
+ 
+
+
+ 
 
  
 

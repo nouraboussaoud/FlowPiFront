@@ -17,6 +17,20 @@ const AdminDashboard = () => {
     // Add your logout logic here
     navigate("/logout"); // Navigate to the logout page
   };
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.profilePic) {
+          setProfilePic(parsedUser.profilePic); // 📸 Affiche l'image Google
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données utilisateur :", error);
+      }
+    }
+  }, []);
   return (
     <>
       <title>Eduport- LMS, Education and Course Theme</title>

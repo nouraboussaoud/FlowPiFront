@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from 'react';
 
 const LayoutStudent = ({ children }) => {
   const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [profilePic, setProfilePic] = useState("");
+  const [imgKey, setImgKey] = useState(Date.now());
   const navigate = useNavigate();
-  const [profilePic, setProfilePic] = useState(null);
   useEffect(() => {
     // Get profile picture filename from local storage
     const storedProfilePic = localStorage.getItem("profilePic");
@@ -19,33 +20,133 @@ const LayoutStudent = ({ children }) => {
   };
   const logoutUser = async () => {
     try {
-      // Send the POST request to the backend
+      const token = localStorage.getItem("token"); 
+  
+      if (!token) {
+        console.warn("⚠️ Aucun token trouvé, redirection forcée.");
+        localStorage.clear();
+        setProfilePic("https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"); 
+        navigate("/login");
+        return;
+      }
+  
       const response = await fetch("http://localhost:5000/api/users/logout", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,  // Send the JWT token
-          "Content-Type": "application/json"
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
-
-      const data = await response.json();
-
+  
       if (response.ok) {
-        // If the server responds with success, remove token and role from localStorage
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-
-        // Redirect to the login page
-        navigate("/login");
+        console.log("✅ Déconnexion réussie !");
+        localStorage.clear(); // ✅ Nettoie tout
+  
+        // 🔄 Réinitialise l’image après déconnexion
+        setProfilePic("https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"); 
+  
+        setTimeout(() => {
+          navigate("/login");
+        }, 500);
       } else {
-        alert(data.message || "Logout failed!");
+        console.error("❌ Erreur lors de la déconnexion !");
+        alert("Erreur de déconnexion !");
       }
     } catch (error) {
-      console.error("Error logging out:", error);
-      alert("Something went wrong during logout!");
+      console.error("❌ Erreur réseau lors de la déconnexion :", error);
+      alert("Erreur de connexion au serveur !");
     }
   };
 
+    
+  const fetchUserData = () => {
+    const storedUser = localStorage.getItem("user");
+    const storedProfilePic = localStorage.getItem("profilePic");
+  
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("🔍 Utilisateur récupéré :", parsedUser);
+  
+        let newProfilePic = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+  
+        if (parsedUser.profilePic && parsedUser.profilePic.trim() !== "") {
+          console.log("✅ Image détectée :", parsedUser.profilePic);
+          newProfilePic = parsedUser.profilePic; // Image Google ou manuelle
+        } else if (storedProfilePic) {
+          newProfilePic = storedProfilePic;
+        } else {
+          console.warn("⚠️ Aucune `profilePic` trouvée, utilisation de l'image par défaut.");
+        }
+  
+        setProfilePic(newProfilePic);
+        setImgKey(Date.now()); // 🔄 Force le rechargement de l’image
+      } catch (error) {
+        console.error("❌ Erreur de parsing `user` :", error);
+      }
+    }
+  };
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedProfilePic = localStorage.getItem("profilePic");
+  
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setProfilePic(storedProfilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log("♻️ Changement détecté dans `localStorage` !");
+      fetchUserData();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const user = urlParams.get("user");
+
+    if (token) {
+      console.log("🔑 Token récupéré :", token);
+      localStorage.setItem("token", token);
+    }
+
+    if (user) {
+      try {
+        console.log("👤 Utilisateur récupéré :", user);
+        const parsedUser = JSON.parse(user);
+        console.log("👀 Données utilisateur après parsing :", parsedUser);
+
+        localStorage.setItem("user", JSON.stringify(parsedUser));
+        localStorage.setItem("profilePic", parsedUser.profilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+
+        fetchUserData(); // 🔄 Met à jour l’image immédiatement après connexion
+      } catch (error) {
+        console.error("❌ Erreur de parsing des données utilisateur :", error);
+      }
+    } else {
+      console.warn("⚠️ Aucune donnée utilisateur dans l'URL après connexion.");
+    }
+  }, []);
+
+ 
+  
   return (
     <div>
        <>
@@ -979,17 +1080,25 @@ const LayoutStudent = ({ children }) => {
               </ul>
             </li>
           </ul>
-          <div>
-          {profilePic ? (
-        <img 
-          src={profilePic} 
-          alt="Profile" 
-          style={{ width: "50px", height: "50px", borderRadius: "50%" }} 
-        />
-      ) : (
-        <p>No Profile Picture</p>
-      )}
-    </div>
+          
+           <div>
+                  {profilePic ? (
+              <img
+              key={imgKey}
+              src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
+              alt="Profile"
+              style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+              onError={(e) => {
+                console.warn("⚠️ Image introuvable :", profilePic);
+                e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+              }}
+            />
+            
+                 
+                  ) : (
+                    <p>🚫 Aucune image trouvée</p>
+                  )}
+                </div>
           <div className="nav my-3 my-xl-0 px-4 flex-nowrap align-items-center">
            <button className='btn btn-light rounded btn-md' onClick={logoutUser}>logout</button>
           </div>

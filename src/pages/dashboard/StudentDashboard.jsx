@@ -6,7 +6,8 @@ import LayoutStudent from './LayoutStudent';
 function StudentDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
-
+  
+  
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');
@@ -17,7 +18,8 @@ function StudentDashboard() {
       navigate('/student-dashboard', { replace: true });
     }
   }, [location, navigate]);
-
+ 
+  
   return (
  <LayoutStudent />
   )
