@@ -9,35 +9,15 @@ const LoginPage = () => {
  
 
 
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    const userString = urlParams.get("user");
-
-    if (token && userString) {
-      try {
-        const user = JSON.parse(decodeURIComponent(userString));
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("profilePic", user.profilePic || "");
-
-        // Rechargement pour appliquer les modifications
-        setTimeout(() => {
-          navigate("/student-dashboard", { replace: true });
-        }, 500);
-      } catch (error) {
-        console.error("❌ Erreur de parsing `user` :", error);
-      }
-    }
-  }, []);
   
 
 
   const googleAuth = () => {
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   };
-  console.log("API URL:", process.env.REACT_APP_API_URL);
+
+  
+  
   
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
@@ -69,7 +49,8 @@ const LoginPage = () => {
         localStorage.setItem("role", data.user.role);
         localStorage.setItem("userId", data.user._id);
         localStorage.setItem("name", data.user.name);
-        handleNormalLogin(data.user);
+        localStorage.setItem("profilePic", data.user.profilePic)
+      
         toast.success("Welcome " + data.user.name); 
         const role = data.user.role;
         if (role === "admin") {
@@ -82,26 +63,13 @@ const LoginPage = () => {
           navigate("/home");
         }
       } else {
+        localStorage.clear();
         toast.error("invalid email or password")
       }
     } catch (error) {
       console.error("Error logging in:", error);
+      localStorage.clear();
     }
-  };
-  const handleNormalLogin = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    
-    // 🔄 Vérifier si l'utilisateur a une image de profil
-    if (userData.profilePic) {
-      localStorage.setItem("profilePic", `http://localhost:5000/uploads/${userData.profilePic}`);
-    } else {
-      localStorage.setItem("profilePic", "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
-    }
-  
-    console.log("✅ Connexion normale réussie :", userData);
-    
-    // 🔄 Rafraîchir immédiatement l'image de profil
-    window.dispatchEvent(new Event("storage"));
   };
   
  

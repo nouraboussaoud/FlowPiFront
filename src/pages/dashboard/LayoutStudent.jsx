@@ -7,10 +7,12 @@ const LayoutStudent = ({ children }) => {
   const [profilePic, setProfilePic] = useState("");
   const [imgKey, setImgKey] = useState(Date.now());
   const navigate = useNavigate();
+  
   useEffect(() => {
+   
     // Get profile picture filename from local storage
     const storedProfilePic = localStorage.getItem("profilePic");
-
+   
     if (storedProfilePic) {
       setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
     }

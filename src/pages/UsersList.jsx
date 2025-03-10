@@ -396,11 +396,18 @@ const UsersList = () => {
                             <div className="card-header bg-transparent border-bottom d-flex justify-content-between">
                               <div className="d-sm-flex align-items-center">
                                 <div className="avatar avatar-md flex-shrink-0">
-                                  <img
-                                    className="avatar-img rounded-circle"
-                                    src={user.profilePic ? `http://localhost:5000/uploads/${user.profilePic}` : "assets/images/avatar/01.jpg"}
-                                    alt="avatar"
-                                  />
+                                <img
+  className="avatar-img rounded-circle"
+  src={
+    user.profilePic
+      ? user.profilePic.startsWith("http")
+        ? user.profilePic // Lien complet pour les utilisateurs Google
+        : `http://localhost:5000/uploads/${user.profilePic}` // Lien local pour les autres utilisateurs
+      : "assets/images/avatar/01.jpg" // Image par défaut si aucun profil n'est disponible
+  }
+  alt="avatar"
+/>
+
                                 </div>
                                 <div className="ms-0 ms-sm-2 mt-2 mt-sm-0">
                                   <h5 className="mb-0">
