@@ -17,9 +17,14 @@ import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import UsersList from "./pages/UsersList";
 import Logout from "./pages/auth/Logout";
-import {Navigate} from "react-router-dom";
-import { useEffect ,useState } from "react";
-import axios from "axios";
+import EditProfile from "./pages/auth/EditProfile";
+import UserSettings from "./pages/auth/UserSettings";
+import NoursDashboar from "./pages/test/NoursDashboar";
+import DouaaComp from "./pages/test/DouaaComp";
+import { Toaster } from "sonner";
+ 
+ 
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -57,6 +62,7 @@ function App() {
           <Route path="/logout" element={<Logout />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
+          <Route path="/messages" element={<MessagesList />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >
