@@ -22,6 +22,7 @@ import UserSettings from "./pages/auth/UserSettings";
 import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
 import { Toaster } from "sonner";
+import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
  
  
 
@@ -47,6 +48,7 @@ function App() {
           <Route path="/logout" element={<Logout />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
+          <Route path="/messages" element={<MessagesList />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

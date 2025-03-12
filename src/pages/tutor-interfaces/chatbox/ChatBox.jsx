@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
-import { get, post } from "../../apiHelper";
+import { get, post } from "../../../apiHelper";
 import "./ChatBox.css";
 const Chatbox = ({ user, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -83,19 +83,20 @@ const Chatbox = ({ user, onClose }) => {
         <button className="close-btn" onClick={onClose}>X</button>
       </div>
       <div className="chat-messages">
-        {messages.length === 0 ? (
-          <div className="no-messages">No messages yet</div>
-        ) : (
-          messages.map((msg) => (
-            <div 
-              key={msg._id} 
-              className={`message ${msg.sender._id === user._id ? "received" : "sent"}`}
-            >
-              {msg.content}
-            </div>
-          ))
-        )}
+  {messages.length === 0 ? (
+    <div className="no-messages">No messages yet</div>
+  ) : (
+    messages.map((msg) => (
+      <div 
+        key={msg._id} 
+        className={`message ${msg.sender._id === user._id ? "received" : "sent"}`}
+      >
+        {msg.content}
       </div>
+    ))
+  )}
+</div>
+
       <div className="chat-input">
         <input
           type="text"
