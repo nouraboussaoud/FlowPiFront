@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ChatBox from "./ChatBox";
+import ChatBox from "./chatbox/ChatBox";
 
 const UsersTable = () => {
   const [students, setStudents] = useState([]);
