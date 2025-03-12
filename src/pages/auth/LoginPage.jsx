@@ -44,20 +44,10 @@ const LoginPage = () => {
           navigate("/home");
         }
       } else {
-        // Handle specific error responses based on the message from the server
-        if (data.message === "Invalid email or password") {
-          toast.error("Invalid email or password");
-        } else if (data.message === "Please verify your email to activate your account") {
-          toast.error("Please verify your email to activate your account");
-        } else if (data.message === "Your account is banned") {
-          toast.error("Your account is banned");
-        } else {
-          toast.error("An unexpected error occurred");
-        }
+        toast.error("invalid email or password")
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      toast.error("An error occurred, please try again later");
     }
   };
 
