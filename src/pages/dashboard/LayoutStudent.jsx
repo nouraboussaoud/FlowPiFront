@@ -17,6 +17,9 @@ const LayoutStudent = ({ children }) => {
   const handleEditProfile = () => {
     navigate("/edit-profile"); 
   };
+  const handleMessages = () => {
+    navigate("/messages");
+  };
   const logoutUser = async () => {
     try {
       // Send the POST request to the backend
@@ -801,9 +804,10 @@ const LayoutStudent = ({ children }) => {
                     className="dropdown-item"
                     href=""
                   >
-                    <button className=""onClick={handleEditProfile} >
+                    <a className=""onClick={handleEditProfile} >
+                    <i className="fas fa-fw fa-cog me-1" />
                     Edit Profile
-                    </button>
+                    </a>
                   </a>{" "}
                 </li>
                 <li>
@@ -893,8 +897,8 @@ const LayoutStudent = ({ children }) => {
               </ul>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="docs/alerts.html">
-                Components
+              <a className="nav-link" onClick={handleMessages}>
+                Messages
               </a>
             </li>
             <li className="nav-item dropdown">
