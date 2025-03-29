@@ -1,60 +1,48 @@
 import React, { useState, useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify"; // Importez Toastify
+import "react-toastify/dist/ReactToastify.css"; // Importez le fichier CSS de Toastify
 
 const CreateGroup = () => {
   const [groupName, setGroupName] = useState("");
   const [users, setUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
-  const [groups, setGroups] = useState([]);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true); // Ajout pour détecter le chargement
 
   // Fetch users when component mounts
-  useEffect(() => {
-    fetch("http://localhost:5000/api/users/getAll", {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setUsers(data);
-        } else {
-          console.error("Data is not an array:", data);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching users:", error);
-      });
-  }, []);
-
-  // Fetch groups after creating a group or when the component mounts
-  const fetchGroups = async () => {
+  const fetchUsers = async () => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Token is missing. Please login.");
-      return;
-    }
+    if (!token) return;
 
     try {
-      const response = await fetch("http://localhost:5000/api/groups/getAllGroups", {
-        method: "GET",
+      const response = await fetch("http://localhost:5000/api/users/getAll", {
         headers: {
           "Authorization": `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch groups");
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        console.error("❌ Erreur: Les données récupérées ne sont pas un tableau:", data);
       }
-
-      const groups = await response.json();
-      console.log("Groups fetched successfully:", groups);
-      setGroups(groups);
     } catch (error) {
-      setError(error.message);
-      console.error("Error fetching groups:", error);
+      console.error("❌ Erreur lors du chargement des utilisateurs:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Chargement initial
+  useEffect(() => {
+    console.log("🔍 Vérification du token...");
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      console.log("🔑 Token trouvé, récupération des utilisateurs...");
+      fetchUsers();
+    }
+  }, [localStorage.getItem("token")]); // <-- Surveiller le token
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,8 +73,8 @@ const CreateGroup = () => {
       const result = await response.json();
       console.log("Group created successfully:", result);
 
-      // Fetch the updated list of groups after creation
-      fetchGroups();
+      // Affichage de la notification de succès
+      toast.success("Group created successfully!");
 
       // Clear input and selection after submission
       setGroupName("");
@@ -94,6 +82,8 @@ const CreateGroup = () => {
     } catch (error) {
       setError(error.message);
       console.error("Error creating group:", error);
+      // Affichage de la notification d'erreur
+      toast.error("Failed to create group. Please try again.");
     }
   };
 
@@ -106,29 +96,33 @@ const CreateGroup = () => {
   };
 
   return (
-    <div>
-      <h2>Create a New Group</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Group Name:</label>
+    <div style={styles.container}>
+      <h2 style={styles.header}>Create a New Group</h2>
+
+      {error && <p style={styles.error}>{error}</p>}
+
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Group Name:</label>
           <input
             type="text"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             required
+            style={styles.input}
           />
         </div>
 
-        <div>
-          <label>Select Members:</label>
-          <div>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Select Members:</label>
+          <div style={styles.membersContainer}>
             {users.map((user) => (
-              <div key={user._id}>
+              <div key={user._id} style={styles.member}>
                 <input
                   type="checkbox"
                   checked={selectedMembers.includes(user._id)}
                   onChange={() => handleMemberSelection(user._id)}
+                  style={styles.checkbox}
                 />
                 <span>{user.name} ({user.email})</span>
               </div>
@@ -136,26 +130,77 @@ const CreateGroup = () => {
           </div>
         </div>
 
-        <button type="submit">Create Group</button>
+        <button type="submit" style={styles.submitButton}>Create Group</button>
       </form>
 
-      {/* Display the created groups */}
-      <h3>Existing Groups</h3>
-      <ul>
-        {groups.map((group) => (
-          <li key={group._id}>
-            <strong>{group.name}</strong>
-            <p>
-              Members:{" "}
-              {group.members.map((member) => (
-                <span key={member._id}>{member.name}</span>
-              ))}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <ToastContainer />
     </div>
   );
+};
+
+const styles = {
+  container: {
+    maxWidth: "600px",
+    margin: "0 auto",
+    padding: "20px",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+  },
+  header: {
+    textAlign: "center",
+    color: "#333",
+    fontSize: "24px",
+    marginBottom: "20px",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  inputGroup: {
+    marginBottom: "15px",
+  },
+  label: {
+    fontWeight: "bold",
+    marginBottom: "5px",
+    color: "#555",
+  },
+  input: {
+    padding: "10px",
+    fontSize: "16px",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    width: "100%",
+  },
+  membersContainer: {
+    marginTop: "10px",
+  },
+  member: {
+    marginBottom: "10px",
+    display: "flex",
+    alignItems: "center",
+  },
+  checkbox: {
+    marginRight: "10px",
+  },
+  submitButton: {
+    padding: "12px",
+    fontSize: "16px",
+    backgroundColor: "#4CAF50",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+  submitButtonHover: {
+    backgroundColor: "#45a049",
+  },
+  error: {
+    color: "red",
+    textAlign: "center",
+    marginBottom: "15px",
+  },
 };
 
 export default CreateGroup;

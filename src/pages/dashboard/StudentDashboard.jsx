@@ -23,7 +23,7 @@ function StudentDashboard() {
   return (
     <LayoutStudent>
     <div>
-      <h2>Welcome to your Dashboard</h2>
+     
       <CreateGroup /> {/* Afficher le formulaire de création de groupe */}
     </div>
   </LayoutStudent>
