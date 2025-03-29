@@ -21,17 +21,17 @@ const LayoutStudent = ({ children }) => {
     navigate("/edit-profile"); 
   };
   const logoutUser = async () => {
+    console.log("🔄 Tentative de déconnexion...");
+  
+    // Vérifier si le token est présent
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("⚠️ Aucun token trouvé. Redirection vers /login.");
+      navigate("/login");
+      return;
+    }
+  
     try {
-      const token = localStorage.getItem("token"); 
-  
-      if (!token) {
-        console.warn("⚠️ Aucun token trouvé, redirection forcée.");
-        localStorage.clear();
-        setProfilePic("https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"); 
-        navigate("/login");
-        return;
-      }
-  
       const response = await fetch("http://localhost:5000/api/users/logout", {
         method: "POST",
         headers: {
@@ -40,25 +40,27 @@ const LayoutStudent = ({ children }) => {
         },
       });
   
+      if (response.status === 401) {
+        console.warn("🚫 Token expiré. Nettoyage et redirection.");
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
+  
       if (response.ok) {
         console.log("✅ Déconnexion réussie !");
-        localStorage.clear(); // ✅ Nettoie tout
-  
-        // 🔄 Réinitialise l’image après déconnexion
-        setProfilePic("https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"); 
-  
-        setTimeout(() => {
-          navigate("/login");
-        }, 500);
+        localStorage.clear();
+        navigate("/login");
       } else {
-        console.error("❌ Erreur lors de la déconnexion !");
-        alert("Erreur de déconnexion !");
+        throw new Error("Erreur lors de la déconnexion !");
       }
     } catch (error) {
-      console.error("❌ Erreur réseau lors de la déconnexion :", error);
+      console.error("❌ Erreur de déconnexion :", error);
       alert("Erreur de connexion au serveur !");
     }
   };
+  
+  
 
     
   const fetchUserData = () => {
@@ -105,7 +107,8 @@ const LayoutStudent = ({ children }) => {
   }, []);
   useEffect(() => {
     fetchUserData();
-  }, []);
+  }, [user]); // Met à jour lorsque `user` change
+  
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1000,6 +1003,12 @@ const LayoutStudent = ({ children }) => {
                 Components
               </a>
             </li>
+            <li className="nav-item">
+  <a className="nav-link" href="http://localhost:3000/InvitationList">
+    Invitations to Join Groups
+  </a>
+</li>
+
             <li className="nav-item dropdown">
               <a
                 className="nav-link"
@@ -1084,22 +1093,21 @@ const LayoutStudent = ({ children }) => {
           </ul>
           
            <div>
-                  {profilePic ? (
-              <img
-              key={imgKey}
-              src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
-              alt="Profile"
-              style={{ width: "50px", height: "50px", borderRadius: "50%" }}
-              onError={(e) => {
-                console.warn("⚠️ Image introuvable :", profilePic);
-                e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
-              }}
-            />
-            
-                 
-                  ) : (
-                    <p>🚫 Aucune image trouvée</p>
-                  )}
+           {profilePic ? (
+  <img
+    key={imgKey}
+    src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
+    alt="Profile"
+    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+    onError={(e) => {
+      console.warn("⚠️ Image introuvable :", profilePic);
+      e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; 
+    }}
+  />
+) : (
+  <p>🚫 Aucune image trouvée</p>
+)}
+
                 </div>
           <div className="nav my-3 my-xl-0 px-4 flex-nowrap align-items-center">
            <button className='btn btn-light rounded btn-md' onClick={logoutUser}>logout</button>

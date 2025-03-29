@@ -922,7 +922,10 @@ const AdminDashboard = () => {
                   <div className="card-header border-bottom d-flex justify-content-between align-items-center p-4">
                     <h5 className="card-header-title">Top Instructors</h5>
                     <a href="usersList" className="btn btn-link p-0 mb-0">
-                      View all
+                      View users
+                    </a>
+                    <a href="groupList" className="btn btn-link p-0 mb-0">
+                      View groups
                     </a>
                   </div>
                   <div className="card-body p-4">

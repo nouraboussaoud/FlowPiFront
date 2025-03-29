@@ -17,6 +17,8 @@ import CreateGroup from "./pages/dashboard/CreateGroup";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import UsersList from "./pages/UsersList";
+import GroupList from "./pages/GroupList";
+import InvitationList from "./pages/UserGroupInvitations";
 import Logout from "./pages/auth/Logout";
 import EditProfile from "./pages/auth/EditProfile";
 import UserSettings from "./pages/auth/UserSettings";
@@ -34,16 +36,52 @@ function App() {
   const [user, setUser] = useState(null);
   const getUser = async () => {
     try {
-      const url = `${process.env.REACT_APP_API_URL}/auth/login/success`;
-    const { data } = await axios.get(url, { withCredentials: true });
-    setUser(data.user);
+      console.log("🔄 Exécution de getUser() après connexion Google...");
+      
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("⚠️ Aucun token trouvé dans localStorage.");
+        return;
+      }
+  
+      // Utiliser une route correcte pour récupérer l'utilisateur après Google Auth
+      const url = `${process.env.REACT_APP_API_URL}/api/users/me`; 
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        withCredentials: true
+      });
+  
+      if (!response.data) {
+        throw new Error("⚠️ Aucune donnée utilisateur récupérée !");
+      }
+  
+      console.log("✅ Utilisateur récupéré :", response.data);
+      localStorage.setItem("user", JSON.stringify(response.data)); // Stockage en local
+  
+      setUser(response.data); // Met à jour l'état utilisateur immédiatement
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération de l'utilisateur :", error);
     }
-    catch (error) {
-      console.error("Error getting user:", error);}
-    };
-    useEffect(() => {
-      getUser();
-    }, []);
+  };
+  
+  // 🛠️ Lance la récupération après la connexion Google
+  useEffect(() => {
+    console.log("🔄 Vérification après connexion...");
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+  
+    if (token) {
+      console.log("🆕 Token détecté, stockage et récupération de l'utilisateur...");
+      localStorage.setItem("token", token); // Stocke le token dans `localStorage`
+      getUser(); // Récupère immédiatement l'utilisateur après connexion Google
+    } else {
+      console.warn("⚠️ Aucun token trouvé dans l'URL après connexion.");
+    }
+  }, []);
+  
+    
   return (
     <div>
       <BrowserRouter>
@@ -62,6 +100,8 @@ function App() {
           <Route path="/tutor-dashboard" element={<TutorDashboard />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/usersList" element={<UsersList />} />
+          <Route path="/groupList" element={<GroupList />} />
+          <Route path="/InvitationList" element={<InvitationList />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
