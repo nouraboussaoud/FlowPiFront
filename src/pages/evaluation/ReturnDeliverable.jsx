@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import LayoutStudent from '../dashboard/LayoutStudent';
+import api from "../../services/Api";
 
 const ReturnDeliverable = ({ role, handleNavigation }) => {
   const [title, setTitle] = useState("");
@@ -17,38 +18,53 @@ const ReturnDeliverable = ({ role, handleNavigation }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const token = queryParams.get('token');
+    const token = localStorage.getItem('authToken');
+    console.log('Token from Local Storage:', token); // Debugging log
 
     if (token) {
-      localStorage.setItem('authToken', token);
-      console.log('Token stored in localStorage:', token);
-      navigate('/return-deliverable', { replace: true });
+      console.log('Token is available in localStorage');
+    } else {
+      console.warn("No token found in localStorage.");
     }
+  }, []);
 
+  useEffect(() => {
     const fetchRepositories = async () => {
+      const token = localStorage.getItem('authToken');
+      console.log('Detailed Token Check:', {
+        token: token,
+        tokenLength: token ? token.length : 'No Token',
+        tokenType: typeof token
+      });
+  
       try {
-        const response = await axios.get("/api/github/repositories", {
+        const response = await axios.get("http://localhost:5000/api/deliverables/repositories", {
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
           },
           withCredentials: true
         });
+        console.log('Full Repository Response:', response);
         setRepositories(response.data.repositories);
       } catch (error) {
-        console.error("Error fetching repositories:", error);
+        console.error("Detailed Error Fetching Repositories:", {
+          errorMessage: error.message,
+          errorResponse: error.response ? error.response.data : 'No response',
+          errorStatus: error.response ? error.response.status : 'No status'
+        });
       }
     };
-
+  
     fetchRepositories();
-  }, [location, navigate]);
+  }, []);
 
   const handleRepoChange = async (e) => {
     const repo = e.target.value;
     setSelectedRepo(repo);
 
     try {
-      const response = await axios.get(`/api/github/repositories/${repo}/branches`, {
+      const response = await axios.get(`http://localhost:5000/api/deliverables/repositories/${repo}/branches`, {
         headers: {
           "Authorization": `Bearer ${localStorage.getItem('authToken')}`
         },
@@ -65,7 +81,7 @@ const ReturnDeliverable = ({ role, handleNavigation }) => {
     setSelectedBranch(branch);
 
     try {
-      const response = await axios.get(`/api/github/repositories/${selectedRepo}/branches/${branch}/commits`, {
+      const response = await axios.get(`http://localhost:5000/api/deliverables/repositories/${selectedRepo}/branches/${branch}/commits`, {
         headers: {
           "Authorization": `Bearer ${localStorage.getItem('authToken')}`
         },
