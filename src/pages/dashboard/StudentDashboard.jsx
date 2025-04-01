@@ -14,6 +14,7 @@ function StudentDashboard() {
     if (token) {
       localStorage.setItem('authToken', token);
       console.log('Token stored in localStorage:', token);
+      console.log('on est ici');
       navigate('/student-dashboard', { replace: true });
     }
   }, [location, navigate]);

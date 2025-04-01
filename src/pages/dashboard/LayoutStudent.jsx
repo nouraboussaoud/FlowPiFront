@@ -19,9 +19,17 @@ const LayoutStudent = ({ children }) => {
   };
 
   const handleNavigateToDeliverables = () => {
+    navigate("/deliverables-history");
+  };
+
+  const handleNavigateToReturnDeliverable= () =>{
     navigate("/return-deliverable");
   };
 
+  const handleNavigateToTutorsDeliverables=()=>{
+    navigate("/tutors-deliverables");
+  };
+  
   const logoutUser = async () => {
     try {
       // Send the POST request to the backend
@@ -635,10 +643,11 @@ const LayoutStudent = ({ children }) => {
                       {" "}
                       <a
                         className="dropdown-item"
-                        href="instructor-manage-course.html"
+                        href="#"
+                        onClick={handleNavigateToTutorsDeliverables}
                       >
                         <i className="bi bi-basket-fill fa-fw me-1" />
-                        Courses
+                          Deliverables
                       </a>{" "}
                     </li>
                     <li>
@@ -733,6 +742,41 @@ const LayoutStudent = ({ children }) => {
                         Dashboard
                       </a>{" "}
                     </li>
+                    <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    <i className="fas fa-user-graduate fa-fw me-1" />
+                    My Deliverables
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="#"
+                        onClick={handleNavigateToDeliverables}
+                      >
+                        <i className="bi bi-card-checklist fa-fw me-1" />
+                        My Deliverables History
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="#"
+                        onClick={handleNavigateToReturnDeliverable}
+                      >
+                        <i className="bi bi-card-checklist fa-fw me-1" />
+                        Add Deliverable
+                      </a>{" "}
+                    </li>
+                    
+                  </ul>
+                </li>
                     <li>
                       {" "}
                       <a

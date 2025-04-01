@@ -1,0 +1,112 @@
+.tools-sidebar {
+  background-color: #f9f9f9; /* Light background for contrast */
+  border-radius: 12px; /* Rounded corners */
+  padding: 20px;
+  max-width: 400px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 1; /* Ensure visibility */
+}
+
+h4 {
+  font-size: 1.8em; /* Larger title for emphasis */
+  margin-bottom: 20px;
+  color: #333; /* Darker text for readability */
+  text-align: center;
+  font-weight: bold;
+}
+
+.tools-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0; /* Subtle border for separation */
+}
+
+.tools-section h5 {
+  font-size: 1.5em; /* Slightly larger section titles */
+  margin-bottom: 10px;
+  color: #007bff; /* Blue color for section titles */
+  position: relative;
+  padding-bottom: 5px;
+}
+
+.tools-section h5::after {
+  content: '';
+  display: block;
+  width: 50px; /* Underline width */
+  height: 4px; /* Underline height */
+  background-color: #007bff; /* Underline color */
+  margin-top: 5px;
+  border-radius: 2px; /* Rounded underline */
+}
+
+ul {
+  list-style-type: none; /* Remove default list styling */
+  padding: 0;
+}
+
+ul li {
+  margin: 10px 0; /* Space between list items */
+}
+
+ul li a {
+  color: #007bff; /* Link color */
+  text-decoration: none; /* Remove underline */
+  transition: color 0.3s ease; /* Smooth color transition */
+}
+
+ul li a:hover {
+  color: #0056b3; /* Darker color on hover */
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px; /* Increased padding for comfort */
+  border: 1px solid #ccc; /* Light border */
+  border-radius: 6px; /* Rounded corners */
+  margin-top: 5px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+}
+
+.form-control:focus {
+  border-color: #007bff; /* Highlight border on focus */
+  outline: none; /* Remove outline */
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Soft glow effect */
+}
+
+.code-snippet {
+  background-color: #f1f1f1; /* Light background for code block */
+  padding: 10px;
+  border-radius: 6px; /* Rounded corners */
+  overflow-x: auto; /* Allow horizontal scrolling */
+  border: 1px solid #e0e0e0; /* Light border */
+}
+
+.btn {
+  padding: 10px 15px; /* Increased padding for buttons */
+  border: none;
+  border-radius: 6px; /* Rounded corners */
+  cursor: pointer;
+  font-size: 0.95em; /* Slightly larger font */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+}
+
+.btn-primary {
+  background-color: #007bff; /* Primary button color */
+  color: white; /* Text color */
+}
+
+.btn-primary:hover {
+  background-color: #0056b3; /* Darker on hover */
+  transform: translateY(-2px); /* Lift effect on hover */
+}
+
+.btn-danger {
+  background-color: #dc3545; /* Danger button color */
+  color: white; /* Text color */
+}
+
+.btn-danger:hover {
+  background-color: #c82333; /* Darker on hover */
+  transform: translateY(-2px); /* Lift effect on hover */
+}

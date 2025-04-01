@@ -22,6 +22,8 @@ import UserSettings from "./pages/auth/UserSettings";
 import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
 import ReturnDeliverable from "./pages/evaluation/ReturnDeliverable";
+import DeliverablesHistory from "./pages/evaluation/DeliverablesDashboard";
+import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
 import { Toaster } from "sonner";
  
  
@@ -49,6 +51,8 @@ function App() {
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
           <Route path="/return-deliverable" element={<ReturnDeliverable />} />
+          <Route path="/deliverables-history" element={<DeliverablesHistory />} />
+          <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >
