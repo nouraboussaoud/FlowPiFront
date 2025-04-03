@@ -8,7 +8,40 @@ const CreateGroup = () => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true); // Ajout pour détecter le chargement
-
+  useEffect(() => {
+    const checkGroupName = async () => {
+      if (groupName.trim() === "") return;
+      
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:5000/api/groups/check-name?name=${encodeURIComponent(groupName)}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          }
+        );
+        
+        if (!response.ok) throw new Error("Failed to check group name");
+        
+        const data = await response.json();
+        if (data.exists) {
+          setError("This group name is already taken");
+        } else {
+          setError("");
+        }
+      } catch (error) {
+        console.error("Error checking group name:", error);
+      }
+    };
+  
+    const timer = setTimeout(() => {
+      checkGroupName();
+    }, 500);
+  
+    return () => clearTimeout(timer);
+  }, [groupName]);
   // Fetch users when component mounts
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
@@ -46,13 +79,14 @@ const CreateGroup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setError(""); // Réinitialiser l'erreur avant chaque soumission
+  
     const token = localStorage.getItem("token");
     if (!token) {
       setError("Token is missing. Please login.");
       return;
     }
-
+  
     try {
       const response = await fetch("http://localhost:5000/api/groups/createGroup", {
         method: "POST",
@@ -62,28 +96,25 @@ const CreateGroup = () => {
         },
         body: JSON.stringify({
           name: groupName,
-          members: selectedMembers, // Array of user IDs
+          members: selectedMembers,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create group");
-      }
-
+  
       const result = await response.json();
+  
+      if (!response.ok) {
+        // Si le serveur retourne un message d'erreur spécifique
+        throw new Error(result.message || "Failed to create group");
+      }
+  
       console.log("Group created successfully:", result);
-
-      // Affichage de la notification de succès
       toast.success("Group created successfully!");
-
-      // Clear input and selection after submission
       setGroupName("");
       setSelectedMembers([]);
     } catch (error) {
       setError(error.message);
       console.error("Error creating group:", error);
-      // Affichage de la notification d'erreur
-      toast.error("Failed to create group. Please try again.");
+      toast.error(error.message); // Affiche le message d'erreur spécifique
     }
   };
 
