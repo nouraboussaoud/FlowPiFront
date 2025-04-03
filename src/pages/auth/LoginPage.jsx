@@ -6,33 +6,7 @@ import Layout from "./Layout";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    const role = urlParams.get("role");
-  
-    console.log("🔑 Token récupéré :", token);
-    console.log("👤 Rôle récupéré :", role);
-  
-    if (token && role) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-  
-      // Rediriger selon le rôle
-      if (role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (role === "tutor") {
-        navigate("/tutor-dashboard");
-      } else if (role === "student") {
-        navigate("/student-dashboard");
-      } else {
-        navigate("/home"); // Page par défaut
-      }
-    } else {
-      console.error("❌ Erreur lors de la récupération du token ou du rôle.");
-    }
-  }, [navigate]);
-  
+ 
   
 
   const googleAuth = () => {

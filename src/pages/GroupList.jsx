@@ -199,10 +199,21 @@ const GroupList = () => {
                   <p className="card-text">
                     <strong>Members:</strong>
                     <ul>
-                      {group.members.map((member) => (
-                        <li key={member._id}>{member.name}</li> // Afficher les noms des membres
-                      ))}
-                    </ul>
+  {group.members.map((member) => (
+    <li key={member._id}>
+      {member.name}
+      {member.skills && member.skills.length > 0 && (
+        <div>
+        <small>Skills: 
+          {member.skills.map(skill => (
+            <span className="badge bg-secondary me-1">{skill}</span>
+          ))}
+        </small>
+      </div>
+      )}
+    </li>
+  ))}
+</ul>
                   </p>
                   <div className="d-flex justify-content-between">
                     <button

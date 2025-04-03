@@ -127,7 +127,7 @@ const GroupList = () => {
             <p>Loading your groups...</p>
           </div>
         ) : userGroups.length === 0 ? (
-          <div className="alert alert-info text-center">You are not a member of any groups yet.</div>
+          <div className="alert alert-info text-center">  You haven't received any invitations yet</div>
         ) : (
           <div className="row">
             {userGroups.map((group) => (

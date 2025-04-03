@@ -13,9 +13,13 @@ import GithubCallback from "./pages/GithubCallback";
 import LoginPage from "./pages/auth/LoginPage";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import SubjectForm from "./pages/dashboard/SubjectForm";
+import SubjectList from "./pages/dashboard/SubjectList";
 import CreateGroup from "./pages/dashboard/CreateGroup";
+import SkillsManager from "./pages/dashboard/SkillsManager";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
+import SubjectAssignment from "./pages/dashboard/SubjectAssignment";
 import UsersList from "./pages/UsersList";
 import GroupList from "./pages/GroupList";
 import InvitationList from "./pages/UserGroupInvitations";
@@ -26,62 +30,13 @@ import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
 import { Toaster } from "sonner";
 import {Navigate} from "react-router-dom";
-import { useEffect ,useState } from "react";
-import axios from "axios";
+
+
  
  
 
 
 function App() {
-  const [user, setUser] = useState(null);
-  const getUser = async () => {
-    try {
-      console.log("🔄 Exécution de getUser() après connexion Google...");
-      
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.warn("⚠️ Aucun token trouvé dans localStorage.");
-        return;
-      }
-  
-      // Utiliser une route correcte pour récupérer l'utilisateur après Google Auth
-      const url = `${process.env.REACT_APP_API_URL}/api/users/me`; 
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        withCredentials: true
-      });
-  
-      if (!response.data) {
-        throw new Error("⚠️ Aucune donnée utilisateur récupérée !");
-      }
-  
-      console.log("✅ Utilisateur récupéré :", response.data);
-      localStorage.setItem("user", JSON.stringify(response.data)); // Stockage en local
-  
-      setUser(response.data); // Met à jour l'état utilisateur immédiatement
-    } catch (error) {
-      console.error("❌ Erreur lors de la récupération de l'utilisateur :", error);
-    }
-  };
-  
-  // 🛠️ Lance la récupération après la connexion Google
-  useEffect(() => {
-    console.log("🔄 Vérification après connexion...");
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-  
-    if (token) {
-      console.log("🆕 Token détecté, stockage et récupération de l'utilisateur...");
-      localStorage.setItem("token", token); // Stocke le token dans `localStorage`
-      getUser(); // Récupère immédiatement l'utilisateur après connexion Google
-    } else {
-      console.warn("⚠️ Aucun token trouvé dans l'URL après connexion.");
-    }
-  }, []);
-  
-    
   return (
     <div>
       <BrowserRouter>
@@ -97,7 +52,11 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/create-group" element={<CreateGroup />} />
+          <Route path="/Skills-Manager" element={<SkillsManager />} />
           <Route path="/tutor-dashboard" element={<TutorDashboard />} />
+          <Route path="/Subject-Assignment" element={<SubjectAssignment />} />
+          <Route path="/Subject-Form" element={<SubjectForm />} />
+          <Route path="/Subject-List" element={<SubjectList />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />

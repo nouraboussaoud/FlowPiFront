@@ -1008,6 +1008,12 @@ const LayoutStudent = ({ children }) => {
     Invitations to Join Groups
   </a>
 </li>
+<li className="nav-item">
+  <a className="nav-link" href="create-group">
+    Create Groups
+  </a>
+</li>
+
 
             <li className="nav-item dropdown">
               <a

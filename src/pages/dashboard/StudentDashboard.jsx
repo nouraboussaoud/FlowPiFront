@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
 import LayoutStudent from './LayoutStudent';
-import CreateGroup from "./CreateGroup";
+import SkillsManager from "./SkillsManager";
 function StudentDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ function StudentDashboard() {
     <LayoutStudent>
     <div>
      
-      <CreateGroup /> {/* Afficher le formulaire de création de groupe */}
+      <SkillsManager /> {/* Afficher le formulaire de création de groupe */}
     </div>
   </LayoutStudent>
   )
