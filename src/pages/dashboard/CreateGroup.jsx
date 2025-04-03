@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify"; // Importez Toastify
 import "react-toastify/dist/ReactToastify.css"; // Importez le fichier CSS de Toastify
-
+import LayoutStudent from './LayoutStudent';
 const CreateGroup = () => {
   const [groupName, setGroupName] = useState("");
   const [users, setUsers] = useState([]);
@@ -95,7 +95,9 @@ const CreateGroup = () => {
     );
   };
 
-  return (
+  return (    <LayoutStudent>
+   
+   
     <div style={styles.container}>
       <h2 style={styles.header}>Create a New Group</h2>
 
@@ -135,7 +137,7 @@ const CreateGroup = () => {
 
       <ToastContainer />
     </div>
-  );
+    </LayoutStudent> );
 };
 
 const styles = {
