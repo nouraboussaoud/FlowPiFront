@@ -12,9 +12,10 @@ const SubjectAssignment = () => {
     threshold: 0.15,
     maxGroups: 3,
     autoAssign: false,
-    results: [], // Initialize with empty array
+    results: null, // Initialize with empty array
     error: null,
-    stats: null
+    stats: null,
+    lastUpdated: null
   });
 
   const handleChange = (e) => {
@@ -24,7 +25,22 @@ const SubjectAssignment = () => {
       [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) : value
     }));
   };
-
+  const refreshData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.get('http://localhost:5000/api/subject/getAllSubjects', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { timestamp: state.lastUpdated } // Envoyez le dernier timestamp
+      });
+      
+      setState(prev => ({
+        ...prev,
+        lastUpdated: new Date().getTime()
+      }));
+    } catch (error) {
+      console.error("Refresh error:", error);
+    }
+  };
   const handleAssign = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
@@ -35,14 +51,14 @@ const SubjectAssignment = () => {
         throw new Error('Authentication token missing');
       }
 
-      const params = {
-        threshold: state.threshold,
-        maxGroups: state.maxGroups,
-        auto: state.autoAssign
-      };
+      
 
       const { data } = await axios.get('http://localhost:5000/api/subject/assign', {
-        params,
+        params: {
+          threshold: state.threshold,
+          maxGroups: state.maxGroups,
+          auto: state.autoAssign
+        },
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -50,20 +66,34 @@ const SubjectAssignment = () => {
       });
 
       if (data?.success) {
+         // Attendre 1 seconde supplémentaire pour la base de données
+         if (state.autoAssign) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+  
         setState(prev => ({
           ...prev,
+          loading: false,
           results: data.assignments || [],
           stats: {
             ...data.stats,
             assignmentsCount: data.assignments?.length || 0,
-            averageScore: data.assignments?.reduce((sum, item) => sum + (item.score || 0), 0) / (data.assignments?.length || 1) || 0
+            averageScore: data.assignments?.length 
+              ? (data.assignments.reduce((sum, item) => sum + (item.score || 0), 0) / data.assignments.length)
+              : 0
           },
-          loading: false
+          lastUpdated: data.timestamp // Utilisez le timestamp du backend
         }));
+  
         
-        toast.success(`Assignment successful: ${data.assignments?.length || 0} matches found`);
-      } else {
-        throw new Error(data?.message || 'Error during assignment');
+        if (state.autoAssign) {
+          setTimeout(async () => {
+            await refreshData();
+            toast.success("Assignments updated successfully");
+          }, 1500);
+        } else {
+          toast.success(`Found ${data.assignments?.length || 0} potential matches`);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -75,7 +105,7 @@ const SubjectAssignment = () => {
         ...prev,
         error: errorMessage,
         loading: false,
-        results: [] // Reset on error
+        results: []
       }));
       
       if (error.response?.status === 401) {
@@ -86,7 +116,6 @@ const SubjectAssignment = () => {
       }
     }
   };
-
   const getScoreColor = (score) => {
     if (score > 0.7) return '#28a745'; // Green
     if (score > 0.4) return '#ffc107'; // Yellow
