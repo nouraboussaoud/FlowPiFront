@@ -328,12 +328,7 @@ const LayoutTutor = ({ children }) => {
                     All subjects
                   </a>
                 </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="Subject-Assignment">
-                  Group Assignment
-                  </a>
-                </li>
+              
                
               </ul>
             </li>
@@ -1032,11 +1027,35 @@ const LayoutTutor = ({ children }) => {
                 </li>
               </ul>
             </li>
-            <li className="nav-item">
-              <a className="nav-link" href="groupList">
-              View groups
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="demoMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+               Groups
               </a>
+              <ul className="dropdown-menu" aria-labelledby="demoMenu">
+           
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="groupList">
+                  View groups
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="Subject-Assignment">
+                  Group Assignment
+                  </a>
+                </li>
+               
+              </ul>
             </li>
+          
             
 
             <li className="nav-item dropdown">
