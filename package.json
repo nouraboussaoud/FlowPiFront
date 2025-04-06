@@ -18,7 +18,7 @@
     "react-router-dom": "^6.16.0",
     "react-scripts": "5.0.1",
     "socket.io-client": "^4.8.1",
-    "sonner": "^2.0.1",
+    "sonner": "^2.0.3",
     "toast": "^0.5.4",
     "web-vitals": "^2.1.4"
   },
