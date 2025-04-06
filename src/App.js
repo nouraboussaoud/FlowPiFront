@@ -23,6 +23,8 @@ import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
 import { Toaster } from "sonner";
 import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
+import DashboardTasks from "./pages/tasks/DashboardTasks";
+import TaskManager from "./pages/tasks/DashboardTasks";
  
  
 
@@ -32,7 +34,7 @@ function App() {
     <div>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LoginPage/>} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
@@ -49,6 +51,7 @@ function App() {
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
           <Route path="/messages" element={<MessagesList />} />
+          <Route path="/tasks" element={< TaskManager />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >
