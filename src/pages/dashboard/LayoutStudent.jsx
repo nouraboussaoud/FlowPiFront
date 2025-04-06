@@ -22,6 +22,7 @@ const LayoutStudent = ({ children }) => {
   const handleMessages = () => {
     navigate("/messages");
   };
+ 
   const logoutUser = async () => {
     try {
       // Send the POST request to the backend
@@ -347,7 +348,10 @@ const LayoutStudent = ({ children }) => {
                   >
                     <a className=""onClick={handleEditProfile} >
                     <i className="fas fa-fw fa-cog me-1" />
+                    <a className=""onClick={handleEditProfile} >
+                    <i className="fas fa-fw fa-cog me-1" />
                     Edit Profile
+                    </a>
                     </a>
                   </a>{" "}
                 </li>
