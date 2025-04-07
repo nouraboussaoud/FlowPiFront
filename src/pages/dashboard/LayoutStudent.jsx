@@ -348,24 +348,23 @@ const LayoutStudent = ({ children }) => {
                   >
                     <a className=""onClick={handleEditProfile} >
                     <i className="fas fa-fw fa-cog me-1" />
-                    <a className=""onClick={handleEditProfile} >
-                    <i className="fas fa-fw fa-cog me-1" />
                     Edit Profile
                     </a>
-                    </a>
                   </a>{" "}
                 </li>
-                <button onClick={toggleTaskManager}>
-          {showTaskManager ? "Hide Task Manager" : "Show Task Manager"}
-        </button>
-
+                
                 <li>
                   {" "}
-                  <a className="dropdown-item" href="instructor-setting.html">
-                    <i className="fas fa-fw fa-cog me-1" />
-                    Settings
+                  <a
+                    className="dropdown-item"
+                    href=""
+                  >
+                  <a onClick={toggleTaskManager}>
+                  <i  className="fas fa-solid fa-list-check me-1"/>
+                  Tasks 
+                  </a>
                   </a>{" "}
-                </li>
+                  </li>
                 <li>
                   {" "}
                   <a

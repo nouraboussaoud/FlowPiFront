@@ -331,3 +331,211 @@
 .margin-bottom-1 {
   margin-bottom: 1rem;
 }
+/* Add these styles to your Tasks.css file */
+
+/* Modal size variations */
+.modal-lg {
+  width: 90%;
+  max-width: 800px;
+}
+
+/* Progress bar styling */
+.progress-bar-container {
+  width: 100%;
+  height: 20px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #3b82f6;
+  color: white;
+  text-align: center;
+  line-height: 20px;
+  font-size: 12px;
+  transition: width 0.3s ease;
+}
+
+/* Add these new styles to your Tasks.css file */
+
+/* Progress styling in task cards */
+.task-progress {
+  margin: 12px 0;
+}
+
+.progress-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Progress details in repo modal */
+.progress-details {
+  margin-bottom: 15px;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.progress-percentage {
+  font-weight: 600;
+}
+
+/* Progress summary in commits modal */
+.progress-summary {
+  background-color: #f9fafb;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.progress-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.progress-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 16px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.progress-metrics {
+  display: flex;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.section-title {
+  font-size: 16px;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Modal size variations */
+.modal-lg {
+  width: 90%;
+  max-width: 800px;
+}
+
+/* Progress bar styling */
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #3b82f6;
+  color: white;
+  text-align: center;
+  line-height: 8px;
+  font-size: 10px;
+  transition: width 0.3s ease;
+}
+
+/* Commits container styling */
+.commits-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.commit-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.commit-item:last-child {
+  border-bottom: none;
+}
+
+.commit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.commit-date {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+}
+
+.commit-message {
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.empty-commits {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* Button styles */
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Task card styling */
+.task-card {
+  position: relative;
+}
+
+.task-details {
+  margin-bottom: 10px;
+  font-size: 14px;
+  word-break: break-word;
+}
