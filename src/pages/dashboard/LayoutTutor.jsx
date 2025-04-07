@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import LayoutStudent from "../dashboard/LayoutStudent";
 import "./Tasks.css";
 import { Folder, GitBranch, Clock, BarChart2 } from "lucide-react";
 
@@ -24,12 +23,15 @@ const TaskManager = () => {
     name: "",
     branch: ""
   });
+  // State for commits and commits modal
   const [commits, setCommits] = useState([]);
   const [showCommitsModal, setShowCommitsModal] = useState(false);
   const [loadingCommits, setLoadingCommits] = useState(false);
+  // State for progress update
   const [progressUpdate, setProgressUpdate] = useState({
     progressPercentage: 0,
-    completedCount: 0
+    completedCount: 0,
+    totalCount: 0
   });
 
   const handleRepoInputChange = (e) => {
@@ -52,6 +54,7 @@ const TaskManager = () => {
     setLoadingCommits(true);
 
     try {
+      // API call to fetch commits
       const response = await axios.get(
         `http://localhost:5000/api/tasks/track-commits/${selectedTaskId}/${owner}/${name}/${branch}`,
         {
@@ -61,25 +64,16 @@ const TaskManager = () => {
         }
       );
 
+      // Store commits in state
       const commitData = response.data.commitDetails || [];
       setCommits(commitData);
       
-      setProgressUpdate({
-        progressPercentage: response.data.progressPercentage,
-        completedCount: response.data.completedCount
-      });
-      
-      // Update the task in the tasks list
-      setTasks(tasks.map(task => 
-        task._id === selectedTaskId 
-          ? { 
-              ...task, 
-              progressPercentage: response.data.progressPercentage,
-              completedCount: response.data.completedCount
-            } 
-          : task
-      ));
-      
+      // Update task progress based on commits
+      // Here we'll also update the task's progress in the database
+// Update task progress based on commits count directly
+const commitCount = commitData.length;
+await updateTaskProgress(selectedTaskId, commitCount);      
+      // Close repo modal and open commits modal
       setShowRepoModal(false);
       setShowCommitsModal(true);
     } catch (error) {
@@ -87,6 +81,61 @@ const TaskManager = () => {
       setError("Failed to fetch commits. Please check repository details.");
     } finally {
       setLoadingCommits(false);
+    }
+  };
+
+  // Function to update task progress
+  const updateTaskProgress = async (taskId, commitCount) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No token found. Please login.");
+      return;
+    }
+
+    try {
+      // Calculate progress percentage based on commit count
+      // You might want to customize this calculation logic
+     // Update task progress based on commits count directly
+     const progress = commitCount; // Each commit represents 1%
+
+      // Update progress state for UI display
+      setProgressUpdate({
+        progressPercentage: progress,
+        completedCount: commitCount,
+        totalCount: 100 // We set 100 as the maximum for percentage calculation
+      });
+
+      // API call to update task progress in the database
+      const response = await axios.put(
+        `http://localhost:5000/api/tasks/updateTaskProgress/${taskId}`,
+        { 
+          progressPercentage: progress,
+          completedCount: commitCount,
+          totalCount: 100
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update the task in the tasks array
+      setTasks(tasks.map(task => 
+        task._id === taskId 
+          ? { ...task, progressPercentage: progress } 
+          : task
+      ));
+
+      // Also update selectedTask if it exists
+      if (selectedTask) {
+        setSelectedTask({
+          ...selectedTask,
+          progressPercentage: progress
+        });
+      }
+
+    } catch (error) {
+      console.error("Error updating task progress:", error);
+      setError("Failed to update task progress.");
     }
   };
 
@@ -108,10 +157,12 @@ const TaskManager = () => {
     
       setSelectedTask(response.data);
       
+      // Initialize progress update state with task data
       if (response.data.progressPercentage !== undefined) {
         setProgressUpdate({
           progressPercentage: response.data.progressPercentage || 0,
-          completedCount: response.data.completedCount || 0
+          completedCount: response.data.completedCount || 0,
+          totalCount: response.data.totalCount || 10
         });
       }
     } catch (error) {
@@ -152,6 +203,7 @@ const TaskManager = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProjects(response.data);
+      console.log("Projects fetched:", response.data);
     } catch (error) {
       setError("Error fetching projects");
       console.error(error);
@@ -165,6 +217,7 @@ const TaskManager = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Updating ${name} to ${value}`);
     setNewTask((prevTask) => ({
       ...prevTask,
       [name]: value,
@@ -183,6 +236,8 @@ const TaskManager = () => {
       setError("Please select a project");
       return;
     }
+
+    console.log("Creating task with data:", newTask);
 
     try {
       setIsLoading(true);
@@ -231,25 +286,54 @@ const TaskManager = () => {
     }
   };
 
+  const updateTask = async (taskId, updatedData) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No token found. Please login.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await axios.put(
+        `http://localhost:5000/api/tasks/setTaskCompleted/${taskId}`,
+        updatedData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setTasks(
+        tasks.map((task) =>
+          task._id === taskId ? { ...task, ...updatedData } : task
+        )
+      );
+    } catch (error) {
+      setError("Error updating task");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getProjectName = (projectId) => {
     const project = projects.find(p => p._id === projectId);
     return project ? project.name : "No Project";
   };
 
+  // Function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
 
+  // Function to get progress bar color based on percentage
   const getProgressColor = (percentage) => {
-    if (percentage < 30) return "#ef4444";
-    if (percentage < 70) return "#f59e0b";
-    return "#10b981";
+    if (percentage < 30) return "#ef4444"; // Red
+    if (percentage < 70) return "#f59e0b"; // Yellow/Orange
+    return "#10b981"; // Green
   };
 
   return (
-        <LayoutStudent>
-    
     <div className="container">
       <header className="header">
         <h1 className="title">Task Manager</h1>
@@ -321,11 +405,15 @@ const TaskManager = () => {
                   required
                 >
                   <option value="">Select a project</option>
-                  {projects.map((project) => (
-                    <option key={project._id} value={project._id}>
-                      {project.name}
-                    </option>
-                  ))}
+                  {projects && projects.length > 0 ? (
+                    projects.map((project) => (
+                      <option key={project._id} value={project._id}>
+                        {project.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No projects available</option>
+                  )}
                 </select>
               </div>
 
@@ -374,11 +462,12 @@ const TaskManager = () => {
                 </p>
               )}
               
+              {/* Display progress bar in task card */}
               {task.progressPercentage !== undefined && (
                 <div className="task-progress">
                   <div className="progress-label">
                     <BarChart2 size={14} />
-                    <span>Commits: {task.completedCount || 0} ({task.progressPercentage || 0}%)</span>
+                    <span>Progress: {task.progressPercentage || 0}%</span>
                   </div>
                   <div className="progress-bar-container">
                     <div
@@ -438,6 +527,7 @@ const TaskManager = () => {
         </div>
       )}
 
+      {/* Repository Modal */}
       {showRepoModal && selectedTask && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -503,12 +593,13 @@ const TaskManager = () => {
                 />
               </div>
 
+              {/* Progress Bar with more detailed info */}
               <div className="form-group">
                 <label className="label">Current Progress</label>
                 <div className="progress-details">
                   <div className="progress-stats">
                     <span>Commits: {selectedTask.completedCount || 0}</span>
-                    <span className="progress-percentage">{selectedTask.progressPercentage || 0}%</span>
+                    <span className="progress-percentage">{selectedTask.progressPercentage || 0}% Complete</span>
                   </div>
                   <div className="progress-bar-container">
                     <div
@@ -543,6 +634,7 @@ const TaskManager = () => {
         </div>
       )}
 
+      {/* Commits Modal */}
       {showCommitsModal && (
         <div className="modal-overlay">
           <div className="modal-content modal-lg">
@@ -559,9 +651,10 @@ const TaskManager = () => {
               </button>
             </div>
 
+            {/* Progress information */}
             <div className="progress-summary">
               <div className="progress-header">
-                <h3>Commit Progress</h3>
+                <h3>Progress Update</h3>
                 <span className="progress-badge" style={{ backgroundColor: getProgressColor(progressUpdate.progressPercentage) }}>
                   {progressUpdate.progressPercentage}%
                 </span>
@@ -577,8 +670,12 @@ const TaskManager = () => {
               </div>
               <div className="progress-metrics">
                 <div className="metric">
-                  <span className="metric-label">Total Commits:</span>
+                  <span className="metric-label">Commits Found:</span>
                   <span className="metric-value">{progressUpdate.completedCount}</span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Target Goal:</span>
+                  <span className="metric-value">{progressUpdate.totalCount}</span>
                 </div>
               </div>
             </div>
@@ -618,7 +715,6 @@ const TaskManager = () => {
         </div>
       )}
     </div>
-    </LayoutStudent>
   );
 };
 
