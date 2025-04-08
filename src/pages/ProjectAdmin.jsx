@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import LayoutTutor from './dashboard/LayoutTutor';
+import DashboardLayout from "./DashboardLayout";
 
 const ProjectManager = () => {
   const [projects, setProjects] = useState([]);
@@ -95,11 +95,11 @@ const ProjectManager = () => {
   }, []);
 
   return (
-    <LayoutTutor>
+    <DashboardLayout >
       <div style={styles.container}>
-       
-          <h1 style={styles.title}>All Projects</h1>
+      <h1 style={styles.title}>All Projects</h1>
         <br></br>
+
 
         {isLoading ? (
           <div style={styles.emptyState}>Loading projects...</div>
@@ -135,7 +135,7 @@ const ProjectManager = () => {
           <div style={styles.emptyState}>No projects found</div>
         )}
       </div>
-      </LayoutTutor>
+      </DashboardLayout >
   );
 };
 

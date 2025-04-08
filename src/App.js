@@ -16,12 +16,16 @@ import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import SubjectForm from "./pages/dashboard/SubjectForm";
 import SubjectList from "./pages/dashboard/SubjectList";
 import CreateGroup from "./pages/dashboard/CreateGroup";
+
 import SkillsManager from "./pages/dashboard/SkillsManager";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import SubjectAssignment from "./pages/dashboard/SubjectAssignment";
 import UsersList from "./pages/UsersList";
 import GroupList from "./pages/GroupList";
+import SubjectAdmin from "./pages/SubjectAdmin";
+import CreateSubjectAdmin from "./pages/CreateSubjectAdmin";
+import ProjectAdmin from "./pages/ProjectAdmin";
 import GroupTutor from "./pages/GroupTutor";
 import InvitationList from "./pages/UserGroupInvitations";
 import Logout from "./pages/auth/Logout";
@@ -60,6 +64,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />
+          <Route path="/SubjectAdmin" element={<SubjectAdmin />} />
+          <Route path="/CreateSubjectAdmin" element={<CreateSubjectAdmin />} />
+          <Route path="/ProjectAdmin" element={<ProjectAdmin />} />
           <Route path="/GroupTutor" element={<GroupTutor />} />
           <Route path="/Project-Manager" element={<ProjectManager />} />
           <Route path="/Project-Tutor" element={<ProjectTutor />} />
