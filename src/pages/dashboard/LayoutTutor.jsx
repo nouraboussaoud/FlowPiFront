@@ -332,6 +332,11 @@ const LayoutTutor = ({ children }) => {
                
               </ul>
             </li>
+            <li className="nav-item">
+              <a className="nav-link" href="Project-Tutor">
+                Projects
+              </a>
+            </li>
             {/* Nav item 2 Pages */}
             <li className="nav-item dropdown">
               <a
@@ -1042,7 +1047,7 @@ const LayoutTutor = ({ children }) => {
            
                 <li>
                   {" "}
-                  <a className="dropdown-item" href="groupList">
+                  <a className="dropdown-item" href="GroupTutor">
                   View groups
                   </a>
                 </li>

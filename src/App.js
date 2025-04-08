@@ -22,6 +22,7 @@ import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import SubjectAssignment from "./pages/dashboard/SubjectAssignment";
 import UsersList from "./pages/UsersList";
 import GroupList from "./pages/GroupList";
+import GroupTutor from "./pages/GroupTutor";
 import InvitationList from "./pages/UserGroupInvitations";
 import Logout from "./pages/auth/Logout";
 import EditProfile from "./pages/auth/EditProfile";
@@ -30,9 +31,8 @@ import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
 import { Toaster } from "sonner";
 import {Navigate} from "react-router-dom";
-
-
- 
+import ProjectManager from "./pages/ProjectManager";
+import ProjectTutor from "./pages/ProjectTutor";
  
 
 
@@ -60,6 +60,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />
+          <Route path="/GroupTutor" element={<GroupTutor />} />
+          <Route path="/Project-Manager" element={<ProjectManager />} />
+          <Route path="/Project-Tutor" element={<ProjectTutor />} />
           <Route path="/InvitationList" element={<InvitationList />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/edit-profile" element={<EditProfile />} />
