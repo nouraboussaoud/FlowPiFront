@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCheck } from 'react-icons/fa'; // Icône de croix et de coche
 import { toast, ToastContainer } from 'react-toastify'; // Pour afficher des toasts
 import 'react-toastify/dist/ReactToastify.css'; // Importer le style de Toastify
-import DashboardLayout from './DashboardLayout';
+import LayoutStudent from './dashboard/LayoutStudent';
 
 const GroupList = () => {
   const [userGroups, setUserGroups] = useState([]); // Groupes disponibles pour l'utilisateur connecté
@@ -110,7 +110,7 @@ const GroupList = () => {
   }, []);
 
   return (
-    <DashboardLayout>
+    <LayoutStudent>
       <div className="container mt-5">
         <div>
           <p style={styles.title}>Invitation List for Groups</p>
@@ -198,7 +198,7 @@ const GroupList = () => {
 
       {/* Affichage du toast */}
       <ToastContainer />
-    </DashboardLayout>
+      </LayoutStudent>
   );
 };
 

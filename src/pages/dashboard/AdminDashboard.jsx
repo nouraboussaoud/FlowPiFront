@@ -926,9 +926,11 @@ const AdminDashboard = () => {
                       View users
                     </a>
                     <a href="groupList" className="btn btn-link p-0 mb-0">
-                      View groups
+                      View Groups
                     </a>
+                 
                   </div>
+                  
                   <div className="card-body p-4">
                     <div className="d-sm-flex justify-content-between align-items-center">
                       <div className="d-sm-flex align-items-center mb-1 mb-sm-0">
@@ -1085,6 +1087,15 @@ const AdminDashboard = () => {
                 <div className="card shadow h-100">
                   <div className="card-header border-bottom p-4">
                     <h5 className="card-header-title">Notice board</h5>
+                    <a href="SubjectAdmin" className="btn btn-link p-0 mb-0">
+                      View Subjects
+                    </a><br></br>
+                    <a href="CreateSubjectAdmin" className="btn btn-link p-0 mb-0">
+                      Create Subjects
+                    </a><br></br>
+                    <a href="ProjectAdmin" className="btn btn-link p-0 mb-0">
+                     Projects
+                    </a>
                   </div>
                   <div className="card-body p-4">
                     <div className="custom-scrollbar h-300px">
