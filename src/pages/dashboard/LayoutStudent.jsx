@@ -1013,6 +1013,11 @@ const LayoutStudent = ({ children }) => {
     Create Groups
   </a>
 </li>
+<li className="nav-item">
+  <a className="nav-link" href="Project-Manager">
+   Projects
+  </a>
+</li>
 
 
             <li className="nav-item dropdown">

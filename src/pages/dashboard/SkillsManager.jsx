@@ -13,13 +13,15 @@ import {
 } from '@mui/material';
 
 // Static skills list
-const STATIC_SKILLS = [
+const STATIC_SKILLS =  [
   "javascript", "python", "java", "c#", "c++", "react", "angular", 
   "vue.js", "node.js", "express", "mongodb", "mysql", "postgresql",
   "docker", "git", "aws", "azure", "machine learning", "data science",
   "cybersecurity", "typescript", "php", "ruby", "swift", "kotlin",
   "django", "flask", "spring", "laravel", "tensorflow", "pytorch", 
-  "nlp", "computer vision" , "redux" , "graphql" , "flutter" , "react native" , "jest" , "css" , "sql" , "airflow" , "pyspark"
+  "nlp", "computer vision" , "redux" , "graphql" , "flutter" , "react native" , "jest" , "css" , "sql" , "airflow" , "pyspark" ,"kubernetes", "helm", "istio", "serverless", "terraform", 
+"prometheus", "grafana", "argoCD", "vault", "grpc", 
+"keda", "kubeflow", "jenkins", "github actions", "opa"
 ];
 
 const SkillsManager = () => {

@@ -48,7 +48,6 @@ const SubjectForm = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Validation instantanée pour la limite de caractères
     if (name === 'title' && value.length > 100) {
       setErrors(prev => ({
         ...prev,
@@ -60,7 +59,6 @@ const SubjectForm = () => {
         description: 'Description must be 500 characters or less'
       }));
     } else {
-      // Effacer l'erreur si la longueur est correcte
       setErrors(prev => ({
         ...prev,
         [name]: undefined
@@ -120,7 +118,6 @@ const SubjectForm = () => {
       });
 
       alert("Subject added successfully!");
-      // Reset form
       setFormData({
         title: '',
         description: '',
@@ -138,137 +135,202 @@ const SubjectForm = () => {
 
   return (
     <LayoutTutor>
-      <div className="container mt-4 p-4 shadow rounded bg-light" style={{ maxWidth: '700px' }}>
-        <h3 className="mb-4 text-center text-primary">Create a New Subject</h3>
+      <div className="container mt-4 p-4 rounded bg-white" style={{ 
+        maxWidth: '700px', 
+        border: '1px solid #e5e7eb',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+      }}>
+        <h3 className="mb-4 text-center" style={{ color: '#374151' }}>Create a New Subject</h3>
         
         <form onSubmit={handleSubmit}>
           {/* Title Field */}
           <div className="mb-3">
-  <label className="form-label">Subject Title*</label>
-  <input
-    type="text"
-    name="title"
-    className={`form-control ${errors.title ? 'is-invalid' : ''}`}
-    value={formData.title}
-    onChange={handleChange}
-    maxLength={100} // Bloque physiquement la saisie au-delà
-  />
-  {errors.title && (
-    <div className="invalid-feedback d-block">
-      {errors.title}
-    </div>
-  )}
-  <small className="text-muted">
-    {formData.title.length}/100 characters
-  </small>
-</div>
+            <label className="form-label" style={{ color: '#4b5563' }}>Subject Title*</label>
+            <input
+              type="text"
+              name="title"
+              className={`form-control ${errors.title ? 'is-invalid' : ''}`}
+              value={formData.title}
+              onChange={handleChange}
+              maxLength={100}
+              style={{ 
+                borderColor: '#e5e7eb',
+                backgroundColor: '#f9fafb'
+              }}
+            />
+            {errors.title && (
+              <div className="invalid-feedback d-block">
+                {errors.title}
+              </div>
+            )}
+            <small className="text-muted">
+              {formData.title.length}/100 characters
+            </small>
+          </div>
 
           {/* Description Field */}
           <div className="mb-3">
-  <label className="form-label">Subject Description*</label>
-  <textarea
-    name="description"
-    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-    rows="3"
-    value={formData.description}
-    onChange={handleChange}
-    maxLength={500}
-  ></textarea>
-  {errors.description && (
-    <div className="invalid-feedback d-block">
-      {errors.description}
-    </div>
-  )}
-  <small className="text-muted">
-    {formData.description.length}/500 characters
-  </small>
-</div>
+            <label className="form-label" style={{ color: '#4b5563' }}>Subject Description*</label>
+            <textarea
+              name="description"
+              className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+              rows="3"
+              value={formData.description}
+              onChange={handleChange}
+              maxLength={500}
+              style={{ 
+                borderColor: '#e5e7eb',
+                backgroundColor: '#f9fafb'
+              }}
+            ></textarea>
+            {errors.description && (
+              <div className="invalid-feedback d-block">
+                {errors.description}
+              </div>
+            )}
+            <small className="text-muted">
+              {formData.description.length}/500 characters
+            </small>
+          </div>
 
           {/* Key Features */}
-          <h5 className="text-secondary">Key Features</h5>
+          <h5 className="mb-3" style={{ color: '#4b5563' }}>Key Features</h5>
           {formData.keyFeatures.map((item, index) => (
             <div key={index} className="row mb-2">
               <div className="col-md-6">
                 <input
-                  className="form-control"
+                  className="form-control mb-2"
                   placeholder="Feature Title"
                   value={item.title}
                   onChange={(e) => handleListChange(index, 'title', e.target.value, 'keyFeatures')}
+                  style={{ 
+                    borderColor: '#e5e7eb',
+                    backgroundColor: '#f9fafb'
+                  }}
                 />
               </div>
               <div className="col-md-6">
                 <input
-                  className={`form-control ${errors[`keyFeatures_${index}_description`] ? 'is-invalid' : ''}`}
+                  className={`form-control mb-2 ${errors[`keyFeatures_${index}_description`] ? 'is-invalid' : ''}`}
                   placeholder="Feature Description"
                   value={item.description}
                   onChange={(e) => handleListChange(index, 'description', e.target.value, 'keyFeatures')}
+                  style={{ 
+                    borderColor: '#e5e7eb',
+                    backgroundColor: '#f9fafb'
+                  }}
                 />
                 {errors[`keyFeatures_${index}_description`] && (
                   <div className="invalid-feedback">{errors[`keyFeatures_${index}_description`]}</div>
                 )}
               </div>
               {formData.keyFeatures.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-danger mt-2"
-                  onClick={() => removeItem(index, 'keyFeatures')}
-                >
-                  Remove
-                </button>
+                <div className="col-12">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => removeItem(index, 'keyFeatures')}
+                    style={{ 
+                      backgroundColor: 'transparent',
+                      color: '#6b7280',
+                      border: '1px solid #d1d5db'
+                    }}
+                  >
+                    Remove Feature
+                  </button>
+                </div>
               )}
             </div>
           ))}
           <button
             type="button"
-            className="btn btn-outline-primary btn-sm mb-3"
+            className="btn btn-sm mb-4"
             onClick={() => addItem('keyFeatures')}
+            style={{ 
+              backgroundColor: 'transparent',
+              color: '#374151',
+              border: '1px solid #d1d5db'
+            }}
           >
             + Add Key Feature
           </button>
 
           {/* AI Functionalities */}
-          <h5 className="text-secondary">AI Functionalities</h5>
+          <h5 className="mb-3" style={{ color: '#4b5563' }}>AI Functionalities</h5>
           {formData.aiFunctionalities.map((item, index) => (
             <div key={index} className="row mb-2">
               <div className="col-md-6">
                 <input
-                  className="form-control"
+                  className="form-control mb-2"
                   placeholder="AI Title"
                   value={item.title}
                   onChange={(e) => handleListChange(index, 'title', e.target.value, 'aiFunctionalities')}
+                  style={{ 
+                    borderColor: '#e5e7eb',
+                    backgroundColor: '#f9fafb'
+                  }}
                 />
               </div>
               <div className="col-md-6">
                 <input
-                  className={`form-control ${errors[`aiFunc_${index}_description`] ? 'is-invalid' : ''}`}
+                  className={`form-control mb-2 ${errors[`aiFunc_${index}_description`] ? 'is-invalid' : ''}`}
                   placeholder="AI Description"
                   value={item.description}
                   onChange={(e) => handleListChange(index, 'description', e.target.value, 'aiFunctionalities')}
+                  style={{ 
+                    borderColor: '#e5e7eb',
+                    backgroundColor: '#f9fafb'
+                  }}
                 />
                 {errors[`aiFunc_${index}_description`] && (
                   <div className="invalid-feedback">{errors[`aiFunc_${index}_description`]}</div>
                 )}
               </div>
               {formData.aiFunctionalities.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-danger mt-2"
-                  onClick={() => removeItem(index, 'aiFunctionalities')}
-                >
-                  Remove
-                </button>
+                <div className="col-12">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => removeItem(index, 'aiFunctionalities')}
+                    style={{ 
+                      backgroundColor: 'transparent',
+                      color: '#6b7280',
+                      border: '1px solid #d1d5db'
+                    }}
+                  >
+                    Remove Functionality
+                  </button>
+                </div>
               )}
             </div>
           ))}
           <button
             type="button"
-            className="btn btn-outline-success btn-sm mb-4"
+            className="btn btn-sm mb-4"
             onClick={() => addItem('aiFunctionalities')}
+            style={{ 
+              backgroundColor: 'transparent',
+              color: '#374151',
+              border: '1px solid #d1d5db'
+            }}
           >
             + Add AI Functionality
           </button>
 
-          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+          {/* Submit Button */}
+          <button 
+            type="submit" 
+            className="btn w-100 py-2" 
+            disabled={loading}
+            style={{ 
+              backgroundColor: '#374151',
+              color: 'white',
+              border: 'none',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+          >
             {loading ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2"></span>
