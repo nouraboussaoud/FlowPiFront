@@ -17,6 +17,9 @@ const RegisterPage = () => {
   const [profilePic, setProfilePic] = useState(null); // To store the selected file
   const [loading, setLoading] = useState(false);
 
+  
+    ///////////////////[[[]]]
+
   //Yessine
   const [suggestedPassword, setSuggestedPassword] = useState("");
   const [showSuggestion, setShowSuggestion] = useState(false);
@@ -48,6 +51,10 @@ const RegisterPage = () => {
     e.preventDefault();
     
     
+<<<<<<< HEAD
+=======
+
+>>>>>>> e40ef3c7d61e3d1e26f242c3c12a9bd2350346d8
 
 
     setLoading(true);
@@ -183,6 +190,7 @@ const RegisterPage = () => {
                                 )}
 
                                 {/*Yessine*/}
+<<<<<<< HEAD
                               <input 
                                 type={showPassword ? "text" : "password"} // Toggle input type
                                 className="form-control border-0 bg-light rounded-end ps-1"
@@ -221,6 +229,10 @@ const RegisterPage = () => {
                             </div>
                             
                             
+=======
+                            </div>
+                            
+>>>>>>> e40ef3c7d61e3d1e26f242c3c12a9bd2350346d8
                           </div>
                           <div className="mb-4">
                             <label htmlFor="inputRole" className="form-label">Role *</label>
