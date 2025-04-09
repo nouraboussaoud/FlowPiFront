@@ -4,7 +4,7 @@ import axios from "axios";
 import "../tasks/Tasks.css";
 
 import { Folder, GitBranch, Clock, BarChart2 } from "lucide-react";
-import LayoutTutorss from "./LayoutTutorss";
+
 
 const TaskManager = () => {
   const [tasks, setTasks] = useState([]);
@@ -337,7 +337,7 @@ await updateTaskProgress(selectedTaskId, commitCount);
   };
 
   return (
-    <LayoutTutorss>
+  
     <div className="container">
       <header className="header">
         <h1 className="title">Task Manager</h1>
@@ -719,7 +719,7 @@ await updateTaskProgress(selectedTaskId, commitCount);
         </div>
       )}
     </div>
-    </LayoutTutorss>
+   
   );
 };
 

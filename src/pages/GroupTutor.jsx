@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrashAlt } from "react-icons/fa"; // Import des icônes pour Edit et Delete
-import LayoutTutor from './dashboard/LayoutTutor';
+import LayoutTutorss from './dashboard/LayoutTutorss';
 
 const GroupList = () => {
   const [groups, setGroups] = useState([]);
@@ -175,7 +175,7 @@ const GroupList = () => {
   };
 
   return (
-    <LayoutTutor>
+    <LayoutTutorss>
     <div className="container mt-5">
       <h1 className="text-center mb-4">Groups List</h1>
 
@@ -323,7 +323,7 @@ const GroupList = () => {
         </div>
       )}
     </div>
-    </LayoutTutor>
+    </LayoutTutorss>
   );
 };
 

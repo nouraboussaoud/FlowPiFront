@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import LayoutTutor from './LayoutTutor';
+import LayoutTutorss from './LayoutTutorss';
 import axios from 'axios';
 
 const SubjectForm = () => {
@@ -134,7 +134,7 @@ const SubjectForm = () => {
   };
 
   return (
-    <LayoutTutor>
+    <LayoutTutorss>
       <div className="container mt-4 p-4 rounded bg-white" style={{ 
         maxWidth: '700px', 
         border: '1px solid #e5e7eb',
@@ -342,7 +342,7 @@ const SubjectForm = () => {
           </button>
         </form>
       </div>
-    </LayoutTutor>
+    </LayoutTutorss>
   );
 };
 
