@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+<<<<<<< HEAD
     "@auth0/auth0-react": "^2.3.0",
+=======
+    "@monaco-editor/react": "^4.7.0",
+>>>>>>> origin/Yessine
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -13,11 +17,18 @@
     "generate-password": "^1.7.1",
     "lucide-react": "^0.477.0",
     "nanoid": "^5.1.2",
+    "prism-react-renderer": "^2.4.1",
+    "prismjs": "^1.30.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^18.2.0",
+<<<<<<< HEAD
     "react-google-recaptcha": "^3.1.0",
     "react-router-dom": "^6.30.0",
+=======
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^6.16.0",
+>>>>>>> origin/Yessine
     "react-scripts": "5.0.1",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.1",
@@ -29,6 +40,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "proxy": "http://localhost:5000",
   "eslintConfig": {
     "extends": [
       "react-app",
