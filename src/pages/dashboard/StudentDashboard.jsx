@@ -12,6 +12,7 @@ function StudentDashboard() {
   const [tutors, setTutors] = useState([]); // State to hold the list of tutors
   const [selectedTutor, setSelectedTutor] = useState(null); // State to hold selected tutor for the chat
 
+  const [userId, setUserId] = useState(null);
 
   
   

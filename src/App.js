@@ -38,7 +38,7 @@ import DeliverablesHistory from "./pages/evaluation/DeliverablesDashboard";
 import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
 import { Toaster } from "sonner";
 import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
-import DashboardTasks from "./pages/tasks/DashboardTasks";
+import AdminTaskDashboard from "./pages/tasks/DashboardTasks";
 import TaskManager from "./pages/tasks/DashboardTasks";
  
 import {Navigate} from "react-router-dom";
@@ -86,6 +86,7 @@ function App() {
           <Route path="/return-deliverable" element={<ReturnDeliverable />} />
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
+          <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

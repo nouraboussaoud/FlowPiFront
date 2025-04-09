@@ -1,4 +1,4 @@
-/* Animations */
+/* Base styles and animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -7,6 +7,35 @@
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #eef2ff;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --danger-light: #fee2e2;
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --info: #3b82f6;
+  --info-light: #dbeafe;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --border-radius: 8px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Main container */
@@ -22,69 +51,82 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e1e5eb;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--gray-200);
+  position: relative;  /* Added position relative */
+  z-index: 1;  /* Lower z-index than modals */
 }
 
 .title {
-  color: #2d3748;
-  font-size: 2rem;
+  color: var(--gray-800);
+  font-size: 1.75rem;
+  font-weight: 700;
   margin: 0;
 }
 
 /* Button styles */
 .button {
   border: none;
-  border-radius: 0.375rem;
-  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  padding: 0.625rem 1.25rem;
   font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .button:active {
   transform: translateY(0);
 }
 
+.button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .button-primary {
-  background-color: #4f46e5;
+  background-color: var(--primary);
   color: white;
 }
 
-.button-primary:hover {
-  background-color: #4338ca;
+.button-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
 }
 
 .button-danger {
-  background-color: #ef4444;
+  background-color: var(--danger);
   color: white;
 }
 
-.button-danger:hover {
-  background-color: #dc2626;
+.button-danger:hover:not(:disabled) {
+  background-color: var(--danger-hover);
 }
 
 .button-default {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
 }
 
-.button-default:hover {
-  background-color: #d1d5db;
+.button-default:hover:not(:disabled) {
+  background-color: var(--gray-200);
 }
 
 /* Task grid */
 .task-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
 }
@@ -92,83 +134,112 @@
 /* Task card */
 .task-card {
   background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
   padding: 1.5rem;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  border: 1px solid var(--gray-200);
+  position: relative;
+  overflow: hidden;
 }
 
 .task-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
-.task-card-urgent {
-  border-left: 4px solid #ef4444;
+.task-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: var(--primary);
 }
 
-.task-card-high {
-  border-left: 4px solid #f59e0b;
+.task-card-urgent::before {
+  background-color: var(--danger);
 }
 
-.task-card-medium {
-  border-left: 4px solid #3b82f6;
+.task-card-high::before {
+  background-color: var(--warning);
 }
 
-.task-card-low {
-  border-left: 4px solid #10b981;
+.task-card-medium::before {
+  background-color: var(--info);
+}
+
+.task-card-low::before {
+  background-color: var(--success);
 }
 
 .task-title {
-  margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  margin: 0 0 0.75rem 0;
+  color: var(--gray-800);
   font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .task-description {
-  color: #6b7280;
-  margin: 0.5rem 0;
+  color: var(--gray-600);
+  margin: 0.75rem 0;
   font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .task-meta {
   display: flex;
   justify-content: space-between;
-  margin-top: 1rem;
+  align-items: center;
+  margin-top: 1.25rem;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--gray-500);
+}
+
+.task-details {
+  background-color: var(--gray-50);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
 }
 
 /* Priority badge */
 .priority-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.5;
 }
 
 .priority-urgent {
-  background-color: #fee2e2;
-  color: #b91c1c;
+  background-color: var(--danger-light);
+  color: var(--danger);
 }
 
 .priority-high {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--warning-light);
+  color: var(--warning);
 }
 
 .priority-medium {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: var(--info-light);
+  color: var(--info);
 }
 
 .priority-low {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--success-light);
+  color: var(--success);
 }
 
-/* Modal styles */
+/* Modal styles - Updated */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -176,21 +247,27 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1000;  /* Make sure this is a high value */
   animation: fadeIn 0.3s ease-out;
+  padding: 1rem;
 }
 
 .modal-content {
   background: white;
   padding: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius);
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   animation: slideUp 0.3s ease-out;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;  /* Added position relative */
+  z-index: 1001;  /* Higher than modal-overlay to ensure content is on top */
 }
 
 .modal-header {
@@ -202,7 +279,12 @@
 
 .modal-title {
   margin: 0;
-  color: #1f2937;
+  color: var(--gray-800);
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .close-button {
@@ -210,109 +292,316 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--gray-500);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
 .close-button:hover {
-  color: #1f2937;
+  background-color: var(--gray-100);
+  color: var(--gray-800);
 }
 
 /* Form elements */
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--gray-700);
+  font-size: 0.875rem;
 }
 
 .input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background-color: white;
 }
 
 .input:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  transition: all 0.2s;
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;
+  background-color: white;
 }
 
 .select:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
   min-height: 100px;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  resize: vertical;
+  background-color: white;
 }
 
 .textarea:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .button-group {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: 0.75rem;
   margin-top: 1.5rem;
 }
 
 /* Error message */
 .error-message {
-  color: #ef4444;
-  background-color: #fee2e2;
+  color: var(--danger);
+  background-color: var(--danger-light);
   padding: 1rem;
-  border-radius: 0.375rem;
-  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.875rem;
+  border-left: 4px solid var(--danger);
 }
 
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
+  padding: 3rem 2rem;
+  color: var(--gray-500);
+  background-color: var(--gray-50);
+  border-radius: var(--border-radius);
   margin-top: 2rem;
+  border: 1px dashed var(--gray-300);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state svg {
+  color: var(--gray-400);
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
 }
 
 /* Button group in task card */
 .task-button-group {
   display: flex;
   gap: 0.5rem;
+}
+
+.task-button-group .button {
+  padding: 0.375rem;
+  height: 2rem;
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Improved progress styling */
+.task-progress {
+  margin: 1rem 0;
+}
+
+.progress-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 0.5rem;
+  background-color: var(--gray-100);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+}
+
+/* Progress details in repo modal */
+.progress-details {
+  margin-bottom: 1.25rem;
+  background-color: var(--gray-50);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  border: 1px solid var(--gray-200);
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+}
+
+.progress-percentage {
+  font-weight: 600;
+}
+
+/* Progress summary in commits modal */
+.progress-summary {
+  background-color: var(--gray-50);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--gray-200);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progress-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.progress-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.progress-metrics {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-bottom: 0.25rem;
+}
+
+.metric-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.section-title {
+  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
+/* Modal size variations */
+.modal-lg {
+  max-width: 800px;
+  width: 90%;
+}
+
+/* Commits container styling */
+.commits-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  background-color: white;
+}
+
+.commit-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.commit-item:last-child {
+  border-bottom: none;
+}
+
+.commit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.commit-date {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.commit-message {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  word-break: break-word;
+  color: var(--gray-700);
+}
+
+.empty-commits {
+  padding: 2rem;
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 0.875rem;
 }
 
 /* Utility classes */
@@ -331,211 +620,300 @@
 .margin-bottom-1 {
   margin-bottom: 1rem;
 }
-/* Add these styles to your Tasks.css file */
 
-/* Modal size variations */
-.modal-lg {
-  width: 90%;
-  max-width: 800px;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .task-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header .button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    padding: 1.5rem;
+    width: 95%;
+  }
 }
 
-/* Progress bar styling */
-.progress-bar-container {
-  width: 100%;
-  height: 20px;
-  background-color: #f3f4f6;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
+/* Risk Assessment Styles */
+.button-info {
   background-color: #3b82f6;
   color: white;
-  text-align: center;
-  line-height: 20px;
-  font-size: 12px;
-  transition: width 0.3s ease;
-}
-
-/* Add these new styles to your Tasks.css file */
-
-/* Progress styling in task cards */
-.task-progress {
-  margin: 12px 0;
-}
-
-.progress-label {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-bottom: 5px;
-  font-size: 12px;
-  color: #6b7280;
+  justify-content: center;
 }
 
-/* Progress details in repo modal */
-.progress-details {
-  margin-bottom: 15px;
+.button-info:hover {
+  background-color: #2563eb;
 }
 
-.progress-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: #4b5563;
+.risk-assessment-content {
+  padding: 1.5rem;
 }
 
-.progress-percentage {
-  font-weight: 600;
+.risk-level, .confidence-level, .risk-explanation {
+  margin-bottom: 1.5rem;
 }
 
-/* Progress summary in commits modal */
-.progress-summary {
-  background-color: #f9fafb;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 20px;
-  border: 1px solid #e5e7eb;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.progress-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.progress-badge {
+.risk-badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 16px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  margin-top: 0.5rem;
   color: white;
-  font-size: 14px;
-  font-weight: 600;
 }
 
-.progress-metrics {
-  display: flex;
-  gap: 20px;
-  margin-top: 14px;
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-}
-
-.metric-label {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 2px;
-}
-
-.metric-value {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.section-title {
-  font-size: 16px;
-  margin: 0 0 12px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* Modal size variations */
-.modal-lg {
-  width: 90%;
-  max-width: 800px;
-}
-
-/* Progress bar styling */
-.progress-bar-container {
-  width: 100%;
-  height: 8px;
-  background-color: #f3f4f6;
-  border-radius: 4px;
+.confidence-meter {
+  background-color: #e5e7eb;
+  border-radius: 0.375rem;
+  height: 1.5rem;
+  margin-top: 0.5rem;
+  position: relative;
   overflow: hidden;
 }
 
-.progress-bar {
-  height: 100%;
+.confidence-bar {
   background-color: #3b82f6;
-  color: white;
-  text-align: center;
-  line-height: 8px;
-  font-size: 10px;
+  height: 100%;
+  border-radius: 0.375rem;
   transition: width 0.3s ease;
 }
 
-/* Commits container styling */
-.commits-container {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+.confidence-value {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-shadow: 0 0 2px rgba(0,0,0,0.5);
 }
 
-.commit-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
+.risk-explanation p {
   background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border-left: 4px solid #3b82f6;
 }
 
-.commit-item:last-child {
-  border-bottom: none;
-}
-
-.commit-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.commit-date {
-  font-size: 12px;
+.ai-disclaimer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
   color: #6b7280;
   display: flex;
   align-items: center;
 }
-
-.commit-message {
-  font-size: 14px;
-  line-height: 1.4;
-  word-break: break-word;
+/* AI Risk Assessment Modal Styles */
+.risk-modal {
+  max-width: 800px;
+  width: 90%;
+  animation: slideUp 0.3s ease-out;
 }
 
-.empty-commits {
-  padding: 24px;
-  text-align: center;
-  color: #6b7280;
-}
-
-/* Button styles */
-.button-group {
+.risk-visualization {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--gray-50);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--gray-200);
 }
 
-/* Task card styling */
-.task-card {
+.risk-gauge {
+  flex: 1;
+  max-width: 300px;
+}
+
+.gauge-background {
+  height: 20px;
+  background: var(--gray-200);
+  border-radius: 10px;
+  overflow: hidden;
   position: relative;
 }
 
-.task-details {
-  margin-bottom: 10px;
-  font-size: 14px;
-  word-break: break-word;
+.gauge-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.risk-summary {
+  flex: 2;
+}
+
+.risk-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.confidence-pill {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--info-light);
+  color: var(--info);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.risk-description {
+  margin-top: 0.5rem;
+  color: var(--gray-600);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.risk-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.detail-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.detail-card h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--gray-800);
+  font-size: 1rem;
+}
+
+.risk-factors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.risk-factors li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.risk-factors svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.recommendations {
+  grid-column: 1 / -1;
+}
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.recommendation-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.rec-icon {
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.recommendation-item p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.ai-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.ai-powered {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.ai-footer small {
+  color: var(--gray-500);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Risk color variations */
+.risk-high {
+  background-color: var(--danger);
+}
+
+.risk-medium {
+  background-color: var(--warning);
+}
+
+.risk-low {
+  background-color: var(--success);
+}
+
+/* Responsive adjustments for risk modal */
+@media (max-width: 768px) {
+  .risk-visualization {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .risk-gauge {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .risk-details {
+    grid-template-columns: 1fr;
+  }
 }

@@ -79,16 +79,13 @@ const LayoutStudent = ({ children }) => {
       alert("Erreur de connexion au serveur !");
     }
   };
-   // Toggle TaskManager visibility
- // Toggle TaskManager visibility and navigate to /tasks
- const toggleTaskManager = () => {
-  setShowTaskManager(!showTaskManager);
-  navigate("/tasks");  // This will navigate to the /tasks path
-};
-  
-  
 
-    
+  // Toggle TaskManager visibility and navigate to /tasks
+  const toggleTaskManager = () => {
+    setShowTaskManager(!showTaskManager);
+    navigate("/tasks");  // This will navigate to the /tasks path
+  };
+  
   const fetchUserData = () => {
     const storedUser = localStorage.getItem("user");
     const storedProfilePic = localStorage.getItem("profilePic");
@@ -110,7 +107,7 @@ const LayoutStudent = ({ children }) => {
         }
   
         setProfilePic(newProfilePic);
-        setImgKey(Date.now()); // 🔄 Force le rechargement de l’image
+        setImgKey(Date.now()); // 🔄 Force le rechargement de l'image
       } catch (error) {
         console.error("❌ Erreur de parsing `user` :", error);
       }
@@ -167,7 +164,7 @@ const LayoutStudent = ({ children }) => {
         localStorage.setItem("user", JSON.stringify(parsedUser));
         localStorage.setItem("profilePic", parsedUser.profilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
 
-        fetchUserData(); // 🔄 Met à jour l’image immédiatement après connexion
+        fetchUserData(); // 🔄 Met à jour l'image immédiatement après connexion
       } catch (error) {
         console.error("❌ Erreur de parsing des données utilisateur :", error);
       }
@@ -607,21 +604,28 @@ const LayoutStudent = ({ children }) => {
               </a>
             </li>
             <li className="nav-item">
-  <a className="nav-link" href="http://localhost:3000/InvitationList">
-    Invitations to Join Groups
-  </a>
-</li>
-<li className="nav-item">
-  <a className="nav-link" href="create-group">
-    Create Groups
-  </a>
-</li>
-<li className="nav-item">
-  <a className="nav-link" href="Project-Manager">
-   Projects
-  </a>
-</li>
-
+              <a className="nav-link" href="http://localhost:3000/InvitationList">
+                Invitations to Join Groups
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="create-group">
+                Create Groups
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="Project-Manager">
+                Projects
+                {/* Add the new Tasks button with icon here */}
+                <button 
+                  className="btn btn-sm btn-outline-primary ms-2"
+                  onClick={toggleTaskManager}
+                  title="View Tasks"
+                >
+                  <i className="fas fa-tasks"></i> Tasks
+                </button>
+              </a>
+            </li>
 
             <li className="nav-item dropdown">
               <a
@@ -759,6 +763,17 @@ const LayoutStudent = ({ children }) => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      {/* Add a Tasks button in the main content area */}
+      <div className="container mt-4">
+        <div className="d-flex justify-content-end mb-3">
+          <button 
+            className="btn btn-primary" 
+            onClick={toggleTaskManager}
+          >
+            <i className="fas fa-tasks me-2"></i> Task Manager
+          </button>
         </div>
       </div>
       {children}

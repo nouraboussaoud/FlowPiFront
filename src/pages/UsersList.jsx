@@ -302,6 +302,9 @@ const UsersList = () => {
           <li className="nav-item">
             <a className="nav-link text-white" href="#">Settings</a>
           </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/dashboard-tasks">Tasks</a>
+          </li>
         </ul>
       </nav>
 

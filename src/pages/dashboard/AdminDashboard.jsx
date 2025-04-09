@@ -928,6 +928,9 @@ const AdminDashboard = () => {
                     <a href="groupList" className="btn btn-link p-0 mb-0">
                       View Groups
                     </a>
+                    <a href="dashboard-tasks" className="btn btn-link p-0 mb-0">
+                      View Tasks
+                    </a>
                  
                   </div>
                   
@@ -1096,6 +1099,8 @@ const AdminDashboard = () => {
                     <a href="ProjectAdmin" className="btn btn-link p-0 mb-0">
                      Projects
                     </a>
+                    
+
                   </div>
                   <div className="card-body p-4">
                     <div className="custom-scrollbar h-300px">
