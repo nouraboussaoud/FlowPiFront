@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import axios from 'axios';
-import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress, FaArrowLeft } from 'react-icons/fa';
+import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 import Editor from '@monaco-editor/react';
+import { useNavigate } from 'react-router-dom';
 
-// Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
+  const navigate = useNavigate();
   // State declarations
   const [aiScore, setAiScore] = useState(null);
   const [aiScoreLoading, setAiScoreLoading] = useState(false);
@@ -37,28 +38,14 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [nestedFileTree, setNestedFileTree] = useState({});
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
   const [pdfError, setPdfError] = useState(null);
-  const [viewingPdf, setViewingPdf] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState('');
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPdfError(null);
   };
-
   const onDocumentLoadError = (error) => {
     console.error('PDF load error:', error);
-    setPdfError('Failed to load PDF document. Please try again or download the file directly.');
-  };
-
-  const handleFileClick = (url, isPdf = false) => {
-    if (isPdf) {
-      setPdfUrl(url);
-      setViewingPdf(true);
-      setSelectedFileContent('');
-    } else {
-      fetchFileContent(url);
-      setViewingPdf(false);
-    }
+    setPdfError('Failed to load PDF document');
   };
 
   // Rubric data
@@ -72,7 +59,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     rubric.reduce((acc, criterion) => ({ ...acc, [criterion.name]: 0 }), {})
   );
 
-  // File type detection
+  // Enhanced file type detection for Monaco
   const getFileLanguage = (filename) => {
     if (!filename) return 'plaintext';
     
@@ -125,16 +112,52 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       const file = response.data.file;
   
       if (file?.url) {
-        setUploadedFiles([{
-          path: file.url,
-          name: file.url.split('/').pop(),
-          public_id: file.public_id
-        }]);
+        setUploadedFiles([
+          {
+            path: file.url,
+            name: file.url.split('/').pop(),
+            public_id: file.public_id
+          }
+        ]);
       } else {
         setUploadedFiles([]);
       }
     } catch (error) {
       console.error("Error fetching uploaded files:", error.message);
+    }
+  };
+
+  /*const downloadPdf = async () => {
+    try {
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = deliverable.file.url;
+      link.download = deliverable.file.url.split('/').pop() || 'report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback to opening in new tab if download fails
+      window.open(deliverable.file.url, '_blank');
+    }
+  };*/
+
+  const openPdfInNewTab = () => {
+    try {
+      // Open the PDF URL in a new tab
+      window.open(deliverable.file.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open PDF:', error);
+      // Fallback option if window.open fails
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.opener = null;
+        newWindow.location.href = deliverable.file.url;
+      } else {
+        // If popups are blocked, show the user a message
+        alert('Popup blocked. Please allow popups for this site or click the file link to view the PDF.');
+      }
     }
   };
 
@@ -176,12 +199,13 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const fetchAiDetectionScore = async () => {
     setAiScoreLoading(true);
     try {
+      // You might need to adjust the API endpoint to include the file path
       const res = await axios.get(`/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`);
       const score = res.data?.ai_probability;
-      setAiScore(score);
+      setAiScore(score); // e.g. 82.34
     } catch (error) {
       console.error("AI detection fetch error:", error);
-      setAiScore("Error");
+      setAiScore("Erreur");
     } finally {
       setAiScoreLoading(false);
     }
@@ -190,16 +214,12 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   // GitHub API functions
   const fetchCommitDetails = async () => {
     try {
-      const token = process.env.REACT_APP_GITHUB_TOKEN;
-      if (!token) throw new Error('GitHub token not configured');
-      
       const response = await axios.get(
         `https://api.github.com/repos/nouraboussaoud/FlowPiFront/commits/main`,
         {
           headers: {
-            Authorization: `token ${token}`,
-            Accept: 'application/vnd.github.v3+json'
-          }
+            Authorization: `Bearer ${process.env.REACT_APP_GITHUB_TOKEN}`,
+          },
         }
       );
 
@@ -209,25 +229,18 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
         throw new Error('Failed to fetch commit details.');
       }
     } catch (error) {
-      setError(prev => ({
-        ...prev, 
-        tree: error.response?.data?.message || error.message
-      }));
+      setError(prev => ({...prev, tree: error.message}));
     }
   };
 
   const fetchFileTree = async () => {
     try {
-      const token = process.env.REACT_APP_GITHUB_TOKEN;
-      if (!token) throw new Error('GitHub token not configured');
-      
       const response = await axios.get(
         `https://api.github.com/repos/nouraboussaoud/FlowPiFront/git/trees/main?recursive=1`,
         {
           headers: {
-            Authorization: `token ${token}`,
-            Accept: 'application/vnd.github.v3+json'
-          }
+            Authorization: `Bearer ${process.env.REACT_APP_GITHUB_TOKEN}`,
+          },
         }
       );
 
@@ -239,13 +252,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
         throw new Error('Failed to fetch file tree.');
       }
     } catch (error) {
-      console.error('GitHub API error:', error);
-      setError(prev => ({
-        ...prev, 
-        tree: error.response?.status === 403 
-          ? 'GitHub API rate limit exceeded. Try again later.'
-          : error.response?.data?.message || error.message
-      }));
+      setError(prev => ({...prev, tree: error.message}));
       setLoading(prev => ({...prev, tree: false}));
     }
   };
@@ -259,6 +266,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (cache[filePath]) {
         setSelectedFileContent(cache[filePath]);
         setLoading(prev => ({...prev, content: false}));
+        // Still trigger AI detection even if content is from cache
         setAiScore(null);
         fetchAiDetectionScore();
         return;
@@ -277,6 +285,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (response.data) {
         setSelectedFileContent(response.data);
         setCache((prevCache) => ({ ...prevCache, [filePath]: response.data }));
+        // Call AI detection when a file is selected
         setAiScore(null);
         fetchAiDetectionScore();
       } else {
@@ -355,6 +364,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     });
   };
 
+
   const renderFileTree = (tree, level = 0) => {
     const items = Object.values(tree);
     const folders = items.filter(item => item.isFolder)
@@ -396,7 +406,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
         {files.map(node => (
           <div 
             key={node.path}
-            onClick={() => handleFileClick(node.path, node.path.endsWith('.pdf'))}
+            onClick={() => fetchFileContent(node.path)}
             style={{
               cursor: 'pointer',
               display: 'flex',
@@ -431,8 +441,10 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   }, [deliverable]);
 
+  // Effect to handle file path changes
   useEffect(() => {
     if (selectedFilePath) {
+      // Reset AI score when file path changes
       setAiScore(null);
     }
   }, [selectedFilePath]);
@@ -679,21 +691,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 <p><strong>Title:</strong> {deliverable.title}</p>
                 <p><strong>Submission Date:</strong> {new Date(deliverable.submission_date).toLocaleDateString()}</p>
                 <p><strong>Description:</strong> {deliverable.description}</p>
-                <p>
-                  <strong>File:</strong>{' '}
-                  <a
-                    href={deliverable.file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#007bff', textDecoration: 'underline' }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleFileClick(deliverable.file.url, true);
-                    }}
-                  >
-                    {deliverable.file.url.split('/').pop()}
-                  </a>
-                </p>
+                
 
                 <div style={{ margin: '15px 0' }}>
                   <h5>Quick Links</h5>
@@ -730,26 +728,8 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                     alignItems: 'center',
                     marginBottom: '10px'
                   }}>
-                    <h5>{viewingPdf ? 'PDF Viewer' : 'File Content'}</h5>
-                    {viewingPdf ? (
-                      <button 
-                        onClick={() => setViewingPdf(false)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#1a73e8',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '2px 8px',
-                          borderRadius: '3px'
-                        }}
-                      >
-                        <FaArrowLeft size={12} />
-                        Back to Files
-                      </button>
-                    ) : selectedFileContent && (
+                    <h5>File Content</h5>
+                    {selectedFileContent && (
                       <button 
                         onClick={toggleFullScreenEditor}
                         style={{
@@ -775,41 +755,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                     height: '300px',
                     overflow: 'hidden',
                   }}>
-                    {viewingPdf ? (
-                      <div style={{ height: '100%', overflow: 'auto' }}>
-                        <Document
-                          file={pdfUrl}
-                          onLoadSuccess={onDocumentLoadSuccess}
-                          onLoadError={onDocumentLoadError}
-                          loading={<div>Loading PDF...</div>}
-                          error={<div style={{ color: 'red', padding: '20px' }}>
-                            {pdfError || 'Error loading PDF'}
-                          </div>}
-                        >
-                          {Array.from(new Array(numPages), (el, index) => (
-                            <Page
-                              key={`page_${index + 1}`}
-                              pageNumber={index + 1}
-                              width={600}
-                              renderTextLayer={false}
-                              renderAnnotationLayer={false}
-                            />
-                          ))}
-                        </Document>
-                        {pdfError && (
-                          <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                            <a 
-                              href={pdfUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              style={{ color: '#1a73e8' }}
-                            >
-                              Open PDF in new tab
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ) : loading.content ? (
+                    {loading.content ? (
                       <div style={{ 
                         height: '100%',
                         display: 'flex',
@@ -956,32 +902,38 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   )}
               </div>
               <div style={{ marginBottom: '20px' }}>
-              <h5>Uploaded Report</h5>
-{uploadedFiles?.length > 0 ? (
-  uploadedFiles.map((file, index) => (
-    <div key={index}>
-      <a
-        href={file.path}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: 'inline-block',
-          marginBottom: '5px',
-          color: '#007bff',
-          textDecoration: 'underline'
-        }}
-        onClick={(e) => {
-          e.preventDefault();
-          handleFileClick(file.path, true);
-        }}
-      >
-        {file.name}
-      </a>
-    </div>
-  ))
-) : (
-  <p>No uploaded report found.</p>
-)}
+                <h5>Uploaded Report</h5>
+                <p>
+                  <strong>File:</strong>{' '}
+                  <a
+                    href={deliverable.file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#007bff', textDecoration: 'underline' }}
+                  >
+                    {deliverable.file.url.split('/').pop()}
+                  </a>
+                  
+                  <button
+                    onClick={openPdfInNewTab}
+                    style={{
+                      marginTop:'10px',
+                      marginLeft: '10px',
+                      padding: '5px 15px',
+                      backgroundColor: '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      '&:hover': {
+                        backgroundColor: '#4b5563'
+                      }
+                    }}
+                  >
+                    Open PDF
+                  </button>
+                </p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>

@@ -656,17 +656,6 @@ const LayoutStudent = ({ children }) => {
                     </li>
                     <li>
                       {" "}
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={handleNavigationToReportViewer}
-                      >
-                        <i className="bi bi-file-earmark-plus-fill fa-fw me-1" />
-                        Reports
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
                       <a className="dropdown-item" href="course-added.html">
                         <i className="bi bi-file-check-fill fa-fw me-1" />
                         Course Added

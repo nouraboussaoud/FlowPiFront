@@ -70,7 +70,7 @@ function App() {
           <Route path="/return-deliverable" element={<ReturnDeliverable />} />
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
-          <Route path="/report-viewer" element={<ReportViewer/>}/>
+          <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
 
     
 <Route path="/nour" element={<NoursDashboar/>} >
