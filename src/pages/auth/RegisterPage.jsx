@@ -17,6 +17,9 @@ const RegisterPage = () => {
   const [profilePic, setProfilePic] = useState(null); // To store the selected file
   const [loading, setLoading] = useState(false);
 
+  
+    ///////////////////[[[]]]
+
   //Yessine
   const [suggestedPassword, setSuggestedPassword] = useState("");
   const [showSuggestion, setShowSuggestion] = useState(false);
@@ -183,43 +186,7 @@ const RegisterPage = () => {
                                 )}
 
                                 {/*Yessine*/}
-                              <input 
-                                type={showPassword ? "text" : "password"} // Toggle input type
-                                className="form-control border-0 bg-light rounded-end ps-1"
-                                placeholder="password"
-                                id="inputPassword5"
-                                value={password} // Use state to update input
-                                onChange={(e) => setPassword(e.target.value)}
-                                onFocus={handleFocus} // Trigger password suggestion when focused
-                                required
-                              />
-                              <span className="input-group-text bg-light border-0" onClick={() => setShowPassword(!showPassword)}>
-                                {showPassword ? <EyeOff /> : <Eye />}
-                              </span>
-                              {/* Yessine */}
-                                {showSuggestion && !password &&(
-                                  <div className="form-label mt-2 bg-gray-100 p-2 rounded-md">
-                                    <p className="text-sm mb-2">Suggested Password: <span className="font-semibold">{suggestedPassword}</span></p>
-                                    <div className="flex justify-between">
-                                      <button 
-                                        onClick={useSuggestedPassword} 
-                                        className="btn btn-outline-secondary py-3 px-4 w-full"
-                                      >
-                                        Use This Password
-                                      </button>
-                                      <button 
-                                        onClick={() => setShowSuggestion(false)} 
-                                        className="btn custom-btn-outline-danger py-3 px-4 w-full"
-                                      >
-                                        Dismiss
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/*Yessine*/}
                             </div>
-                            
                             
                           </div>
                           <div className="mb-4">

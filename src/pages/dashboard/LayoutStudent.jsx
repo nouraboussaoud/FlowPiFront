@@ -22,7 +22,6 @@ const LayoutStudent = ({ children }) => {
   const handleMessages = () => {
     navigate("/messages");
   };
- 
   const logoutUser = async () => {
     try {
       // Send the POST request to the backend
@@ -444,7 +443,11 @@ const LayoutStudent = ({ children }) => {
                 </li>
               </ul>
             </li>
-            
+            <li className="nav-item">
+              <a className="nav-link" onClick={handleMessages}>
+                Messages
+              </a>
+            </li>
             <li className="nav-item dropdown">
               <a
                 className="nav-link"
