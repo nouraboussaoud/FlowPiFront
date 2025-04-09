@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
@@ -6,41 +6,6 @@ import Layout from "./Layout";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const googleAuth = () => {
-    window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
-  };
-  console.log("API URL:", process.env.REACT_APP_API_URL);
-    const handleGoogleCallback = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const user = urlParams.get('user');
-    
-      if (token && user) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", user);
-        localStorage.setItem("role", JSON.parse(user).role);
-    
-        alert("Google login successful!");
-    
-        const role = JSON.parse(user).role;
-        if (role === "admin") {
-          navigate("/admin-dashboard");
-        } else if (role === "student") {
-          navigate("/student-dashboard");
-        } else if (role === "tutor") {
-          navigate("/tutor-dashboard");
-        } else {
-          navigate("/home");
-        }
-      }
-    };
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        handleGoogleCallback();
-      }, 10000); // Timeout de 10 secondes
-    
-      return () => clearTimeout(timer);
-    }, [handleGoogleCallback]); // Ajoutez handleGoogleCallback ici
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
 
@@ -212,7 +177,7 @@ const LoginPage = () => {
                         <p className="small position-absolute top-50 start-50 translate-middle bg-body px-5">Or</p>
                       </div>
                       <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-google mb-2 mb-xxl-0" onClick={googleAuth}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
+                        <button className="btn bg-google mb-2 mb-xxl-0" onClick={() => { /* Add Google login logic here */ }}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
                       </div>
                       <div className="col-xxl-6 d-grid">
                         <button className="btn bg-facebook mb-0" onClick={handleGitHubLogin}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>

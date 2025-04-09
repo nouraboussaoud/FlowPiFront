@@ -22,9 +22,6 @@ import UserSettings from "./pages/auth/UserSettings";
 import NoursDashboar from "./pages/test/NoursDashboar";
 import DouaaComp from "./pages/test/DouaaComp";
 import { Toaster } from "sonner";
-import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
-import DashboardTasks from "./pages/tasks/DashboardTasks";
-import TaskManager from "./pages/tasks/DashboardTasks";
  
  
 
@@ -43,6 +40,8 @@ function App() {
     useEffect(() => {
       getUser();
     }, []);
+
+  
   return (
     <div>
       <BrowserRouter>
@@ -64,7 +63,6 @@ function App() {
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/user-settings" element={<UserSettings />} />
           <Route path="/messages" element={<MessagesList />} />
-          <Route path="/tasks" element={< TaskManager />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >
@@ -78,4 +76,4 @@ function App() {
   );
 }
 
-export default App;
+export default App ;
