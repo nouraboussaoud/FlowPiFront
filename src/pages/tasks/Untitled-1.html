@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Dashboard Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom CSS for animations and additional styling */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+        
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+
+        /* Modal styles */
+        .modal {
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-indigo-700 text-white w-64 flex-shrink-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out" id="sidebar">
+            <div class="flex items-center justify-between p-4 border-b border-indigo-600">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-rocket text-2xl text-indigo-300"></i>
+                    <span class="text-xl font-bold">ProjectDash</span>
+                </div>
+                <button id="sidebarClose" class="md:hidden text-gray-300 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="mb-8">
+                    <div class="text-xs uppercase font-semibold text-indigo-300 mb-3">Main</div>
+                    <ul>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg bg-indigo-800 text-white">
+                                <i class="fas fa-home mr-3"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg hover:bg-indigo-800 text-indigo-100 hover:text-white">
+                                <i class="fas fa-tasks mr-3"></i>
+                                <span>Projects</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg hover:bg-indigo-800 text-indigo-100 hover:text-white">
+                                <i class="fas fa-calendar-alt mr-3"></i>
+                                <span>Calendar</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg hover:bg-indigo-800 text-indigo-100 hover:text-white">
+                                <i class="fas fa-envelope mr-3"></i>
+                                <span>Messages</span>
+                                <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">3</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mb-8">
+                    <div class="text-xs uppercase font-semibold text-indigo-300 mb-3">Tools</div>
+                    <ul>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg hover:bg-indigo-800 text-indigo-100 hover:text-white">
+                                <i class="fas fa-chart-line mr-3"></i>
+                                <span>Analytics</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg hover:bg-indigo-800 text-indigo-100 hover:text-white">
+                                <i class="fas fa-users mr-3"></i>
+                                <span>Team</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="flex items-center p-2 rounded-lg hover:bg-indigo-800 text-indigo-100 hover:text-white">
+                                <i class="fas fa-cog mr-3"></i>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-8 pt-4 border-t border-indigo-600">
+                    <div class="flex items-center">
+                        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="w-10 h-10 rounded-full">
+                        <div class="ml-3">
+                            <div class="font-medium">Sarah Johnson</div>
+                            <div class="text-xs text-indigo-300">Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center">
+                        <button id="sidebarToggle" class="mr-4 text-gray-600 hover:text-indigo-600 md:hidden">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-xl font-semibold text-gray-800">Dashboard</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="text-gray-600 hover:text-indigo-600">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <button id="messagesButton" class="text-gray-600 hover:text-indigo-600">
+                                <i class="fas fa-envelope text-xl"></i>
+                                <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <button class="flex items-center text-gray-600 hover:text-indigo-600">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="w-8 h-8 rounded-full">
+                                <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="p-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white mb-6 animate-fadeIn">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div class="mb-4 md:mb-0">
+                            <h2 class="text-2xl font-bold mb-2">Welcome back, Sarah!</h2>
+                            <p class="opacity-90">Here's what's happening with your projects today.</p>
+                        </div>
+                        <button class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition">
+                            View Reports
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition-all duration-300 animate-fadeIn delay-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Total Projects</p>
+                                <h3 class="text-2xl font-bold mt-1">24</h3>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up mr-1"></i> 12% from last month</p>
+                            </div>
+                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg">
+                                <i class="fas fa-folder-open text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition-all duration-300 animate-fadeIn delay-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Tasks Completed</p>
+                                <h3 class="text-2xl font-bold mt-1">156</h3>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up mr-1"></i> 8% from last week</p>
+                            </div>
+                            <div class="bg-green-100 text-green-600 p-3 rounded-lg">
+                                <i class="fas fa-check-circle text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition-all duration-300 animate-fadeIn delay-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Pending Tasks</p>
+                                <h3 class="text-2xl font-bold mt-1">42</h3>
+                                <p class="text-red-500 text-sm mt-2"><i class="fas fa-arrow-down mr-1"></i> 5% from yesterday</p>
+                            </div>
+                            <div class="bg-yellow-100 text-yellow-600 p-3 rounded-lg">
+                                <i class="fas fa-exclamation-circle text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition-all duration-300 animate-fadeIn">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Team Members</p>
+                                <h3 class="text-2xl font-bold mt-1">14</h3>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up mr-1"></i> 2 new members</p>
+                            </div>
+                            <div class="bg-blue-100 text-blue-600 p-3 rounded-lg">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Projects -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Activity Chart -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 lg:col-span-2 animate-fadeIn delay-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">Project Activity</h3>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 text-sm bg-indigo-100 text-indigo-600 rounded-lg">Week</button>
+                                <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">Month</button>
+                                <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">Year</button>
+                            </div>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Progress -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 animate-fadeIn delay-200">
+                        <h3 class="text-lg font-semibold mb-6">Project Progress</h3>
+                        <div class="space-y-5">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Website Redesign</span>
+                                    <span class="text-sm font-medium">75%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-indigo-600 h-2 rounded-full progress-bar" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Mobile App</span>
+                                    <span class="text-sm font-medium">50%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full progress-bar" style="width: 50%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Marketing Campaign</span>
+                                    <span class="text-sm font-medium">30%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-purple-500 h-2 rounded-full progress-bar" style="width: 30%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">UI/UX Design</span>
+                                    <span class="text-sm font-medium">90%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full progress-bar" style="width: 90%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full mt-6 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+                            View All Projects
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Tasks and Team Members -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Tasks -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 animate-fadeIn delay-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">Recent Tasks</h3>
+                            <button class="text-indigo-600 hover:text-indigo-800">
+                                <i class="fas fa-plus"></i> Add Task
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox" class="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Complete dashboard design</p>
+                                    <p class="text-xs text-gray-500">Due tomorrow</p>
+                                </div>
+                                <div class="ml-4">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">Design</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox" class="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium line-through">Team meeting</p>
+                                    <p class="text-xs text-gray-500">Completed today</p>
+                                </div>
+                                <div class="ml-4">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Meeting</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox" class="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Review client feedback</p>
+                                    <p class="text-xs text-gray-500">Due in 2 days</p>
+                                </div>
+                                <div class="ml-4">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">Review</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox" class="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Update documentation</p>
+                                    <p class="text-xs text-gray-500">Due in 3 days</p>
+                                </div>
+                                <div class="ml-4">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Documentation</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Members -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 animate-fadeIn delay-200">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">Team Members</h3>
+                            <button class="text-indigo-600 hover:text-indigo-800">
+                                <i class="fas fa-plus"></i> Invite
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Michael Johnson</p>
+                                    <p class="text-xs text-gray-500">Frontend Developer</p>
+                                </div>
+                                <div class="ml-4">
+                                    <button class="text-gray-400 hover:text-indigo-600">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <img src="https://randomuser.me/api/portraits/women/28.jpg" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Emily Davis</p>
+                                    <p class="text-xs text-gray-500">UI/UX Designer</p>
+                                </div>
+                                <div class="ml-4">
+                                    <button class="text-gray-400 hover:text-indigo-600">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Robert Wilson</p>
+                                    <p class="text-xs text-gray-500">Backend Developer</p>
+                                </div>
+                                <div class="ml-4">
+                                    <button class="text-gray-400 hover:text-indigo-600">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                                <img src="https://randomuser.me/api/portraits/women/90.jpg" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium">Jessica Thompson</p>
+                                    <p class="text-xs text-gray-500">Project Manager</p>
+                                </div>
+                                <div class="ml-4">
+                                    <button class="text-gray-400 hover:text-indigo-600">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Messages Modal -->
+    <div id="messagesModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="modal-content bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-semibold">New Message</h3>
+                <button id="closeMessagesModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="flex flex-col md:flex-row h-[70vh]">
+                <!-- Left sidebar - Recipients -->
+                <div class="w-full md:w-1/3 border-r p-4 bg-gray-50">
+                    <div class="mb-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search contacts" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 overflow-y-auto">
+                        <div class="flex items-center p-2 rounded-lg hover:bg-gray-200 cursor-pointer">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Michael Johnson</p>
+                                <p class="text-xs text-gray-500">Frontend Developer</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-2 rounded-lg hover:bg-gray-200 cursor-pointer">
+                            <img src="https://randomuser.me/api/portraits/women/28.jpg" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Emily Davis</p>
+                                <p class="text-xs text-gray-500">UI/UX Designer</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-2 rounded-lg hover:bg-gray-200 cursor-pointer">
+                            <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Robert Wilson</p>
+                                <p class="text-xs text-gray-500">Backend Developer</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-2 rounded-lg hover:bg-gray-200 cursor-pointer">
+                            <img src="https://randomuser.me/api/portraits/women/90.jpg" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Jessica Thompson</p>
+                                <p class="text-xs text-gray-500">Project Manager</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right side - Message composition -->
+                <div class="w-full md:w-2/3 flex flex-col">
+                    <div class="p-4 border-b">
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-500 mr-2">To:</span>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full flex items-center">
+                                    Michael Johnson
+                                    <button class="ml-1 text-indigo-600 hover:text-indigo-800">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 p-4 overflow-y-auto">
+                        <div class="space-y-4">
+                            <!-- Previous messages (if any) -->
+                            <div class="flex items-start">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="w-8 h-8 rounded-full">
+                                <div class="ml-3">
+                                    <div class="bg-gray-100 p-3 rounded-lg">
+                                        <p class="text-sm">Hey Sarah, how's the dashboard project coming along?</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Michael Johnson - 10:30 AM</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start justify-end">
+                                <div class="mr-3 text-right">
+                                    <div class="bg-indigo-100 p-3 rounded-lg">
+                                        <p class="text-sm">It's going well! I'm just finishing up the analytics section.</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">You - 10:32 AM</p>
+                                </div>
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="w-8 h-8 rounded-full">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Message composition area -->
+                    <div class="p-4 border-t">
+                        <div class="mb-3">
+                            <input type="text" placeholder="Subject" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <textarea placeholder="Write your message here..." class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="3"></textarea>
+                        <div class="flex justify-between items-center mt-3">
+                            <div class="flex space-x-2">
+                                <button class="text-gray-500 hover:text-indigo-600">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <button class="text-gray-500 hover:text-indigo-600">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                            </div>
+                            <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                                Send Message
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle for mobile
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+        
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+        });
+        
+        sidebarClose.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+        });
+        
+        // Messages modal functionality
+        const messagesModal = document.getElementById('messagesModal');
+        const messagesButton = document.getElementById('messagesButton');
+        const closeMessagesModal = document.getElementById('closeMessagesModal');
+        
+        messagesButton.addEventListener('click', () => {
+            messagesModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        closeMessagesModal.addEventListener('click', () => {
+            messagesModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+        
+        // Close modal when clicking outside
+        messagesModal.addEventListener('click', (e) => {
+            if (e.target === messagesModal) {
+                messagesModal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+        
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            const activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [
+                        {
+                            label: 'Completed Tasks',
+                            data: [12, 19, 15, 27, 22, 31, 37],
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'New Tasks',
+                            data: [8, 12, 18, 14, 21, 25, 30],
+                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            borderColor: 'rgba(168, 85, 247, 1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Animate progress bars on page load
+            setTimeout(() => {
+                const progressBars = document.querySelectorAll('.progress-bar');
+                progressBars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 500);
+            
+            // Add hover effect to cards
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.classList.add('shadow-lg');
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.classList.remove('shadow-lg');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
