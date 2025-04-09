@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import LayoutTutor from './LayoutTutor';
+import LayoutTutorss from './LayoutTutorss';
 
 const SubjectAssignment = () => {
   const navigate = useNavigate();
@@ -122,7 +122,7 @@ const SubjectAssignment = () => {
   };
 
   return (
-    <LayoutTutor>
+    <LayoutTutorss>
       <div className="container py-4">
         <div className="card shadow-sm">
           <div className="card-header" style={{ backgroundColor: '#374151', color: 'white' }}>
@@ -350,7 +350,7 @@ const SubjectAssignment = () => {
           </div>
         </div>
       </div>
-    </LayoutTutor>
+    </LayoutTutorss>
   );
 };
 

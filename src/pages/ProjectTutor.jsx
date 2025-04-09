@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import LayoutTutor from './dashboard/LayoutTutor';
+import LayoutTutorss from './dashboard/LayoutTutorss';
 
 const ProjectManager = () => {
   const [projects, setProjects] = useState([]);
@@ -95,7 +95,7 @@ const ProjectManager = () => {
   }, []);
 
   return (
-    <LayoutTutor>
+    <LayoutTutorss>
       <div style={styles.container}>
        
           <h1 style={styles.title}>All Projects</h1>
@@ -135,7 +135,7 @@ const ProjectManager = () => {
           <div style={styles.emptyState}>No projects found</div>
         )}
       </div>
-      </LayoutTutor>
+      </LayoutTutorss>
   );
 };
 
