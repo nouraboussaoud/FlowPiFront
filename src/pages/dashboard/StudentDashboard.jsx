@@ -4,6 +4,7 @@ import LayoutStudent from './LayoutStudent';
 import Contact from "../../student-interfaces/Contact";
 import { get } from "../../apiHelper";
 import Chatbox from "../tutor-interfaces/chatbox/ChatBox";
+import SkillsManager from "./SkillsManager";
 
 function StudentDashboard() {
   const location = useLocation();
@@ -11,12 +12,15 @@ function StudentDashboard() {
   const [tutors, setTutors] = useState([]); // State to hold the list of tutors
   const [selectedTutor, setSelectedTutor] = useState(null); // State to hold selected tutor for the chat
 
+
+  
+  
   useEffect(() => {
     // Handle token storage
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');
     if (token) {
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
       console.log('Token stored in localStorage:', token);
       console.log('on est ici');
       navigate('/student-dashboard', { replace: true });
@@ -54,10 +58,15 @@ function StudentDashboard() {
         >
           <Contact tutors={tutors} onSelectTutor={handleSelectTutor} />
         </div>
+        <div>
+     
+      <SkillsManager /> {/* Afficher le formulaire de création de groupe */}
+    </div>
 
       </div>
     </LayoutStudent>
   );
+ 
 }
 
 export default StudentDashboard;

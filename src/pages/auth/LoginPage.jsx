@@ -6,21 +6,25 @@ import Layout from "./Layout";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const googleAuth = () => {
+    // Rediriger vers l'authentification Google
+    window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
+  };
+  
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
 
   // Function to redirect to GitHub OAuth login
- const handleGitHubLogin = () => {
+  const handleGitHubLogin = () => {
     window.location.href = "http://localhost:5000/api/users/auth/github";
-  };
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  };
 
   // Function to handle login (for email and password flow if needed)
   const handleLogin = async (e) => {
     e.preventDefault();
-
 
     try {
       const response = await fetch("http://localhost:5000/api/users/login", {
@@ -36,7 +40,8 @@ const LoginPage = () => {
         localStorage.setItem("role", data.user.role);
         localStorage.setItem("userId", data.user._id);
         localStorage.setItem("name", data.user.name);
-        localStorage.setItem("profilePic", data.user.profilePic)
+        localStorage.setItem("profilePic", data.user.profilePic);
+      
         toast.success("Welcome " + data.user.name); 
         const role = data.user.role;
         if (role === "admin") {
@@ -49,24 +54,24 @@ const LoginPage = () => {
           navigate("/home");
         }
       } else {
-      // Handle specific error responses based on the message from the server
-      if (data.message === "Invalid email or password") {
-        toast.error("Invalid email or password");
-      } else if (data.message === "Please verify your email to activate your account") {
-        toast.error("Please verify your email to activate your account");
-      } else if (data.message === "Your account is banned") {
-        toast.error("Your account is banned");
-      } else {
-        toast.error("An unexpected error occurred");
+        // Handle specific error responses based on the message from the server
+        if (data.message === "Invalid email or password") {
+          toast.error("Invalid email or password");
+        } else if (data.message === "Please verify your email to activate your account") {
+          toast.error("Please verify your email to activate your account");
+        } else if (data.message === "Your account is banned") {
+          toast.error("Your account is banned");
+        } else {
+          toast.error("An unexpected error occurred");
+        }
+        localStorage.clear();
       }
+    } catch (error) {
+      console.error("Error logging in:", error);
+      toast.error("An error occurred, please try again later");
+      localStorage.clear();
     }
-  } catch (error) {
-    console.error("Error logging in:", error);
-    toast.error("An error occurred, please try again later");
-  }
-};
-
- 
+  };
 
   return (
     <div>
@@ -177,7 +182,7 @@ const LoginPage = () => {
                         <p className="small position-absolute top-50 start-50 translate-middle bg-body px-5">Or</p>
                       </div>
                       <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-google mb-2 mb-xxl-0" onClick={() => { /* Add Google login logic here */ }}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
+                        <button className="btn bg-google mb-2 mb-xxl-0" onClick={googleAuth}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
                       </div>
                       <div className="col-xxl-6 d-grid">
                         <button className="btn bg-facebook mb-0" onClick={handleGitHubLogin}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
