@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import axios from 'axios';
 import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 import Editor from '@monaco-editor/react';
 
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   // State declarations
+  const [aiScore, setAiScore] = useState(null);
+  const [aiScoreLoading, setAiScoreLoading] = useState(false);
+  const [numPages, setNumPages] = useState(null);
   const [evaluationScore, setEvaluationScore] = useState('');
   const [notes, setNotes] = useState('');
   const [checklist, setChecklist] = useState({
@@ -12,9 +18,11 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     requirement2: false,
     requirement3: false,
   });
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [commitURL, setCommitURL] = useState('');
   const [fileTree, setFileTree] = useState([]);
   const [selectedFileContent, setSelectedFileContent] = useState('');
+  const [selectedFileId, setSelectedFileId] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState('');
   const [loading, setLoading] = useState({
     tree: true,
@@ -27,6 +35,16 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [cache, setCache] = useState({});
   const [nestedFileTree, setNestedFileTree] = useState({});
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
+
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+    setPdfError(null);
+  };
+  const onDocumentLoadError = (error) => {
+    console.error('PDF load error:', error);
+    setPdfError('Failed to load PDF document');
+  };
 
   // Rubric data
   const rubric = [
@@ -78,6 +96,40 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   };
 
+  const fetchUploadedFiles = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get(`/api/deliverables/${deliverable._id}/file`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      // Fix: Ensure we're handling both array and single file responses
+      let files = response.data.filePath || response.data.files || [];
+      if (!Array.isArray(files)) files = [files];
+      
+      setUploadedFiles(files.map(file => ({
+        path: file,
+        cleanedPath: file.startsWith('/') ? file : `/uploads/${file.replace(/\\/g, '/')}`
+      })));
+    } catch (error) {
+      console.error("Error fetching uploaded files:", error);
+    }
+  };
+
+  const runAiDetectionOnUploadedFile = async (fileId) => {
+    setAiScoreLoading(true);
+    try {
+      const res = await axios.get(`/api/aiDetection/uploadedFile/${fileId}`);
+      const score = res.data?.ai_probability;
+      setAiScore(score);
+    } catch (error) {
+      console.error("AI detection fetch error:", error);
+      setAiScore("Error");
+    } finally {
+      setAiScoreLoading(false);
+    }
+  };
+
   // Toggle fullscreen editor
   const toggleFullScreenEditor = () => {
     setFullScreenEditor(!fullScreenEditor);
@@ -97,6 +149,22 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const handleSubmit = () => {
     onSubmitEvaluation(evaluationScore, checklist, rubricScores, notes);
     onClose();
+  };
+
+  // AI detection
+  const fetchAiDetectionScore = async () => {
+    setAiScoreLoading(true);
+    try {
+      // You might need to adjust the API endpoint to include the file path
+      const res = await axios.get(`/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`);
+      const score = res.data?.ai_probability;
+      setAiScore(score); // e.g. 82.34
+    } catch (error) {
+      console.error("AI detection fetch error:", error);
+      setAiScore("Erreur");
+    } finally {
+      setAiScoreLoading(false);
+    }
   };
 
   // GitHub API functions
@@ -154,6 +222,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (cache[filePath]) {
         setSelectedFileContent(cache[filePath]);
         setLoading(prev => ({...prev, content: false}));
+        // Still trigger AI detection even if content is from cache
+        setAiScore(null);
+        fetchAiDetectionScore();
         return;
       }
 
@@ -170,6 +241,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (response.data) {
         setSelectedFileContent(response.data);
         setCache((prevCache) => ({ ...prevCache, [filePath]: response.data }));
+        // Call AI detection when a file is selected
+        setAiScore(null);
+        fetchAiDetectionScore();
       } else {
         throw new Error('File content not available');
       }
@@ -318,8 +392,17 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     if (deliverable) {
       fetchCommitDetails();
       fetchFileTree();
+      fetchUploadedFiles();
     }
   }, [deliverable]);
+
+  // Effect to handle file path changes
+  useEffect(() => {
+    if (selectedFilePath) {
+      // Reset AI score when file path changes
+      setAiScore(null);
+    }
+  }, [selectedFilePath]);
 
   if (!deliverable) return null;
 
@@ -742,6 +825,86 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   onChange={(e) => setNotes(e.target.value)}
                 ></textarea>
               </div>
+              
+              <div style={{ marginBottom: '20px' }}>
+                  {selectedFilePath && (
+                    <>
+                      <h5>report :</h5>
+                      <a
+                        href={selectedFilePath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-block',
+                          marginBottom: '10px',
+                          color: '#007bff',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        {selectedFilePath.split('/').pop()}
+                      </a>
+                      <div>
+                        <strong>AI Detection Score :</strong>{' '}
+                        {aiScoreLoading ? 'Analyzing...' : 
+                          aiScore !== null ? 
+                            (typeof aiScore === 'number' ? 
+                              `${(aiScore * 100).toFixed(2)}%` : 
+                              aiScore) : 
+                            'No analysis available'}
+                      </div>
+                    </>
+                  )}
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+  <h5>Uploaded Report</h5>
+  {uploadedFiles?.length > 0 ? (
+    uploadedFiles.map((file, index) => (
+      <div key={index}>
+        <a
+          href="#!"
+          style={{
+            display: 'inline-block',
+            marginBottom: '5px',
+            color: '#007bff',
+            textDecoration: 'underline'
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            setSelectedFilePath(file.cleanedPath);
+          }}
+        >
+          {file.path.split(/[/\\]/).pop()}
+        </a>
+      </div>
+    ))
+  ) : (
+    <p>No uploaded report found.</p>
+  )}
+
+  {/* PDF Viewer - Only show if PDF is selected */}
+  {selectedFilePath && selectedFilePath.toLowerCase().endsWith('.pdf') && (
+    <div style={{ marginTop: '20px', border: '1px solid #ddd', padding: '10px' }}>
+      <h6>Preview: {selectedFilePath.split('/').pop()}</h6>
+      <div style={{ height: '500px', overflow: 'auto' }}>
+        <Document
+          file={selectedFilePath}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
+          loading={<div>Loading PDF...</div>}
+          error={<div>Failed to load PDF.</div>}
+        >
+          {Array.from(new Array(numPages), (el, index) => (
+            <Page 
+              key={`page_${index + 1}`} 
+              pageNumber={index + 1} 
+              width={600}
+            />
+          ))}
+        </Document>
+      </div>
+    </div>
+  )}
+</div>
 
               <div style={{ marginBottom: '20px' }}>
                 <h5>Final Mark</h5>

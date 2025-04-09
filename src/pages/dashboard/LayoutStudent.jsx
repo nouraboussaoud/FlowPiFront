@@ -29,6 +29,10 @@ const LayoutStudent = ({ children }) => {
   const handleNavigateToTutorsDeliverables=()=>{
     navigate("/tutors-deliverables");
   };
+
+  const handleNavigationToReportViewer=()=>{
+    navigate("/report-viewer");
+  }
   
   const logoutUser = async () => {
     try {
@@ -654,10 +658,11 @@ const LayoutStudent = ({ children }) => {
                       {" "}
                       <a
                         className="dropdown-item"
-                        href="instructor-create-course.html"
+                        href="#"
+                        onClick={handleNavigationToReportViewer}
                       >
                         <i className="bi bi-file-earmark-plus-fill fa-fw me-1" />
-                        Create Course
+                        Reports
                       </a>{" "}
                     </li>
                     <li>
