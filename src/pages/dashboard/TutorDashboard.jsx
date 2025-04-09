@@ -6,7 +6,7 @@ import LayoutStudent from './LayoutStudent';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
 
-import LayoutTutor from './LayoutTutor';
+import LayoutTutorss from './LayoutTutorss';
 
 function TutorDashboard(){
     const location = useLocation();
@@ -25,11 +25,11 @@ function TutorDashboard(){
     }, [location, navigate]);
     return (
         <div>
-          <UsersTable />
+      
 
-          <LayoutTutor >
-         
-          </LayoutTutor>
+          <LayoutTutorss >
+          <UsersTable />
+          </LayoutTutorss>
         </div>
       );
 

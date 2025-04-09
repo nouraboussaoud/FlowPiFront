@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import LayoutTutor from './LayoutTutor';
+import LayoutTutorss from './LayoutTutorss';
 
 const SubjectList = () => {
   const [subjects, setSubjects] = useState([]);
@@ -121,7 +121,7 @@ const SubjectList = () => {
   };
 
   return (
-    <LayoutTutor>
+    <LayoutTutorss>
       <div className="container mt-4">
         <h2 className="text-center mb-4"> List of Subjects</h2>
 
@@ -338,7 +338,7 @@ const SubjectList = () => {
           </div>
         )}
       </div>
-    </LayoutTutor>
+    </LayoutTutorss>
   );
 };
 
