@@ -26,16 +26,32 @@ import DeliverablesHistory from "./pages/evaluation/DeliverablesDashboard";
 import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
 import ReportViewer from "./pages/evaluation/ReportViewer"
 import { Toaster } from "sonner";
+import {Navigate} from "react-router-dom";
+import { useEffect ,useState } from "react";
+import axios from "axios";
  
  
 
 
 function App() {
+  const [user, setUser] = useState(null);
+  const getUser = async () => {
+    try {
+      const url = `${process.env.REACT_APP_API_URL}/auth/login/success`;
+    const { data } = await axios.get(url, { withCredentials: true });
+    setUser(data.user);
+    }
+    catch (error) {
+      console.error("Error getting user:", error);}
+    };
+    useEffect(() => {
+      getUser();
+    }, []);
   return (
     <div>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
