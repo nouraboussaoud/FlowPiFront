@@ -36,6 +36,7 @@ import DouaaComp from "./pages/test/DouaaComp";
 import ReturnDeliverable from "./pages/evaluation/ReturnDeliverable";
 import DeliverablesHistory from "./pages/evaluation/DeliverablesDashboard";
 import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
+import ReportViewer from "./pages/evaluation/ReportViewer"
 import { Toaster } from "sonner";
 import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
 import AdminTaskDashboard from "./pages/tasks/DashboardTasks";
@@ -87,6 +88,7 @@ function App() {
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
           <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
+          <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

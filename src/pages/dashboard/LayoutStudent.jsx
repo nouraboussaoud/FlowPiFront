@@ -39,6 +39,10 @@ const LayoutStudent = ({ children }) => {
   const handleNavigateToTutorsDeliverables=()=>{
     navigate("/tutors-deliverables");
   };
+
+  const handleNavigationToReportViewer=()=>{
+    navigate("/report-viewer");
+  }
   
   const logoutUser = async () => {
     console.log("🔄 Tentative de déconnexion...");
@@ -297,16 +301,6 @@ const LayoutStudent = ({ children }) => {
                       >
                         <i className="bi bi-basket-fill fa-fw me-1" />
                           Deliverables
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="instructor-create-course.html"
-                      >
-                        <i className="bi bi-file-earmark-plus-fill fa-fw me-1" />
-                        Create Course
                       </a>{" "}
                     </li>
                     <li>

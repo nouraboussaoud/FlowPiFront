@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import axios from 'axios';
 import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 import Editor from '@monaco-editor/react';
+import { useNavigate } from 'react-router-dom';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
+  const navigate = useNavigate();
   // State declarations
+  const [aiScore, setAiScore] = useState(null);
+  const [aiScoreLoading, setAiScoreLoading] = useState(false);
+  const [numPages, setNumPages] = useState(null);
   const [evaluationScore, setEvaluationScore] = useState('');
   const [notes, setNotes] = useState('');
   const [checklist, setChecklist] = useState({
@@ -12,9 +20,11 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     requirement2: false,
     requirement3: false,
   });
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [commitURL, setCommitURL] = useState('');
   const [fileTree, setFileTree] = useState([]);
   const [selectedFileContent, setSelectedFileContent] = useState('');
+  const [selectedFileId, setSelectedFileId] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState('');
   const [loading, setLoading] = useState({
     tree: true,
@@ -29,7 +39,20 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [cache, setCache] = useState({});
   const [nestedFileTree, setNestedFileTree] = useState({});
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
+<<<<<<< HEAD
   const [submitSuccess, setSubmitSuccess] = useState(false);
+=======
+  const [pdfError, setPdfError] = useState(null);
+
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+    setPdfError(null);
+  };
+  const onDocumentLoadError = (error) => {
+    console.error('PDF load error:', error);
+    setPdfError('Failed to load PDF document');
+  };
+>>>>>>> Amine
 
   // Rubric data
   const rubric = [
@@ -78,6 +101,82 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       case 'yaml': return 'yaml';
       case 'xml': return 'xml';
       default: return 'plaintext';
+    }
+  };
+
+  const fetchUploadedFiles = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("No token found");
+  
+      const response = await axios.get(`/api/deliverables/${deliverable._id}/file`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+  
+      const file = response.data.file;
+  
+      if (file?.url) {
+        setUploadedFiles([
+          {
+            path: file.url,
+            name: file.url.split('/').pop(),
+            public_id: file.public_id
+          }
+        ]);
+      } else {
+        setUploadedFiles([]);
+      }
+    } catch (error) {
+      console.error("Error fetching uploaded files:", error.message);
+    }
+  };
+
+  /*const downloadPdf = async () => {
+    try {
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = deliverable.file.url;
+      link.download = deliverable.file.url.split('/').pop() || 'report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback to opening in new tab if download fails
+      window.open(deliverable.file.url, '_blank');
+    }
+  };*/
+
+  const openPdfInNewTab = () => {
+    try {
+      // Open the PDF URL in a new tab
+      window.open(deliverable.file.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open PDF:', error);
+      // Fallback option if window.open fails
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.opener = null;
+        newWindow.location.href = deliverable.file.url;
+      } else {
+        // If popups are blocked, show the user a message
+        alert('Popup blocked. Please allow popups for this site or click the file link to view the PDF.');
+      }
+    }
+  };
+
+  const runAiDetectionOnUploadedFile = async (fileId) => {
+    setAiScoreLoading(true);
+    try {
+      const res = await axios.get(`/api/aiDetection/${fileId}`);
+      setAiScore(res.data?.ai_probability || "No score available");
+    } catch (error) {
+      console.error("AI detection fetch error:", error);
+      setAiScore("Error");
+    } finally {
+      setAiScoreLoading(false);
     }
   };
 
@@ -137,6 +236,22 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   };
 
+  // AI detection
+  const fetchAiDetectionScore = async () => {
+    setAiScoreLoading(true);
+    try {
+      // You might need to adjust the API endpoint to include the file path
+      const res = await axios.get(`/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`);
+      const score = res.data?.ai_probability;
+      setAiScore(score); // e.g. 82.34
+    } catch (error) {
+      console.error("AI detection fetch error:", error);
+      setAiScore("Erreur");
+    } finally {
+      setAiScoreLoading(false);
+    }
+  };
+
   // GitHub API functions
   const fetchCommitDetails = async () => {
     try {
@@ -192,6 +307,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (cache[filePath]) {
         setSelectedFileContent(cache[filePath]);
         setLoading(prev => ({...prev, content: false}));
+        // Still trigger AI detection even if content is from cache
+        setAiScore(null);
+        fetchAiDetectionScore();
         return;
       }
 
@@ -208,6 +326,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (response.data) {
         setSelectedFileContent(response.data);
         setCache((prevCache) => ({ ...prevCache, [filePath]: response.data }));
+        // Call AI detection when a file is selected
+        setAiScore(null);
+        fetchAiDetectionScore();
       } else {
         throw new Error('File content not available');
       }
@@ -284,6 +405,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     });
   };
 
+
   const renderFileTree = (tree, level = 0) => {
     const items = Object.values(tree);
     const folders = items.filter(item => item.isFolder)
@@ -356,6 +478,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     if (deliverable) {
       fetchCommitDetails();
       fetchFileTree();
+<<<<<<< HEAD
       
       // Initialize form with existing evaluation data if available
       if (deliverable.evaluation) {
@@ -366,8 +489,19 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
           setNotes(deliverable.evaluation.notes);
         }
       }
+=======
+      fetchUploadedFiles();
+>>>>>>> Amine
     }
   }, [deliverable]);
+
+  // Effect to handle file path changes
+  useEffect(() => {
+    if (selectedFilePath) {
+      // Reset AI score when file path changes
+      setAiScore(null);
+    }
+  }, [selectedFilePath]);
 
   if (!deliverable) return null;
 
@@ -616,6 +750,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   fontWeight: 'bold'
                 }}>{deliverable.status.charAt(0).toUpperCase() + deliverable.status.slice(1)}</span></p>
                 
+
                 <div style={{ margin: '15px 0' }}>
                   <h5>Quick Links</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -793,6 +928,70 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 ></textarea>
+              </div>
+              
+              <div style={{ marginBottom: '20px' }}>
+                  {selectedFilePath && (
+                    <>
+                      <h5>report :</h5>
+                      <a
+                        href={selectedFilePath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-block',
+                          marginBottom: '10px',
+                          color: '#007bff',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        {selectedFilePath.split('/').pop()}
+                      </a>
+                      <div>
+                        <strong>AI Detection Score :</strong>{' '}
+                        {aiScoreLoading ? 'Analyzing...' : 
+                          aiScore !== null ? 
+                            (typeof aiScore === 'number' ? 
+                              `${(aiScore * 100).toFixed(2)}%` : 
+                              aiScore) : 
+                            'No analysis available'}
+                      </div>
+                    </>
+                  )}
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <h5>Uploaded Report</h5>
+                <p>
+                  <strong>File:</strong>{' '}
+                  <a
+                    href={deliverable.file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#007bff', textDecoration: 'underline' }}
+                  >
+                    {deliverable.file.url.split('/').pop()}
+                  </a>
+                  
+                  <button
+                    onClick={openPdfInNewTab}
+                    style={{
+                      marginTop:'10px',
+                      marginLeft: '10px',
+                      padding: '5px 15px',
+                      backgroundColor: '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      '&:hover': {
+                        backgroundColor: '#4b5563'
+                      }
+                    }}
+                  >
+                    Open PDF
+                  </button>
+                </p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
