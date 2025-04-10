@@ -702,17 +702,8 @@ const LayoutStudent = ({ children }) => {
               </ul>
             </li>
           </ul>
-          <div>
-          {profilePic ? (
-        <img 
-          src={profilePic} 
-          alt="Profile" 
-          style={{ width: "50px", height: "50px", borderRadius: "50%" }} 
-        />
-      ) : (
-        <img src='assets/images/avatar/avatar.png' alt="Profile" style={{ width: "50px", height: "50px", borderRadius: "50%" }} />
-      )}
-    </div>
+       
+   
           
            <div>
            {profilePic ? (

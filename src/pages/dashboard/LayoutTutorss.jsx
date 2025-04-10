@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const LayoutTutorss = ({ children }) => {
+const LayoutTutor = ({ children }) => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [profilePic, setProfilePic] = useState("");
@@ -1265,4 +1265,4 @@ const LayoutTutorss = ({ children }) => {
   )
 }
 
-export default LayoutTutorss
+export default LayoutTutor
