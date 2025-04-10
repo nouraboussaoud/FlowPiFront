@@ -1,13 +1,10 @@
 import React from 'react'
-import BreadCrumps from '../../components/BreadCrumps'
-import { User } from 'lucide-react';
 import UsersTable from '../tutor-interfaces/UsersTable';
-import LayoutStudent from './LayoutStudent';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
 
 import LayoutTutorss from './LayoutTutorss';
-
+import LayoutTutor from './LayoutTutor';
 function TutorDashboard(){
     const location = useLocation();
     const navigate = useNavigate();
@@ -28,6 +25,7 @@ function TutorDashboard(){
       
 
           <LayoutTutorss >
+          <LayoutTutor />
           <UsersTable />
           </LayoutTutorss>
         </div>
