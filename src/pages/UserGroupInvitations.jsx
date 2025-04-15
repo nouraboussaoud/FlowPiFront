@@ -40,21 +40,23 @@ const GroupList = () => {
     }
   };
 
-  // Fonction pour gérer l'acceptation de l'invitation
-  const handleAcceptInvitation = (groupId) => {
-    // Affichage du toast de confirmation de l'acceptation
-    toast.success('You have successfully joined the group!');
-
-    // Ajouter le groupe à la liste des groupes acceptés
-    setAcceptedGroups((prev) => {
-      const updatedAcceptedGroups = [...prev, groupId];
-      // Persister dans le localStorage
-      localStorage.setItem('acceptedGroups', JSON.stringify(updatedAcceptedGroups));
-      return updatedAcceptedGroups;
-    });
-
-    // Retirer le groupe de la liste des invitations
-    setUserGroups((prevGroups) => prevGroups.filter((group) => group._id !== groupId));
+  const handleAcceptInvitation = async (groupId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/groups/${groupId}/accept-invitation`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+  
+      if (!response.ok) throw new Error('Failed to accept invitation');
+      
+      // Supprime immédiatement le groupe de la liste
+      setUserGroups(prev => prev.filter(g => g._id !== groupId));
+      toast.success('Invitation accepted!');
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   // Fonction pour gérer le rejet de l'invitation

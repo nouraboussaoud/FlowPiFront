@@ -36,6 +36,15 @@ const DashboardLayout = ({ children, title }) => {
             <a className="nav-link text-white" href="/groupList">Groups</a>
           </li>
           <li className="nav-item">
+            <a className="nav-link text-white" href="/ProjectAdmin">Projects</a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/CreateSubjectAdmin">Create Subjects</a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/SubjectAdmin">All Subjects</a>
+          </li>
+          <li className="nav-item">
             <a className="nav-link text-white" href="#">Settings</a>
           </li>
         </ul>
