@@ -751,16 +751,7 @@ const LayoutStudent = ({ children }) => {
         </div>
       </div>
       {/* Add a Tasks button in the main content area */}
-      <div className="container mt-4">
-        <div className="d-flex justify-content-end mb-3">
-          <button 
-            className="btn btn-primary" 
-            onClick={toggleTaskManager}
-          >
-            <i className="fas fa-tasks me-2"></i> Task Manager
-          </button>
-        </div>
-      </div>
+      
       {children}
     </section>
 

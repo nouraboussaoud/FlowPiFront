@@ -148,6 +148,7 @@ const ProjectManager = () => {
       justifyContent: "center",
       zIndex: 1000,
     },
+    
     modalContent: {
       background: "white",
       padding: "2rem",

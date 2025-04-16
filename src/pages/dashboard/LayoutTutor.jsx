@@ -340,17 +340,8 @@ await updateTaskProgress(selectedTaskId, commitCount);
   
     <div className="container">
       <header className="header">
-        <h1 className="title">Task Manager</h1>
-        <button
-          className="button button-primary"
-          onClick={() => setShowModal(true)}
-          disabled={isLoading}
-        >
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Create Task
-        </button>
+        <h1 className="title">Tutor dashboard</h1>
+       
       </header>
 
       {error && (

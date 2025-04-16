@@ -39,9 +39,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [cache, setCache] = useState({});
   const [nestedFileTree, setNestedFileTree] = useState({});
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
-<<<<<<< HEAD
   const [submitSuccess, setSubmitSuccess] = useState(false);
-=======
   const [pdfError, setPdfError] = useState(null);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -52,7 +50,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     console.error('PDF load error:', error);
     setPdfError('Failed to load PDF document');
   };
->>>>>>> Amine
 
   // Rubric data
   const rubric = [
@@ -478,7 +475,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     if (deliverable) {
       fetchCommitDetails();
       fetchFileTree();
-<<<<<<< HEAD
       
       // Initialize form with existing evaluation data if available
       if (deliverable.evaluation) {
@@ -489,9 +485,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
           setNotes(deliverable.evaluation.notes);
         }
       }
-=======
       fetchUploadedFiles();
->>>>>>> Amine
     }
   }, [deliverable]);
 
