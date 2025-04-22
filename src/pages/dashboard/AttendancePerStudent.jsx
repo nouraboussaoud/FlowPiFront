@@ -104,7 +104,7 @@ const AttendancePerStudent = () => {
       try {
         // Fetch user's groups
         const response = await fetchWithErrorHandling(
-          () => axios.get(`${API_BASE_URL}/groups/my-groups`, {
+          () => axios.get(`${API_BASE_URL}/groups/my-group`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
           "Error fetching groups"
