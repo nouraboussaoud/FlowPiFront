@@ -8,13 +8,16 @@ const DeliverablesHistory = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("token");//douaa
+ 
     console.log('Token from Local Storage:', token);
     const fetchDeliverables = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/deliverables/history', {
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+       
+            
+            Authorization: `Bearer ${localStorage.getItem('token')}`,//douaa
           },
           withCredentials: true
         });

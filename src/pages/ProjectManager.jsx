@@ -254,7 +254,10 @@ const ProjectManager = () => {
       gap: "0.5rem",
       marginTop: "0.5rem"
     }
-  };
+  };useEffect(() => {
+    console.log("User Groups:", userGroups);
+    console.log("Available Groups:", groups);
+  }, [userGroups, groups]);
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
