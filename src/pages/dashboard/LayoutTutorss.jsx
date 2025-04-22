@@ -337,6 +337,32 @@ const LayoutTutor = ({ children }) => {
                 Projects
               </a>
             </li>
+            <li className="nav-item dropdown">
+  <a
+    className="nav-link dropdown-toggle"
+    href="#"
+    id="attendanceMenu"
+    data-bs-toggle="dropdown"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    Attendance Management
+  </a>
+  <ul className="dropdown-menu" aria-labelledby="attendanceMenu">
+    <li>
+      <a className="dropdown-item" href="group-attendance">
+        Record Attendance
+      </a>
+    </li>
+    <li>
+      <a className="dropdown-item" href="AttendanceHistory">
+        View Attendance History
+      </a>
+    </li>
+  </ul>
+</li>
+
+          
             {/* Nav item 2 Pages */}
             <li className="nav-item dropdown">
               <a

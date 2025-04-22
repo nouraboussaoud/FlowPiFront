@@ -18,6 +18,11 @@ import SubjectList from "./pages/dashboard/SubjectList";
 import CreateGroup from "./pages/dashboard/CreateGroup";
 
 import SkillsManager from "./pages/dashboard/SkillsManager";
+import AttendancePerStudent from "./pages/dashboard/AttendancePerStudent";
+
+import GroupAttendance from "./pages/dashboard/GroupAttendance";
+import AttendanceHistory from "./pages/dashboard/AttendanceHistory";
+
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
 import SubjectAssignment from "./pages/dashboard/SubjectAssignment";
@@ -64,6 +69,10 @@ function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/create-group" element={<CreateGroup />} />
           <Route path="/Skills-Manager" element={<SkillsManager />} />
+          <Route path="/AttendancePerStudent" element={<AttendancePerStudent />} />
+       
+          <Route path="/AttendanceHistory" element={<AttendanceHistory />} />
+          <Route path="/group-attendance" element={<GroupAttendance />} />
           <Route path="/tutor-dashboard" element={<TutorDashboard />} />
           <Route path="/Subject-Assignment" element={<SubjectAssignment />} />
           <Route path="/Subject-Form" element={<SubjectForm />} />
