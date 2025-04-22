@@ -270,7 +270,7 @@ const ProjectManager = () => {
     try {
       // 1. Fetch user's groups
       const groupsResponse = await axios.get(
-        "http://localhost:5000/api/groups/my-groups",
+        "http://localhost:5000/api/groups/my-group",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUserGroups(groupsResponse.data);
