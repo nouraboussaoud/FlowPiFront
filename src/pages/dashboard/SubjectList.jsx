@@ -10,10 +10,11 @@ const SubjectList = () => {
     title: '', 
     description: '',
     assignedGroups: [],
-    keyFeatures: [],
-    aiFunctionalities: []
+    keyFeatures: [{ title: '', description: '' }],
+    aiFunctionalities: [{ title: '', description: '' }]
   });
-  
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   // Formatage de la date
   const formatDate = (dateString) => {
@@ -58,6 +59,38 @@ const SubjectList = () => {
     fetchGroups();
   }, []);
 
+  // Validation des champs
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    } else if (formData.title.length > 100) {
+      newErrors.title = 'Title must be less than 100 characters';
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    } else if (formData.description.length > 500) {
+      newErrors.description = 'Description must be less than 500 characters';
+    }
+    
+    formData.keyFeatures.forEach((feature, index) => {
+      if (feature.title && !feature.description) {
+        newErrors[`keyFeatures_${index}_description`] = 'Description is required if title is provided';
+      }
+    });
+    
+    formData.aiFunctionalities.forEach((func, index) => {
+      if (func.title && !func.description) {
+        newErrors[`aiFunc_${index}_description`] = 'Description is required if title is provided';
+      }
+    });
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Lancer l'édition d'un sujet
   const startEditing = (subject) => {
     setEditingSubject(subject._id);
@@ -68,6 +101,7 @@ const SubjectList = () => {
       keyFeatures: subject.keyFeatures.length > 0 ? [...subject.keyFeatures] : [{ title: '', description: '' }],
       aiFunctionalities: subject.aiFunctionalities.length > 0 ? [...subject.aiFunctionalities] : [{ title: '', description: '' }]
     });
+    setErrors({});
   };
 
   // Supprimer un sujet
@@ -83,14 +117,81 @@ const SubjectList = () => {
     }
   };
 
+  // Gestion des changements
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'title' && value.length > 100) {
+      setErrors(prev => ({
+        ...prev,
+        title: 'Title must be 100 characters or less'
+      }));
+    } else if (name === 'description' && value.length > 500) {
+      setErrors(prev => ({
+        ...prev,
+        description: 'Description must be 500 characters or less'
+      }));
+    } else {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const handleListChange = (index, field, value, listName) => {
+    setFormData(prev => {
+      const updatedList = [...prev[listName]];
+      updatedList[index][field] = value;
+      return { ...prev, [listName]: updatedList };
+    });
+  };
+
+  const addItem = (listName) => {
+    setFormData(prev => ({
+      ...prev,
+      [listName]: [...prev[listName], { title: '', description: '' }]
+    }));
+  };
+
+  const removeItem = (index, listName) => {
+    setFormData(prev => {
+      const updatedList = [...prev[listName]];
+      updatedList.splice(index, 1);
+      return { ...prev, [listName]: updatedList };
+    });
+  };
+
   // Mettre à jour un sujet
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
+    
+    setLoading(true);
     const token = localStorage.getItem("token");
     try {
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        keyFeatures: formData.keyFeatures
+          .filter(f => f.title.trim() || f.description.trim())
+          .map(f => ({
+            title: f.title.trim(),
+            description: f.description.trim()
+          })),
+        aiFunctionalities: formData.aiFunctionalities
+          .filter(f => f.title.trim() || f.description.trim())
+          .map(f => ({
+            title: f.title.trim(),
+            description: f.description.trim()
+          })),
+        assignedGroups: formData.assignedGroups
+      };
+
       await axios.put(
         `http://localhost:5000/api/subject/updateSubject/${editingSubject}`, 
-        formData, 
+        payload, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Subject updated successfully.");
@@ -98,32 +199,16 @@ const SubjectList = () => {
       fetchSubjects();
     } catch (err) {
       console.error("Error updating subject:", err);
+      alert(err.response?.data?.message || "Error updating subject");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  // Gestion des features
-  const handleFeatureChange = (type, index, field, value) => {
-    const updatedFeatures = [...formData[type]];
-    updatedFeatures[index][field] = value;
-    setFormData({ ...formData, [type]: updatedFeatures });
-  };
-
-  const addFeature = (type) => {
-    setFormData({ 
-      ...formData, 
-      [type]: [...formData[type], { title: '', description: '' }] 
-    });
-  };
-
-  const removeFeature = (type, index) => {
-    const filteredFeatures = formData[type].filter((_, i) => i !== index);
-    setFormData({ ...formData, [type]: filteredFeatures });
   };
 
   return (
     <LayoutTutorss>
       <div className="container mt-4">
-        <h2 className="text-center mb-4"> List of Subjects</h2>
+        <h2 className="text-center mb-4">List of Subjects</h2>
 
         {subjects.map(subject => (
           <div key={subject._id} className="card mb-4 p-4 shadow-sm">
@@ -178,7 +263,6 @@ const SubjectList = () => {
               </div>
             </div>
 
-            {/* Section pour afficher les groupes assignés */}
             <div className="row mt-3">
               <div className="col-12">
                 <h5>Assigned Groups</h5>
@@ -186,8 +270,7 @@ const SubjectList = () => {
                   <div className="d-flex flex-wrap gap-2">
                     {subject.assignedGroups.map(group => (
                       <span key={group._id} className="badge bg-primary">
-                        {group.name} 
-                       
+                        {group.name}
                       </span>
                     ))}
                   </div>
@@ -216,28 +299,45 @@ const SubjectList = () => {
                 <form onSubmit={handleUpdate}>
                   <div className="modal-body">
                     <div className="mb-3">
-                      <label className="form-label">Title</label>
+                      <label className="form-label">Title*</label>
                       <input
                         type="text"
-                        className="form-control"
+                        name="title"
+                        className={`form-control ${errors.title ? 'is-invalid' : ''}`}
                         value={formData.title}
-                        onChange={(e) => setFormData({...formData, title: e.target.value})}
-                        required
+                        onChange={handleChange}
+                        maxLength={100}
                       />
+                      {errors.title && (
+                        <div className="invalid-feedback d-block">
+                          {errors.title}
+                        </div>
+                      )}
+                      <small className="text-muted">
+                        {formData.title.length}/100 characters
+                      </small>
                     </div>
                     
                     <div className="mb-3">
-                      <label className="form-label">Description</label>
+                      <label className="form-label">Description*</label>
                       <textarea
-                        className="form-control"
+                        name="description"
+                        className={`form-control ${errors.description ? 'is-invalid' : ''}`}
                         rows="3"
                         value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
-                        required
+                        onChange={handleChange}
+                        maxLength={500}
                       />
+                      {errors.description && (
+                        <div className="invalid-feedback d-block">
+                          {errors.description}
+                        </div>
+                      )}
+                      <small className="text-muted">
+                        {formData.description.length}/500 characters
+                      </small>
                     </div>
 
-                   
                     <div className="row">
                       <div className="col-md-6">
                         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -245,7 +345,7 @@ const SubjectList = () => {
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-primary"
-                            onClick={() => addFeature('keyFeatures')}
+                            onClick={() => addItem('keyFeatures')}
                           >
                             Add
                           </button>
@@ -258,22 +358,27 @@ const SubjectList = () => {
                                 className="form-control"
                                 placeholder="Title"
                                 value={feature.title}
-                                onChange={(e) => handleFeatureChange('keyFeatures', index, 'title', e.target.value)}
+                                onChange={(e) => handleListChange(index, 'title', e.target.value, 'keyFeatures')}
                               />
                             </div>
                             <div className="mb-2">
                               <textarea
-                                className="form-control"
+                                className={`form-control ${errors[`keyFeatures_${index}_description`] ? 'is-invalid' : ''}`}
                                 placeholder="Description"
                                 rows="2"
                                 value={feature.description}
-                                onChange={(e) => handleFeatureChange('keyFeatures', index, 'description', e.target.value)}
+                                onChange={(e) => handleListChange(index, 'description', e.target.value, 'keyFeatures')}
                               />
+                              {errors[`keyFeatures_${index}_description`] && (
+                                <div className="invalid-feedback">
+                                  {errors[`keyFeatures_${index}_description`]}
+                                </div>
+                              )}
                             </div>
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-danger"
-                              onClick={() => removeFeature('keyFeatures', index)}
+                              onClick={() => removeItem(index, 'keyFeatures')}
                             >
                               Remove
                             </button>
@@ -287,7 +392,7 @@ const SubjectList = () => {
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-primary"
-                            onClick={() => addFeature('aiFunctionalities')}
+                            onClick={() => addItem('aiFunctionalities')}
                           >
                             Add
                           </button>
@@ -300,22 +405,27 @@ const SubjectList = () => {
                                 className="form-control"
                                 placeholder="Title"
                                 value={func.title}
-                                onChange={(e) => handleFeatureChange('aiFunctionalities', index, 'title', e.target.value)}
+                                onChange={(e) => handleListChange(index, 'title', e.target.value, 'aiFunctionalities')}
                               />
                             </div>
                             <div className="mb-2">
                               <textarea
-                                className="form-control"
+                                className={`form-control ${errors[`aiFunc_${index}_description`] ? 'is-invalid' : ''}`}
                                 placeholder="Description"
                                 rows="2"
                                 value={func.description}
-                                onChange={(e) => handleFeatureChange('aiFunctionalities', index, 'description', e.target.value)}
+                                onChange={(e) => handleListChange(index, 'description', e.target.value, 'aiFunctionalities')}
                               />
+                              {errors[`aiFunc_${index}_description`] && (
+                                <div className="invalid-feedback">
+                                  {errors[`aiFunc_${index}_description`]}
+                                </div>
+                              )}
                             </div>
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-danger"
-                              onClick={() => removeFeature('aiFunctionalities', index)}
+                              onClick={() => removeItem(index, 'aiFunctionalities')}
                             >
                               Remove
                             </button>
@@ -325,11 +435,26 @@ const SubjectList = () => {
                     </div>
                   </div>
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={() => setEditingSubject(null)}>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={() => setEditingSubject(null)}
+                    >
                       Cancel
                     </button>
-                    <button type="submit" className="btn btn-primary">
-                      Save Changes
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Updating...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
                     </button>
                   </div>
                 </form>

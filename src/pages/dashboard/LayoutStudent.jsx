@@ -621,7 +621,11 @@ const LayoutStudent = ({ children }) => {
    Projects
   </a>
 </li>
-
+<li className="nav-item">
+  <a className="nav-link" href="AttendancePerStudent">
+   Attendance
+  </a>
+</li>
 
             <li className="nav-item dropdown">
               <a
