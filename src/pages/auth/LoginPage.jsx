@@ -4,10 +4,30 @@ import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
 import Layout from "./Layout";
 
+const useAnimatedBackground = (images, duration = 5000) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }, duration);
+    return () => clearInterval(interval);
+  }, [images.length, duration]);
+  
+  return images[currentIndex];
+};
+
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const backgroundImages = [
+    "/backgrounds/2885174.jpg",
+    "/backgrounds/image3.png",
+    "/backgrounds/Data_security_05.jpg",
+  ];
+  const currentBg = useAnimatedBackground(backgroundImages,5000);
 
   const googleAuth = () => {
     // Rediriger vers l'authentification Google
@@ -92,32 +112,20 @@ const LoginPage = () => {
         <section className="p-0 d-flex align-items-center position-relative overflow-hidden">
           <div className="container-fluid">
             <div className="row">
-              <div className="col-12 col-lg-6 d-md-flex align-items-center justify-content-center bg-primary bg-opacity-10 vh-lg-100">
-                <div className="p-3 p-lg-5">
-                  <div className="text-center">
-                    <h2 className="fw-bold">Welcome to our largest community</h2>
-                    <p className="mb-0 h6 fw-light">Let's learn something new today!</p>
-                  </div>
-                  <img src="assets/images/element/02.svg" className="mt-5" alt="" />
-                  <div className="d-sm-flex mt-5 align-items-center justify-content-center">
-                    <ul className="avatar-group mb-2 mb-sm-0">
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/01.jpg" alt="avatar" />
-                      </li>
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/02.jpg" alt="avatar" />
-                      </li>
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/03.jpg" alt="avatar" />
-                      </li>
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="avatar" />
-                      </li>
-                    </ul>
-                    <p className="mb-0 h6 fw-light ms-0 ms-sm-3">4k+ Students joined us, now it's your turn.</p>
-                  </div>
+              {/* Left Column - Background Images */}
+              <div className="col-12 col-lg-6 p-0 position-relative vh-100">
+                <div 
+                  className="position-absolute w-100 h-100"
+                  style={{
+                    backgroundImage: `url(${currentBg})`,
+                    backgroundSize: '700px',
+                    backgroundPosition: 'top center',
+                    backgroundRepeat: 'no-repeat',
+                    transition: 'background-image 1s ease-in-out',
+                    zIndex: 0
+                  }}
+                />
                 </div>
-              </div>
               <div className="col-12 col-lg-6 m-auto">
                 <div className="row my-5">
                   <div className="col-sm-10 col-xl-8 m-auto">
