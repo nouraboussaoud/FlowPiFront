@@ -23,9 +23,9 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const backgroundImages = [
-    "/backgrounds/2885174.jpg",
-    "/backgrounds/image3.png",
-    "/backgrounds/Data_security_05.jpg",
+    "/assets/images/2885174.jpg",
+    "/assets/images/image3.png",
+    "/assets/images/Data_security_05.jpg",
   ];
   const currentBg = useAnimatedBackground(backgroundImages,5000);
 
