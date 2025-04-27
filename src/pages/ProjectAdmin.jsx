@@ -14,6 +14,7 @@ const ProjectManager = () => {
       padding: "2rem",
       backgroundColor: "#f9fafb",
       minHeight: "100vh"
+      
     },
     header: {
       marginBottom: "2rem",
