@@ -12,16 +12,17 @@ const TutorsDeliverables = () => {
   useEffect(() => {
     const fetchDeliverables = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/deliverables/history', {
+        const response = await axios.get('http://localhost:5000/api/deliverables/tutor', {
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-          },
-          withCredentials: true
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`
+          }
         });
-        setDeliverables(response.data.deliverables);
+        setDeliverables(response.data);
       } catch (error) {
         console.error('Error fetching deliverables:', error);
-      } finally {
+        // Add more detailed error handling
+      }
+     finally {
         setLoading(false);
       }
     };

@@ -15,6 +15,8 @@ const ReturnDeliverable = () => {
   const navigate = useNavigate();
 
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
+  const localStorageToken = localStorage.getItem("authToken");
+  const token = localStorageToken ? JSON.parse(localStorageToken) : null;
 
   const headers = {
     Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -81,6 +83,7 @@ const ReturnDeliverable = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(token);
 
     const formData = new FormData();
     formData.append("title", title);
@@ -94,7 +97,7 @@ const ReturnDeliverable = () => {
       const res = await fetch("http://localhost:5000/api/deliverables/submit", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
