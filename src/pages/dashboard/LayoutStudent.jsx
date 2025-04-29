@@ -6,6 +6,7 @@ const LayoutStudent = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState(null);
+  console.log(localStorage.getItem("role"));
   useEffect(() => {
     // Get profile picture filename from local storage
     const storedProfilePic = localStorage.getItem("profilePic");

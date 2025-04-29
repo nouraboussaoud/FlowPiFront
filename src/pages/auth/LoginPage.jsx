@@ -1,61 +1,50 @@
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
 import Layout from "./Layout";
 
+const useAnimatedBackground = (images, duration = 5000) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }, duration);
+    return () => clearInterval(interval);
+  }, [images.length, duration]);
+  
+  return images[currentIndex];
+};
+
+
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const backgroundImages = [
+    "/assets/images/2885174.jpg",
+    "/assets/images/image3.png",
+    "/assets/images/Data_security_05.jpg",
+  ];
+  const currentBg = useAnimatedBackground(backgroundImages,5000);
+
   const googleAuth = () => {
+    // Rediriger vers l'authentification Google
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   };
-  console.log("API URL:", process.env.REACT_APP_API_URL);
-    const handleGoogleCallback = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const user = urlParams.get('user');
-    
-      if (token && user) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", user);
-        localStorage.setItem("role", JSON.parse(user).role);
-    
-        alert("Google login successful!");
-    
-        const role = JSON.parse(user).role;
-        if (role === "admin") {
-          navigate("/admin-dashboard");
-        } else if (role === "student") {
-          navigate("/student-dashboard");
-        } else if (role === "tutor") {
-          navigate("/tutor-dashboard");
-        } else {
-          navigate("/home");
-        }
-      }
-    };
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        handleGoogleCallback();
-      }, 10000); // Timeout de 10 secondes
-    
-      return () => clearTimeout(timer);
-    }, [handleGoogleCallback]); // Ajoutez handleGoogleCallback ici
+  
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
 
   // Function to redirect to GitHub OAuth login
- const handleGitHubLogin = () => {
+  const handleGitHubLogin = () => {
     window.location.href = "http://localhost:5000/api/users/auth/github";
-  };
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  };
 
   // Function to handle login (for email and password flow if needed)
   const handleLogin = async (e) => {
     e.preventDefault();
-
 
     try {
       const response = await fetch("http://localhost:5000/api/users/login", {
@@ -71,7 +60,8 @@ const LoginPage = () => {
         localStorage.setItem("role", data.user.role);
         localStorage.setItem("userId", data.user._id);
         localStorage.setItem("name", data.user.name);
-        localStorage.setItem("profilePic", data.user.profilePic)
+        localStorage.setItem("profilePic", data.user.profilePic);
+      
         toast.success("Welcome " + data.user.name); 
         const role = data.user.role;
         if (role === "admin") {
@@ -84,14 +74,24 @@ const LoginPage = () => {
           navigate("/home");
         }
       } else {
-        toast.error("invalid email or password")
+        // Handle specific error responses based on the message from the server
+        if (data.message === "Invalid email or password") {
+          toast.error("Invalid email or password");
+        } else if (data.message === "Please verify your email to activate your account") {
+          toast.error("Please verify your email to activate your account");
+        } else if (data.message === "Your account is banned") {
+          toast.error("Your account is banned");
+        } else {
+          toast.error("An unexpected error occurred");
+        }
+        localStorage.clear();
       }
     } catch (error) {
       console.error("Error logging in:", error);
+      toast.error("An error occurred, please try again later");
+      localStorage.clear();
     }
   };
-
- 
 
   return (
     <div>
@@ -112,32 +112,20 @@ const LoginPage = () => {
         <section className="p-0 d-flex align-items-center position-relative overflow-hidden">
           <div className="container-fluid">
             <div className="row">
-              <div className="col-12 col-lg-6 d-md-flex align-items-center justify-content-center bg-primary bg-opacity-10 vh-lg-100">
-                <div className="p-3 p-lg-5">
-                  <div className="text-center">
-                    <h2 className="fw-bold">Welcome to our largest community</h2>
-                    <p className="mb-0 h6 fw-light">Let's learn something new today!</p>
-                  </div>
-                  <img src="assets/images/element/02.svg" className="mt-5" alt="" />
-                  <div className="d-sm-flex mt-5 align-items-center justify-content-center">
-                    <ul className="avatar-group mb-2 mb-sm-0">
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/01.jpg" alt="avatar" />
-                      </li>
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/02.jpg" alt="avatar" />
-                      </li>
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/03.jpg" alt="avatar" />
-                      </li>
-                      <li className="avatar avatar-sm">
-                        <img className="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="avatar" />
-                      </li>
-                    </ul>
-                    <p className="mb-0 h6 fw-light ms-0 ms-sm-3">4k+ Students joined us, now it's your turn.</p>
-                  </div>
+              {/* Left Column - Background Images */}
+              <div className="col-12 col-lg-6 p-0 position-relative vh-100">
+                <div 
+                  className="position-absolute w-100 h-100"
+                  style={{
+                    backgroundImage: `url(${currentBg})`,
+                    backgroundSize: '700px',
+                    backgroundPosition: 'top center',
+                    backgroundRepeat: 'no-repeat',
+                    transition: 'background-image 1s ease-in-out',
+                    zIndex: 0
+                  }}
+                />
                 </div>
-              </div>
               <div className="col-12 col-lg-6 m-auto">
                 <div className="row my-5">
                   <div className="col-sm-10 col-xl-8 m-auto">
