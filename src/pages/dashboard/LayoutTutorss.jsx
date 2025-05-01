@@ -1060,7 +1060,29 @@ const LayoutTutor = ({ children }) => {
                
               </ul>
             </li>
-          
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="demoMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+               tasks
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="demoMenu">
+           
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="task-manager-tutor">
+                  View tasks
+                  </a>
+                </li>
+                
+               
+              </ul>
+            </li>
             
 
             <li className="nav-item dropdown">

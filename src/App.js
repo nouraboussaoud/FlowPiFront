@@ -45,6 +45,7 @@ import TaskManager from "./pages/tasks/DashboardTasks";
 import {Navigate} from "react-router-dom";
 import ProjectManager from "./pages/ProjectManager";
 import ProjectTutor from "./pages/ProjectTutor";
+import TaskManagerTutor from "./pages/tasks/TaskManagerTutor";
  
 
 
@@ -89,6 +90,7 @@ function App() {
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
           <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
           <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
+          <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

@@ -611,13 +611,8 @@ const LayoutStudent = ({ children }) => {
               <a className="nav-link" href="Project-Manager">
                 Projects
                 {/* Add the new Tasks button with icon here */}
-                <button 
-                  className="btn btn-sm btn-outline-primary ms-2"
-                  onClick={toggleTaskManager}
-                  title="View Tasks"
-                >
-                  <i className="fas fa-tasks"></i> Tasks
-                </button>
+                
+                  
               </a>
             </li>
 

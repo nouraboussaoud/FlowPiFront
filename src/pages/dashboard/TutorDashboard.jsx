@@ -26,7 +26,6 @@ function TutorDashboard(){
 
           <LayoutTutorss >
           <UsersTable />
-          <LayoutTutor />
           
           </LayoutTutorss>
         </div>

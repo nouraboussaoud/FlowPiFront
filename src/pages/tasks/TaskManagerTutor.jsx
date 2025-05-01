@@ -1,49 +1,23 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import LayoutStudent from "../dashboard/LayoutStudent";
+import LayoutTutor from "../dashboard/LayoutTutorss";
 import "./Tasks.css";
-import { Folder, Clock, BarChart2, Edit, AlertCircle } from "lucide-react";
+import { Clock, BarChart2, GitCommit, AlertCircle } from "lucide-react";
 
-const TaskManager = () => {
+const TaskManagerTutor = () => {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    project: "",
-    taskDetails: "",
-    repoOwner: "",
-    repoName: "",
-    branchName: "",
-  });
-  const [updateTaskData, setUpdateTaskData] = useState({
-    title: "",
-    description: "",
-    project: "",
-    taskDetails: "",
-    priority: "medium",
-    status: "pending",
-    repoOwner: "",
-    repoName: "",
-    branchName: "",
-  });
+  const [githubData, setGithubData] = useState({ commits: [], pull_requests: [] });
   const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [showCommitsModal, setShowCommitsModal] = useState(false);
-  const [githubData, setGithubData] = useState({ commits: [], pull_requests: [] });
   const [riskAssessment, setRiskAssessment] = useState({
     risk: "",
     confidence: 0,
     explanation: "",
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  // Status enum
-  const statusOptions = ["pending", "in-progress", "completed"];
 
   // Helper functions for risk assessment
   const getRiskColor = (risk) => {
@@ -104,20 +78,6 @@ const TaskManager = () => {
     }
   };
 
-  // Helper function for status badge color
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "#6b7280"; // Gray for pending
-      case "in-progress":
-        return "#f59e0b"; // Yellow for in-progress
-      case "completed":
-        return "#10b981"; // Green for completed
-      default:
-        return "#6b7280"; // Default to gray
-    }
-  };
-
   // Helper function to calculate progress based on GitHub activity
   const calculateProgress = (commits, pullRequests, taskStatus) => {
     let progress = 0;
@@ -151,31 +111,13 @@ const TaskManager = () => {
     progress = Math.min(progress, 90); // Cap total progress to leave room for completion
 
     // If no recent activity (last week), reduce progress to reflect stagnation
-    const hasRecentActivity =
-      commits.some((c) => new Date(c.date) > oneWeekAgo) ||
-      pullRequests.some((pr) => new Date(pr.merge_date) > oneWeekAgo);
+    const hasRecentActivity = commits.some((c) => new Date(c.date) > oneWeekAgo) ||
+                             pullRequests.some((pr) => new Date(pr.merge_date) > oneWeekAgo);
     if (!hasRecentActivity && taskStatus !== "completed") {
       progress = Math.min(progress, 30); // Cap at 30% for inactive tasks
     }
 
     return Math.round(Math.min(progress, 100)); // Ensure progress is 0-100%
-  };
-
-  // Event handlers
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewTask((prevTask) => ({
-      ...prevTask,
-      [name]: value,
-    }));
-  };
-
-  const handleUpdateInputChange = (e) => {
-    const { name, value } = e.target;
-    setUpdateTaskData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
   };
 
   const openRiskModal = async (taskId) => {
@@ -186,27 +128,20 @@ const TaskManager = () => {
         return;
       }
 
-      const response = await axios.get(
-        `http://localhost:5000/api/tasks/getTaskById/${taskId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get(`http://localhost:5000/api/tasks/getTaskById/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const task = response.data;
       if (task.risk && task.riskConfidence) {
         setRiskAssessment({
           risk: task.risk,
           confidence: task.riskConfidence,
-          explanation:
-            task.riskExplanation ||
-            `AI analysis based on task details: "${
-              task.taskDetails || "No details provided"
-            }". ${
-              task.risk.toLowerCase() === "high risk"
-                ? "Identified potential challenges that may delay completion."
-                : "Task appears manageable with minimal obstacles."
-            }`,
+          explanation: `AI analysis based on task details: "${task.taskDetails || "No details provided"}". ${
+            task.risk.toLowerCase() === "high risk"
+              ? "Identified potential challenges that may delay completion."
+              : "Task appears manageable with minimal obstacles."
+          }`,
         });
         setShowRiskModal(true);
       } else {
@@ -214,51 +149,7 @@ const TaskManager = () => {
       }
     } catch (error) {
       console.error("Error fetching task risk:", error);
-      setError(
-        error.response?.data?.message || "Error fetching risk assessment"
-      );
-    }
-  };
-
-  const openUpdateModal = async (taskId) => {
-    setSelectedTaskId(taskId);
-    setIsUpdating(true);
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("No token found. Please login.");
-        return;
-      }
-
-      const response = await axios.get(
-        `http://localhost:5000/api/tasks/getTaskById/${taskId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const task = response.data;
-      setUpdateTaskData({
-        title: task.title,
-        description: task.description,
-        project: task.project,
-        taskDetails: task.taskDetails || "",
-        priority: task.priority || "medium",
-        status: task.status || "pending",
-        repoOwner: task.repoOwner || "",
-        repoName: task.repoName || "",
-        branchName: task.branchName || "",
-      });
-
-      setShowUpdateModal(true);
-      setIsUpdating(false);
-    } catch (error) {
-      console.error("Error fetching task for update:", error);
-      setError(error.response?.data?.message || "Error fetching task details");
-      setIsUpdating(false);
+      setError(error.response?.data?.message || "Error fetching risk assessment");
     }
   };
 
@@ -289,8 +180,8 @@ const TaskManager = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
@@ -301,11 +192,7 @@ const TaskManager = () => {
       const { commits, pull_requests } = githubResponse.data;
 
       // Calculate progress based on GitHub activity
-      const calculatedProgress = calculateProgress(
-        commits,
-        pull_requests,
-        task.status
-      );
+      const calculatedProgress = calculateProgress(commits, pull_requests, task.status);
 
       // Update task progress in state
       setTasks((prevTasks) =>
@@ -314,24 +201,34 @@ const TaskManager = () => {
         )
       );
 
-      // Update progress in backend
-      await axios.post(
+      // Optionally update progress in backend (uncomment if persistence is needed)
+      /*
+      await axios.put(
         `http://localhost:5000/api/tasks/updateTaskProgress/${taskId}`,
         { progressPercentage: calculatedProgress },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      */
 
       setGithubData({
         commits: commits || [],
-        pull_requests: pull_requests || [],
+        pull_requests: pull_requests || []
       });
       setShowCommitsModal(true);
       setError(null);
     } catch (error) {
       console.error("Error tracking GitHub activity:", error);
-      setError(
-        error.response?.data?.message || error.message || "Error tracking GitHub activity"
-      );
+      let errorMessage = "Error tracking GitHub activity";
+      
+      if (error.response) {
+        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        errorMessage = "No response from server";
+      } else {
+        errorMessage = error.message || "Request setup error";
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -346,15 +243,13 @@ const TaskManager = () => {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/tasks/myTasks", {
+      const response = await axios.get("http://localhost:5000/api/tasks/getAllTasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTasks(response.data);
     } catch (error) {
-      console.error("Error fetching assigned tasks:", error);
-      setError(
-        error.response?.data?.message || "Error fetching your assigned tasks"
-      );
+      console.error("Error fetching tasks:", error);
+      setError(error.response?.data?.message || "Error fetching tasks");
     } finally {
       setIsLoading(false);
     }
@@ -368,12 +263,9 @@ const TaskManager = () => {
     }
 
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/projects/projects",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get("http://localhost:5000/api/projects/projects", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProjects(response.data);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -385,19 +277,15 @@ const TaskManager = () => {
     fetchTasks();
     fetchProjects();
 
-    // Clear error message after 5 seconds
     if (error) {
       const timer = setTimeout(() => setError(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [error]);
 
-  // Handle Escape key for modal accessibility
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
-        setShowModal(false);
-        setShowUpdateModal(false);
         setShowRiskModal(false);
         setShowCommitsModal(false);
       }
@@ -405,82 +293,6 @@ const TaskManager = () => {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
-
-  const createTask = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token found. Please login.");
-      return;
-    }
-
-    if (!newTask.project) {
-      setError("Please select a project");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await axios.post(
-        "http://localhost:5000/api/tasks/createTask",
-        newTask,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setTasks([...tasks, response.data.task]);
-      setNewTask({
-        title: "",
-        description: "",
-        project: "",
-        taskDetails: "",
-        repoOwner: "",
-        repoName: "",
-        branchName: "",
-      });
-      setShowModal(false);
-      setError(null);
-    } catch (error) {
-      console.error("Error creating task:", error);
-      setError(error.response?.data?.message || "Error creating task");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateTask = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token found. Please login.");
-      return;
-    }
-
-    try {
-      setIsUpdating(true);
-      const response = await axios.put(
-        `http://localhost:5000/api/tasks/updateTask/${selectedTaskId}`,
-        updateTaskData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setTasks(
-        tasks.map((task) =>
-          task._id === selectedTaskId ? response.data.task : task
-        )
-      );
-
-      setShowUpdateModal(false);
-      setError(null);
-    } catch (error) {
-      console.error("Update error:", error);
-      setError(error.response?.data?.message || "Error updating task");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   const deleteTask = async (taskId) => {
     const token = localStorage.getItem("token");
@@ -515,14 +327,27 @@ const TaskManager = () => {
     return "#10b981";
   };
 
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "#9ca3af";
+      case "in-progress":
+        return "#f59e0b";
+      case "completed":
+        return "#10b981";
+      default:
+        return "#3b82f6";
+    }
+  };
+
   // Check for stalled tasks (no activity in the last week)
   const isTaskStalled = (task) => {
     if (task.status === "completed") return false;
     if (!task.progressPercentage || task.progressPercentage === 0) return true;
+    // Could fetch recent commits/PRs to check, but for simplicity, assume stalled if low progress
     return task.progressPercentage < 30;
   };
 
-  // Calculate task statistics for dashboard
   const taskStats = {
     total: tasks.length,
     pending: tasks.filter((t) => t.status === "pending").length,
@@ -531,38 +356,16 @@ const TaskManager = () => {
   };
 
   return (
-    <LayoutStudent>
+    <LayoutTutor>
       <div className="container">
-        {/* Intuitive Dashboard Section */}
         <div className="dashboard-overview">
           <div className="dashboard-header">
-            <h1 className="dashboard-title">My Assigned Tasks</h1>
-            <button
-              className="button button-primary"
-              onClick={() => setShowModal(true)}
-              disabled={isLoading}
-            >
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              New Task
-            </button>
+            <h1 className="dashboard-title">Task Management</h1>
           </div>
           <div className="stats-grid">
             <div className="stat-card">
               <h3>{taskStats.total}</h3>
-              <p>Total Assigned</p>
+              <p>Total Tasks</p>
             </div>
             <div className="stat-card">
               <h3>{taskStats.pending}</h3>
@@ -581,365 +384,16 @@ const TaskManager = () => {
 
         {error && (
           <div className="error-message">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="#ef4444"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#ef4444">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {error}
           </div>
         )}
 
-        {showModal && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">Create New Task</h2>
-                <button
-                  className="close-button"
-                  onClick={() => setShowModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-              <form onSubmit={createTask}>
-                <div className="form-group">
-                  <label className="label" htmlFor="title">
-                    Task Title
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="title"
-                    name="title"
-                    placeholder="Enter task title"
-                    value={newTask.title}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="description">
-                    Description
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="description"
-                    name="description"
-                    placeholder="Enter task description"
-                    value={newTask.description}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="project">
-                    Project
-                  </label>
-                  <select
-                    className="select"
-                    id="project"
-                    name="project"
-                    value={newTask.project}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="taskDetails">
-                    Details
-                  </label>
-                  <textarea
-                    className="textarea"
-                    id="taskDetails"
-                    name="taskDetails"
-                    placeholder="Enter task details"
-                    value={newTask.taskDetails}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="repoOwner">
-                    Repository Owner
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="repoOwner"
-                    name="repoOwner"
-                    placeholder="e.g., octocat"
-                    value={newTask.repoOwner}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="repoName">
-                    Repository Name
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="repoName"
-                    name="repoName"
-                    placeholder="e.g., hello-world"
-                    value={newTask.repoName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="branchName">
-                    Branch
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="branchName"
-                    name="branchName"
-                    placeholder="e.g., main"
-                    value={newTask.branchName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="button-group">
-                  <button
-                    className="button button-default"
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="button button-primary"
-                    type="submit"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Creating..." : "Create Task"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {showUpdateModal && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowUpdateModal(false)}
-          >
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">Update Task</h2>
-                <button
-                  className="close-button"
-                  onClick={() => setShowUpdateModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-              <form onSubmit={updateTask}>
-                <div className="form-group">
-                  <label className="label" htmlFor="update-title">
-                    Task Title
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="update-title"
-                    name="title"
-                    placeholder="Enter task title"
-                    value={updateTaskData.title}
-                    onChange={handleUpdateInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-description">
-                    Description
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="update-description"
-                    name="description"
-                    placeholder="Enter task description"
-                    value={updateTaskData.description}
-                    onChange={handleUpdateInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-project">
-                    Project
-                  </label>
-                  <select
-                    className="select"
-                    id="update-project"
-                    name="project"
-                    value={updateTaskData.project}
-                    onChange={handleUpdateInputChange}
-                    required
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-status">
-                    Status
-                  </label>
-                  <select
-                    className="select"
-                    id="update-status"
-                    name="status"
-                    value={updateTaskData.status}
-                    onChange={handleUpdateInputChange}
-                  >
-                    {statusOptions.map((status) => (
-                      <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-priority">
-                    Priority
-                  </label>
-                  <select
-                    className="select"
-                    id="update-priority"
-                    name="priority"
-                    value={updateTaskData.priority}
-                    onChange={handleUpdateInputChange}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-taskDetails">
-                    Details
-                  </label>
-                  <textarea
-                    className="textarea"
-                    id="update-taskDetails"
-                    name="taskDetails"
-                    placeholder="Enter task details"
-                    value={updateTaskData.taskDetails}
-                    onChange={handleUpdateInputChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-repoOwner">
-                    Repository Owner
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="update-repoOwner"
-                    name="repoOwner"
-                    placeholder="e.g., octocat"
-                    value={updateTaskData.repoOwner}
-                    onChange={handleUpdateInputChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-repoName">
-                    Repository Name
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="update-repoName"
-                    name="repoName"
-                    placeholder="e.g., hello-world"
-                    value={updateTaskData.repoName}
-                    onChange={handleUpdateInputChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="label" htmlFor="update-branchName">
-                    Branch
-                  </label>
-                  <input
-                    className="input"
-                    type="text"
-                    id="update-branchName"
-                    name="branchName"
-                    placeholder="e.g., main"
-                    value={updateTaskData.branchName}
-                    onChange={handleUpdateInputChange}
-                  />
-                </div>
-
-                <div className="button-group">
-                  <button
-                    className="button button-default"
-                    type="button"
-                    onClick={() => setShowUpdateModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="button button-primary"
-                    type="submit"
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? "Updating..." : "Update Task"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
         {showRiskModal && (
           <div className="modal-overlay" onClick={() => setShowRiskModal(false)}>
-            <div
-              className="modal-content risk-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="modal-content risk-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2 className="modal-title">
                   <svg
@@ -1076,16 +530,11 @@ const TaskManager = () => {
         )}
 
         {showCommitsModal && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowCommitsModal(false)}
-          >
-            <div
-              className="modal-content commits-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="modal-overlay" onClick={() => setShowCommitsModal(false)}>
+            <div className="modal-content commits-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2 className="modal-title">
+                  <GitCommit size={20} />
                   GitHub Activity
                 </h2>
                 <button
@@ -1103,19 +552,13 @@ const TaskManager = () => {
                       <li key={index} className="commit-item">
                         <div className="commit-message">
                           <strong>{commit.message}</strong>
-                          <a
-                            href={commit.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={commit.url} target="_blank" rel="noopener noreferrer">
                             View on GitHub
                           </a>
                         </div>
                         <div className="commit-meta">
                           <span>Author: {commit.author}</span>
-                          <span>
-                            Date: {new Date(commit.date).toLocaleString()}
-                          </span>
+                          <span>Date: {new Date(commit.date).toLocaleString()}</span>
                         </div>
                       </li>
                     ))}
@@ -1131,18 +574,12 @@ const TaskManager = () => {
                       <li key={index} className="pr-item">
                         <div className="pr-title">
                           <strong>#{pr.number}: {pr.title}</strong>
-                          <a
-                            href={pr.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={pr.url} target="_blank" rel="noopener noreferrer">
                             View on GitHub
                           </a>
                         </div>
                         <div className="pr-meta">
-                          <span>
-                            Merged: {new Date(pr.merge_date).toLocaleString()}
-                          </span>
+                          <span>Merged: {new Date(pr.merge_date).toLocaleString()}</span>
                         </div>
                       </li>
                     ))}
@@ -1180,7 +617,7 @@ const TaskManager = () => {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <p>Loading your tasks...</p>
+            <p>Loading tasks...</p>
           </div>
         ) : tasks.length > 0 ? (
           <div className="task-grid">
@@ -1211,19 +648,12 @@ const TaskManager = () => {
 
                 {typeof task.progressPercentage === "number" &&
                 task.progressPercentage > 0 ? (
-                  <div
-                    className="task-progress"
-                    title="Progress based on GitHub activity"
-                  >
+                  <div className="task-progress" title="Progress based on GitHub activity">
                     <div className="progress-label">
                       <BarChart2 size={14} />
                       <span>Progress: {task.progressPercentage}%</span>
                       {isTaskStalled(task) && (
-                        <AlertCircle
-                          size={14}
-                          color="#ef4444"
-                          title="No recent activity"
-                        />
+                        <AlertCircle size={14} color="#ef4444" title="No recent activity" />
                       )}
                     </div>
                     <div className="progress-bar-container">
@@ -1237,27 +667,18 @@ const TaskManager = () => {
                     </div>
                   </div>
                 ) : (
-                  <div
-                    className="task-progress"
-                    title="Progress based on GitHub activity"
-                  >
+                  <div className="task-progress" title="Progress based on GitHub activity">
                     <div className="progress-label">
                       <BarChart2 size={14} />
                       <span>Progress: Awaiting activity</span>
-                      <AlertCircle
-                        size={14}
-                        color="#ef4444"
-                        title="No activity detected"
-                      />
+                      <AlertCircle size={14} color="#ef4444" title="No activity detected" />
                     </div>
                   </div>
                 )}
 
                 <div className="task-meta">
                   <div>
-                    <span
-                      className={`priority-badge priority-${task.priority}`}
-                    >
+                    <span className={`priority-badge priority-${task.priority}`}>
                       {task.priority
                         ? task.priority.charAt(0).toUpperCase() +
                           task.priority.slice(1)
@@ -1269,15 +690,6 @@ const TaskManager = () => {
                   </div>
 
                   <div className="task-button-group">
-                    <button
-                      className="button button-secondary"
-                      onClick={() => openUpdateModal(task._id)}
-                      disabled={isLoading}
-                      title="Update Task"
-                    >
-                      <Edit size={14} />
-                    </button>
-
                     <button
                       className="button button-info"
                       onClick={() => openRiskModal(task._id)}
@@ -1298,6 +710,15 @@ const TaskManager = () => {
                           d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                         />
                       </svg>
+                    </button>
+
+                    <button
+                      className="button button-primary"
+                      onClick={() => trackCommits(task._id)}
+                      disabled={isLoading}
+                      title="Track GitHub Activity"
+                    >
+                      <GitCommit size={14} />
                     </button>
 
                     <button
@@ -1343,18 +764,12 @@ const TaskManager = () => {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <p>No tasks assigned to you. Create a new task!</p>
-            <button
-              className="button button-primary margin-top-1"
-              onClick={() => setShowModal(true)}
-            >
-              Create Task
-            </button>
+            <p>No tasks available.</p>
           </div>
         )}
       </div>
-    </LayoutStudent>
+    </LayoutTutor>
   );
 };
 
-export default TaskManager;
+export default TaskManagerTutor;
