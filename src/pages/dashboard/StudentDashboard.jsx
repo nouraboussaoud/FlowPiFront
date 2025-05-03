@@ -48,8 +48,6 @@ function StudentDashboard() {
         
         {/* Main Content Area */}
         <div className="flex-grow-1 p-4">
-          <h2>Welcome to the Student Dashboard</h2>
-          <SkillsManager />
           {selectedTutor && <Chatbox user={selectedTutor} onClose={() => setSelectedTutor(null)} />}
         </div>
 
