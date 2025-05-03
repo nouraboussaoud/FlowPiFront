@@ -12,6 +12,7 @@ const LayoutStudent = ({ children }) => {
   const [showTaskManager, setShowTaskManager] = useState(false);
 
   
+  console.log(localStorage.getItem("role"));
   useEffect(() => {
    
     // Get profile picture filename from local storage

@@ -12,7 +12,7 @@ const TutorsDeliverables = () => {
   useEffect(() => {
     const fetchDeliverables = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/deliverables/tutor', {
+        const response = await axios.get('http://localhost:5000/api/deliverables/history', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('authToken')}`
           }
