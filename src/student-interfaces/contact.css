@@ -36,11 +36,15 @@
   }
   
   .contact-item {
-    padding: 10px;
+    padding: 10px 15px;
     border: none;
     border-bottom: 1px solid #f1f1f1;
     cursor: pointer;
     transition: background-color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 50px; /* Ensure enough height for badge alignment */
   }
   
   .contact-item:hover {
@@ -57,11 +61,22 @@
     font-size: 0.95rem;
     color: #333;
     font-weight: 500;
+    flex-grow: 1; /* Allow name to take available space */
   }
   
   .contact-badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
+    background-color: #dc3545; /* Bright red for visibility */
+    color: #fff;
+    font-size: 0.8rem; /* Slightly smaller for balance */
+    font-weight: 600;
+    padding: 4px 8px; /* Compact padding */
+    min-width: 22px; /* Minimum width for single digits */
+    height: 22px; /* Fixed height */
+    line-height: 14px; /* Center text vertically */
+    text-align: center;
+    border-radius: 11px; /* Smooth pill shape */
+    margin-left: 10px; /* Space from name/avatar */
+    flex-shrink: 0; /* Prevent badge from shrinking */
   }
   
   /* Scrollbar styling for contact list */
@@ -94,7 +109,8 @@
     }
   
     .contact-item {
-      padding: 8px;
+      padding: 8px 12px;
+      min-height: 45px;
     }
   
     .contact-avatar {
@@ -104,5 +120,14 @@
   
     .contact-name {
       font-size: 0.9rem;
+    }
+  
+    .contact-badge {
+      font-size: 0.75rem;
+      padding: 3px 7px;
+      min-width: 20px;
+      height: 20px;
+      line-height: 14px;
+      margin-left: 8px;
     }
   }

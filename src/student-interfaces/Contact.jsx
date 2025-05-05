@@ -87,6 +87,24 @@ function ContactList({ tutors, onSelectTutor }) {
     }
   };
 
+  // Format profile picture URL
+  const getProfilePicUrl = (profilePic) => {
+    if (!profilePic) {
+      return "https://via.placeholder.com/40";
+    }
+    return profilePic.startsWith("http")
+      ? profilePic
+      : `http://localhost:5000/uploads/${profilePic}`;
+  };
+
+  // Log tutors for debugging
+  useEffect(() => {
+    console.log("📋 Tutors received:", tutors);
+    tutors.forEach((tutor) => {
+      console.log(`Tutor: ${tutor.name}, ProfilePic: ${tutor.profilePic}`);
+    });
+  }, [tutors]);
+
   const filteredTutors = tutors.filter((tutor) =>
     tutor.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -114,15 +132,19 @@ function ContactList({ tutors, onSelectTutor }) {
           >
             <div className="d-flex align-items-center">
               <img
-                src={tutor.profilePic || "https://via.placeholder.com/40"}
+                src={getProfilePicUrl(tutor.profilePic)}
                 alt={tutor.name}
                 className="contact-avatar rounded-circle me-2"
+                onError={(e) => {
+                  console.warn(`Failed to load image for ${tutor.name}: ${tutor.profilePic}`);
+                  e.target.src = "https://via.placeholder.com/40";
+                }}
               />
               <span className="contact-name">{tutor.name}</span>
             </div>
 
             {unreadCounts[tutor._id] > 0 && (
-              <span className="badge bg-danger rounded-pill contact-badge">
+              <span className="contact-badge badge rounded-pill">
                 {unreadCounts[tutor._id]}
               </span>
             )}

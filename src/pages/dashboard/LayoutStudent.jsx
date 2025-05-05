@@ -25,9 +25,8 @@ const LayoutStudent = ({ children }) => {
   const handleEditProfile = () => {
     navigate("/edit-profile"); 
   };
-  const handleMessages = () => {
-    navigate("/messages");
-  };
+  
+
 
   const handleNavigateToDeliverables = () => {
     navigate("/deliverables-history");
@@ -593,11 +592,7 @@ const LayoutStudent = ({ children }) => {
                 </li>
               </ul>
             </li>
-            <li className="nav-item">
-              <a className="nav-link" onClick={handleMessages}>
-                Messages
-              </a>
-            </li>
+            
             <li className="nav-item">
               <a className="nav-link" href="http://localhost:3000/InvitationList">
                 Invitations to Join Groups
@@ -752,53 +747,6 @@ const LayoutStudent = ({ children }) => {
     </section>
 
   </main>
-  <footer className="bg-dark p-3">
-    <div className="container">
-      <div className="row align-items-center">
-        <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">
-          
-        </div>
-        {/* Widget */}
-        <div className="col-md-4 mb-3 mb-md-0">
-          <div className="text-center text-white text-primary-hover">
-            Copyrights ©2025 Flowpi. Build by{" "}
-            <a
-              href="https://www.webestica.com/"
-              target="_blank"
-              className="text-white"
-            >
-              Webestica
-            </a>
-            .
-          </div>
-        </div>
-        <div className="col-md-4">
-          <ul className="list-inline mb-0 text-center text-md-end">
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-facebook" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-instagram" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-linkedin-in" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-twitter" />
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </footer>
   <div className="back-top">
     <i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" />
   </div>
