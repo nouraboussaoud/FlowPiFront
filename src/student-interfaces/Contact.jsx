@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { get, put } from "../apiHelper";
 import io from "socket.io-client";
+import "./contact.css";
 
 function ContactList({ tutors, onSelectTutor }) {
   const [unreadCounts, setUnreadCounts] = useState({});
@@ -91,39 +92,37 @@ function ContactList({ tutors, onSelectTutor }) {
   );
 
   return (
-    <div className="contact-list">
-      <h4 className="mb-3">Your Contacts</h4>
+    <div className="contact-list-container">
+      <h4 className="contact-list-title">Your Contacts</h4>
 
       <div className="input-group mb-3">
         <input
           type="text"
-          className="form-control"
+          className="form-control contact-search"
           placeholder="Search tutors..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <ul className="list-group">
+      <ul className="list-group contact-list">
         {filteredTutors.map((tutor) => (
           <li
             key={tutor._id}
-            className="list-group-item d-flex justify-content-between align-items-center"
-            style={{ cursor: "pointer" }}
+            className="list-group-item contact-item d-flex justify-content-between align-items-center"
             onClick={() => handleSelectTutor(tutor)}
           >
             <div className="d-flex align-items-center">
               <img
                 src={tutor.profilePic || "https://via.placeholder.com/40"}
                 alt={tutor.name}
-                className="rounded-circle me-2"
-                style={{ width: "40px", height: "40px" }}
+                className="contact-avatar rounded-circle me-2"
               />
-              <span>{tutor.name}</span>
+              <span className="contact-name">{tutor.name}</span>
             </div>
 
             {unreadCounts[tutor._id] > 0 && (
-              <span className="badge bg-danger rounded-pill">
+              <span className="badge bg-danger rounded-pill contact-badge">
                 {unreadCounts[tutor._id]}
               </span>
             )}
@@ -135,5 +134,3 @@ function ContactList({ tutors, onSelectTutor }) {
 }
 
 export default ContactList;
-
-
