@@ -4,10 +4,14 @@ import LayoutTutorss from './LayoutTutorss';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import * as bootstrap from 'bootstrap'; // ← C’est ici qu’on résout l'erreur
+
 
 const AttendanceHistory = () => {
   const [records, setRecords] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [stats, setStats] = useState(null);
+  const [modalGroupName, setModalGroupName] = useState("");
   const recordsPerPage = 5;
   const navigate = useNavigate();
 
@@ -41,11 +45,7 @@ const AttendanceHistory = () => {
           toast.error("Failed to delete attendance record");
         }
       } catch (error) {
-        if (error.response && error.response.status === 404) {
-          toast.error("Attendance record not found");
-        } else {
-          toast.error("Failed to delete attendance record");
-        }
+        toast.error("Failed to delete attendance record");
         console.error("Error deleting attendance record:", error);
       }
     }
@@ -56,13 +56,25 @@ const AttendanceHistory = () => {
       state: { 
         groupId: record.group._id,
         sessionDate: record.sessionDate,
-        attendanceId: record._id // Add the attendanceId for update
+        attendanceId: record._id
       } 
     });
   };
 
-  const handlePageChange = (selectedPage) => {
-    setCurrentPage(selectedPage.selected);
+  const handleShowStats = async (groupId, groupName) => {
+    try {
+      const response = await axios.get(`/api/attendance/group/${groupId}/stats`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+      setStats(response.data);
+      setModalGroupName(groupName);
+      new bootstrap.Modal(document.getElementById("statsModal")).show();
+    } catch (error) {
+      toast.error("Failed to fetch statistics");
+      console.error("Stats error:", error);
+    }
   };
 
   const offset = currentPage * recordsPerPage;
@@ -89,10 +101,16 @@ const AttendanceHistory = () => {
                   Edit
                 </button>
                 <button 
-                  className="btn btn-sm btn-outline-danger"
+                  className="btn btn-sm btn-outline-danger me-2"
                   onClick={() => handleDelete(record._id)}
                 >
                   Delete
+                </button>
+                <button 
+                  className="btn btn-sm btn-outline-info"
+                  onClick={() => handleShowStats(record.group._id, record.group.name)}
+                >
+                  View Stats
                 </button>
               </div>
             </div>
@@ -138,6 +156,53 @@ const AttendanceHistory = () => {
           >
             Next
           </button>
+        </div>
+
+        {/* 🧾 Stats Modal */}
+        <div className="modal fade" id="statsModal" tabIndex="-1" aria-hidden="true">
+          <div className="modal-dialog modal-lg modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">📊 Statistics for Group: {modalGroupName}</h5>
+                <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div className="modal-body">
+                {stats ? (
+                  <table className="table table-bordered table-hover">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Total</th>
+                        <th>% Presence</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.values(stats).map((member, idx) => (
+                        <tr key={idx}>
+                          <td>{member.name}</td>
+                          <td>{member.email}</td>
+                          <td>{member.present}</td>
+                          <td>{member.absent}</td>
+                          <td>{member.totalSessions}</td>
+                          <td>{member.totalSessions > 0 ? `${((member.present / member.totalSessions) * 100).toFixed(1)}%` : "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No stats available</p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </LayoutTutorss>

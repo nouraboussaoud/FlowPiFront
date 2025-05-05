@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { JitsiMeeting } from '@jitsi/react-sdk';
 import LayoutStudent from './dashboard/LayoutStudent';
 
 const ProjectManager = () => {
+  // États pour la gestion des projets
   const [projects, setProjects] = useState([]);
   const [groups, setGroups] = useState([]);
   const [userGroups, setUserGroups] = useState([]);
@@ -11,12 +13,19 @@ const ProjectManager = () => {
     description: "",
     group: ""
   });
+  
+  // États pour l'interface
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
+  
+  // États pour Jitsi Meet
+  const [showJitsi, setShowJitsi] = useState(false);
+  const [currentMeeting, setCurrentMeeting] = useState(null);
 
+  // Styles CSS-in-JS
   const styles = {
     container: {
       maxWidth: "1200px",
@@ -34,10 +43,10 @@ const ProjectManager = () => {
       borderBottom: "1px solid #e5e7eb",
     },
     title: {
-      color: "#1f2937",
       fontSize: "1.8rem",
-      margin: 0,
-      fontWeight: "600"
+      fontWeight: "600",
+      color: "#1f2937",
+      margin: 0
     },
     button: {
       border: "none",
@@ -53,23 +62,30 @@ const ProjectManager = () => {
     buttonPrimary: {
       backgroundColor: "#1f2937",
       color: "white",
-    },
-    buttonPrimaryHover: {
-      backgroundColor: "#374151",
+      '&:hover': {
+        backgroundColor: "#374151"
+      }
     },
     buttonDanger: {
       backgroundColor: "#ef4444",
       color: "white",
-    },
-    buttonDangerHover: {
-      backgroundColor: "#dc2626",
+      '&:hover': {
+        backgroundColor: "#dc2626"
+      }
     },
     buttonDefault: {
       backgroundColor: "#e5e7eb",
       color: "#374151",
+      '&:hover': {
+        backgroundColor: "#d1d5db"
+      }
     },
-    buttonDefaultHover: {
-      backgroundColor: "#d1d5db",
+    buttonSuccess: {
+      backgroundColor: "#10b981",
+      color: "white",
+      '&:hover': {
+        backgroundColor: "#059669"
+      }
     },
     taskCard: {
       background: "white",
@@ -85,24 +101,24 @@ const ProjectManager = () => {
       }
     },
     taskTitle: {
-      color: "#1f2937",
       fontSize: "1.25rem",
-      margin: "0 0 0.5rem 0",
-      fontWeight: "600"
+      fontWeight: "600",
+      color: "#1f2937",
+      margin: "0 0 0.5rem 0"
     },
     taskDescription: {
       color: "#6b7280",
-      margin: "0.5rem 0",
       fontSize: "0.875rem",
-      lineHeight: "1.5"
+      lineHeight: "1.5",
+      margin: "0.5rem 0"
     },
     taskMeta: {
       display: "flex",
       justifyContent: "space-between",
+      alignItems: "center",
       marginTop: "1rem",
       fontSize: "0.875rem",
-      color: "#6b7280",
-      alignItems: "center"
+      color: "#6b7280"
     },
     groupBadge: {
       backgroundColor: "#e5e7eb",
@@ -146,7 +162,7 @@ const ProjectManager = () => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      zIndex: 1000,
+      zIndex: 1000
     },
     modalContent: {
       background: "white",
@@ -154,29 +170,29 @@ const ProjectManager = () => {
       borderRadius: "0.5rem",
       width: "100%",
       maxWidth: "500px",
-      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
+      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)"
     },
     modalHeader: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: "1.5rem",
+      marginBottom: "1.5rem"
     },
     modalTitle: {
-      margin: 0,
-      color: "#1f2937",
       fontSize: "1.25rem",
-      fontWeight: "600"
+      fontWeight: "600",
+      color: "#1f2937",
+      margin: 0
     },
     closeButton: {
       background: "none",
       border: "none",
       fontSize: "1.5rem",
       cursor: "pointer",
-      color: "#6b7280",
+      color: "#6b7280"
     },
     formGroup: {
-      marginBottom: "1.25rem",
+      marginBottom: "1.25rem"
     },
     label: {
       display: "block",
@@ -193,11 +209,11 @@ const ProjectManager = () => {
       fontSize: "1rem",
       backgroundColor: "#f9fafb",
       transition: "border-color 0.2s",
-    },
-    inputFocus: {
-      outline: "none",
-      borderColor: "#3b82f6",
-      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
+      '&:focus': {
+        outline: "none",
+        borderColor: "#3b82f6",
+        boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)"
+      }
     },
     textarea: {
       width: "100%",
@@ -208,6 +224,11 @@ const ProjectManager = () => {
       minHeight: "100px",
       backgroundColor: "#f9fafb",
       transition: "border-color 0.2s",
+      '&:focus': {
+        outline: "none",
+        borderColor: "#3b82f6",
+        boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)"
+      }
     },
     select: {
       width: "100%",
@@ -215,13 +236,13 @@ const ProjectManager = () => {
       border: "1px solid #e5e7eb",
       borderRadius: "0.375rem",
       fontSize: "1rem",
-      backgroundColor: "#f9fafb",
+      backgroundColor: "#f9fafb"
     },
     buttonGroup: {
       display: "flex",
       justifyContent: "flex-end",
       gap: "1rem",
-      marginTop: "1.5rem",
+      marginTop: "1.5rem"
     },
     errorMessage: {
       color: "#ef4444",
@@ -231,17 +252,17 @@ const ProjectManager = () => {
       marginBottom: "1rem",
       display: "flex",
       alignItems: "center",
-      gap: "0.5rem",
+      gap: "0.5rem"
     },
     taskGrid: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
       gap: "1.5rem",
-      marginTop: "2rem",
+      marginTop: "2rem"
     },
     taskButtonGroup: {
       display: "flex",
-      gap: "0.5rem",
+      gap: "0.5rem"
     },
     groupInfo: {
       display: "flex",
@@ -253,12 +274,37 @@ const ProjectManager = () => {
       flexWrap: "wrap",
       gap: "0.5rem",
       marginTop: "0.5rem"
+    },
+    jitsiContainer: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 2000,
+      backgroundColor: 'white'
+    },
+    closeMeetingButton: {
+      position: 'absolute',
+      top: '20px',
+      right: '20px',
+      zIndex: 2001,
+      background: '#ef4444',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      padding: '8px 16px',
+      cursor: 'pointer'
     }
-  };useEffect(() => {
+  };
+
+  // Effet pour le débogage
+  useEffect(() => {
     console.log("User Groups:", userGroups);
     console.log("Available Groups:", groups);
   }, [userGroups, groups]);
 
+  // Récupération des données
   const fetchData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -268,7 +314,7 @@ const ProjectManager = () => {
     }
 
     try {
-      // 1. Fetch user's groups
+      // 1. Récupérer les groupes de l'utilisateur
       const groupsResponse = await axios.get(
         "http://localhost:5000/api/groups/my-group",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -276,7 +322,7 @@ const ProjectManager = () => {
       setUserGroups(groupsResponse.data);
       const userGroupIds = groupsResponse.data.map(group => group._id);
 
-      // 2. Fetch all projects and filter by user's groups
+      // 2. Récupérer les projets filtrés par groupes
       const projectsRes = await axios.get(
         "http://localhost:5000/api/projects/projects",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -287,18 +333,18 @@ const ProjectManager = () => {
       );
       setProjects(filteredProjects);
 
-      // 3. Fetch available groups for creation
+      // 3. Récupérer les groupes disponibles
       const groupsRes = await axios.get(
         "http://localhost:5000/api/groups/dropdown",
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Filter to only show user's groups
+      // Filtrer pour n'afficher que les groupes de l'utilisateur
       const userGroupsForCreation = groupsRes.data.filter(group => 
         userGroupIds.includes(group._id)
       );
 
-      // Mark groups already used in projects
+      // Marquer les groupes déjà utilisés dans des projets
       const usedGroupIds = filteredProjects
         .map(p => p.group?._id)
         .filter(id => id);
@@ -322,6 +368,7 @@ const ProjectManager = () => {
     fetchData();
   }, []);
 
+  // Gestion des changements de formulaire
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewProject(prev => ({
@@ -330,6 +377,7 @@ const ProjectManager = () => {
     }));
   };
 
+  // Création d'un projet
   const createProject = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -342,7 +390,7 @@ const ProjectManager = () => {
       setIsLoading(true);
       const { name, description, group } = newProject;
       
-      // Verify user has access to the selected group
+      // Vérifier l'accès au groupe sélectionné
       const userGroupIds = userGroups.map(g => g._id);
       if (!userGroupIds.includes(group)) {
         throw new Error("You can only create projects for your own groups");
@@ -365,6 +413,7 @@ const ProjectManager = () => {
     }
   };
 
+  // Mise à jour d'un projet
   const updateProject = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -377,7 +426,7 @@ const ProjectManager = () => {
       setIsLoading(true);
       const { name, description, group } = newProject;
       
-      // Verify user has access to the selected group
+      // Vérifier l'accès au groupe sélectionné
       const userGroupIds = userGroups.map(g => g._id);
       if (!userGroupIds.includes(group)) {
         throw new Error("You can only assign projects to your own groups");
@@ -400,6 +449,7 @@ const ProjectManager = () => {
     }
   };
 
+  // Suppression d'un projet
   const deleteProject = async (projectId) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -410,7 +460,7 @@ const ProjectManager = () => {
     try {
       setIsLoading(true);
       
-      // Verify the project belongs to user's group
+      // Vérifier que le projet appartient à un groupe de l'utilisateur
       const projectToDelete = projects.find(p => p._id === projectId);
       const userGroupIds = userGroups.map(g => g._id);
       
@@ -432,6 +482,7 @@ const ProjectManager = () => {
     }
   };
 
+  // Édition d'un projet
   const handleEdit = (project) => {
     setNewProject({
       name: project.name,
@@ -443,6 +494,7 @@ const ProjectManager = () => {
     setShowModal(true);
   };
 
+  // Réinitialisation du formulaire
   const resetForm = () => {
     setNewProject({
       name: "",
@@ -453,10 +505,27 @@ const ProjectManager = () => {
     setEditMode(false);
   };
 
+  // Démarrer une réunion Jitsi
+  const startMeeting = (project) => {
+    // Créer un nom de salle unique basé sur l'ID du projet
+    const roomName = `project-${project._id}-${Math.random().toString(36).substring(7)}`;
+    setCurrentMeeting({
+      roomName,
+      projectName: project.name
+    });
+    setShowJitsi(true);
+  };
+
+  // Fermer la réunion Jitsi
+  const closeMeeting = () => {
+    setShowJitsi(false);
+    setCurrentMeeting(null);
+  };
+
   return (
     <LayoutStudent>
       <div style={styles.container}>
-     
+        {/* Affichage des erreurs */}
         {error && (
           <div style={styles.errorMessage}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#ef4444">
@@ -466,12 +535,64 @@ const ProjectManager = () => {
           </div>
         )}
 
+        {/* Fenêtre Jitsi Meet */}
+        {showJitsi && currentMeeting && (
+          <div style={styles.jitsiContainer}>
+            <button 
+              style={styles.closeMeetingButton}
+              onClick={closeMeeting}
+            >
+              Fermer la réunion
+            </button>
+            <JitsiMeeting
+             domain="jitsi.riot.im" 
+              roomName={currentMeeting.roomName}
+              configOverwrite={{
+                startWithAudioMuted: true,
+                startWithVideoMuted: false,
+                subject: `Réunion pour le projet: ${currentMeeting.projectName}`,
+                constraints: {
+                  video: {
+                    height: { ideal: 720, max: 720, min: 240 }
+                  }
+                },
+                disableSimulcast: false,
+                startScreenSharing: true,
+                enableEmailInStats: false
+              }}
+              interfaceConfigOverwrite={{
+                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                SHOW_CHROME_EXTENSION_BANNER: false,
+                MOBILE_APP_PROMO: false,
+                TOOLBAR_BUTTONS: [
+                  'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+                  'fodeviceselection', 'hangup', 'profile', 'info', 'chat', 'recording',
+                  'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                  'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+                  'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone'
+                ]
+              }}
+              userInfo={{
+                displayName: localStorage.getItem('username') || 'Utilisateur'
+              }}
+              onApiReady={(externalApi) => {
+                console.log('Jitsi API ready', externalApi);
+              }}
+              getIFrameRef={(iframeRef) => {
+                iframeRef.style.height = '100vh';
+                iframeRef.style.width = '100%';
+              }}
+            />
+          </div>
+        )}
+
+        {/* Modal de création/édition de projet */}
         {showModal && (
           <div style={styles.modalOverlay} onClick={() => setShowModal(false)}>
             <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <div style={styles.modalHeader}>
                 <h2 style={styles.modalTitle}>
-                  {editMode ? "Edit Project" : "Create New Project"}
+                  {editMode ? "Modifier le projet" : "Créer un nouveau projet"}
                 </h2>
                 <button 
                   style={styles.closeButton}
@@ -482,13 +603,13 @@ const ProjectManager = () => {
               </div>
               <form onSubmit={editMode ? updateProject : createProject}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label} htmlFor="name">Project Name*</label>
+                  <label style={styles.label} htmlFor="name">Nom du projet*</label>
                   <input
                     style={styles.input}
                     type="text"
                     id="name"
                     name="name"
-                    placeholder="Enter project name"
+                    placeholder="Entrez le nom du projet"
                     value={newProject.name}
                     onChange={handleInputChange}
                     required
@@ -501,7 +622,7 @@ const ProjectManager = () => {
                     style={styles.textarea}
                     id="description"
                     name="description"
-                    placeholder="Enter project description"
+                    placeholder="Entrez la description du projet"
                     value={newProject.description}
                     onChange={handleInputChange}
                     required
@@ -509,7 +630,7 @@ const ProjectManager = () => {
                 </div>
                 
                 <div style={styles.formGroup}>
-                  <label style={styles.label} htmlFor="group">Group*</label>
+                  <label style={styles.label} htmlFor="group">Groupe*</label>
                   <select
                     style={styles.select}
                     id="group"
@@ -518,7 +639,7 @@ const ProjectManager = () => {
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Select a group</option>
+                    <option value="">Sélectionnez un groupe</option>
                     {groups.map(group => (
                       <option 
                         key={group._id} 
@@ -526,8 +647,8 @@ const ProjectManager = () => {
                         disabled={group.isUsed && (!editMode || group._id !== newProject.group)}
                       >
                         {group.name} 
-                        {group.assignedSubjects?.length > 0 && ` (${group.assignedSubjects.length} subjects)`}
-                        {group.isUsed && " (Already assigned to another project)"}
+                        {group.assignedSubjects?.length > 0 && ` (${group.assignedSubjects.length} matières)`}
+                        {group.isUsed && " (Déjà assigné à un autre projet)"}
                       </option>
                     ))}
                   </select>
@@ -537,26 +658,24 @@ const ProjectManager = () => {
                   <button 
                     style={{
                       ...styles.button,
-                      ...styles.buttonDefault,
-                      ':hover': styles.buttonDefaultHover
+                      ...styles.buttonDefault
                     }}
                     type="button" 
                     onClick={() => setShowModal(false)}
                   >
-                    Cancel
+                    Annuler
                   </button>
                   <button 
                     style={{
                       ...styles.button,
-                      ...styles.buttonPrimary,
-                      ':hover': styles.buttonPrimaryHover
+                      ...styles.buttonPrimary
                     }}
                     type="submit" 
                     disabled={isLoading}
                   >
                     {isLoading 
-                      ? (editMode ? 'Updating...' : 'Creating...') 
-                      : (editMode ? 'Update Project' : 'Create Project')}
+                      ? (editMode ? 'Enregistrement...' : 'Création...') 
+                      : (editMode ? 'Enregistrer' : 'Créer le projet')}
                   </button>
                 </div>
               </form>
@@ -564,12 +683,13 @@ const ProjectManager = () => {
           </div>
         )}
 
+        {/* Affichage principal */}
         {isLoading ? (
           <div style={styles.emptyState}>
             <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#9ca3af" style={{ margin: '0 auto 1rem' }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p>Loading projects...</p>
+            <p>Chargement des projets...</p>
           </div>
         ) : projects.length > 0 ? (
           <div style={styles.taskGrid}>
@@ -586,7 +706,7 @@ const ProjectManager = () => {
                           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
-                          {project.group.name || "No group name"}
+                          {project.group.name || "Nom de groupe non défini"}
                         </span>
                         
                         {project.group.assignedSubjects?.length > 0 ? (
@@ -601,11 +721,11 @@ const ProjectManager = () => {
                             ))}
                           </div>
                         ) : (
-                          <span style={styles.subjectBadge}>No subjects assigned</span>
+                          <span style={styles.subjectBadge}>Aucune matière assignée</span>
                         )}
                       </>
                     ) : (
-                      <span style={styles.groupBadge}>No group assigned</span>
+                      <span style={styles.groupBadge}>Aucun groupe assigné</span>
                     )}
                   </div>
                   
@@ -614,10 +734,23 @@ const ProjectManager = () => {
                       style={{
                         ...styles.button,
                         padding: '0.5rem',
-                        ...styles.buttonPrimary,
+                        ...styles.buttonSuccess
+                      }}
+                      onClick={() => startMeeting(project)}
+                      title="Démarrer une réunion"
+                    >
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    <button 
+                      style={{
+                        ...styles.button,
+                        padding: '0.5rem',
+                        ...styles.buttonPrimary
                       }}
                       onClick={() => handleEdit(project)}
-                      title="Edit project"
+                      title="Modifier le projet"
                     >
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -627,10 +760,10 @@ const ProjectManager = () => {
                       style={{
                         ...styles.button,
                         padding: '0.5rem',
-                        ...styles.buttonDanger,
+                        ...styles.buttonDanger
                       }}
                       onClick={() => deleteProject(project._id)}
-                      title="Delete project"
+                      title="Supprimer le projet"
                     >
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -646,21 +779,20 @@ const ProjectManager = () => {
             <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#9ca3af" style={{ margin: '0 auto 1rem' }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p>No projects available for your groups. Create your first project or wait to be added to a group!</p>
+            <p>Aucun projet disponible pour vos groupes. Créez votre premier projet ou attendez d'être ajouté à un groupe !</p>
             {groups.length > 0 && (
               <button 
                 style={{
                   ...styles.button,
                   ...styles.buttonPrimary,
-                  marginTop: '1rem',
-                  ':hover': styles.buttonPrimaryHover
+                  marginTop: '1rem'
                 }}
                 onClick={() => {
                   resetForm();
                   setShowModal(true);
                 }}
               >
-                Create Project
+                Créer un projet
               </button>
             )}
           </div>

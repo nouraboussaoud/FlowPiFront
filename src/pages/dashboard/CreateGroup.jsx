@@ -127,7 +127,8 @@ const CreateGroup = () => {
   };
 
   return (    <LayoutStudent>
-   
+  
+
    
     <div style={styles.container}>
       <h2 style={styles.header}>Create a New Group</h2>
