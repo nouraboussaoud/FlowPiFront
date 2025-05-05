@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import LayoutStudent from "../dashboard/LayoutStudent";
 import "./Tasks.css";
 import { Folder, Clock, BarChart2, Edit, AlertCircle, Eye } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Contact from "../../student-interfaces/Contact";
+import { get, post } from "../../apiHelper";
+import Chatbox from "../tutor-interfaces/chatbox/ChatBox";
 
 const TaskManager = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
@@ -45,9 +51,24 @@ const TaskManager = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  // Chat bubble states
+  const [tutors, setTutors] = useState([]);
+  const [selectedTutor, setSelectedTutor] = useState(null);
+  const [showContactList, setShowContactList] = useState(false);
+  const [showChatBubble, setShowChatBubble] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 6; // Set to 6 tasks per page
 
   // Status enum
   const statusOptions = ["pending", "in-progress", "completed"];
+
+  // Pagination calculations
+  const totalPages = Math.ceil(tasks.length / tasksPerPage);
+  const startIndex = (currentPage - 1) * tasksPerPage;
+  const endIndex = startIndex + tasksPerPage;
+  const paginatedTasks = tasks.slice(startIndex, endIndex);
 
   // Helper functions for risk assessment
   const getRiskColor = (risk) => {
@@ -159,7 +180,7 @@ const TaskManager = () => {
     return Math.round(Math.min(progress, 100));
   };
 
-  // Event handlers
+  // Event handlers for tasks
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTask((prevTask) => ({
@@ -267,7 +288,6 @@ const TaskManager = () => {
       return;
     }
 
-    // Handle case where projectId is an object (populated project)
     const id = typeof projectId === "object" && projectId?._id ? projectId._id : projectId;
 
     if (!id || typeof id !== "string") {
@@ -383,6 +403,8 @@ const TaskManager = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTasks(response.data || []);
+      // Reset to first page when tasks are fetched
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching assigned tasks:", error);
       setError(
@@ -443,6 +465,11 @@ const TaskManager = () => {
       });
       setShowModal(false);
       setError(null);
+      // Adjust current page if new task pushes tasks to a new page
+      const newTotalPages = Math.ceil((tasks.length + 1) / tasksPerPage);
+      if (currentPage > newTotalPages) {
+        setCurrentPage(newTotalPages);
+      }
     } catch (error) {
       console.error("Error creating task:", error);
       setError(error.response?.data?.message || "Error creating task");
@@ -497,12 +524,120 @@ const TaskManager = () => {
       });
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
       setError(null);
+      // Adjust current page if the last task on the current page is deleted
+      const newTotalPages = Math.ceil((tasks.length - 1) / tasksPerPage);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) {
+        setCurrentPage(1);
+      }
     } catch (error) {
       console.error("Error deleting task:", error);
       setError(error.response?.data?.message || "Error deleting task");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Generate page numbers with ellipses
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage, endPage;
+
+    if (totalPages <= maxPagesToShow) {
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      const halfMax = Math.floor(maxPagesToShow / 2);
+      if (currentPage <= halfMax + 1) {
+        startPage = 1;
+        endPage = maxPagesToShow - 1;
+      } else if (currentPage + halfMax >= totalPages) {
+        startPage = totalPages - maxPagesToShow + 2;
+        endPage = totalPages;
+      } else {
+        startPage = currentPage - halfMax;
+        endPage = currentPage + halfMax - 1;
+      }
+    }
+
+    // Always include first page
+    pages.push(1);
+
+    // Add ellipsis if needed
+    if (startPage > 2) {
+      pages.push("...");
+    }
+
+    // Add middle pages
+    for (let i = Math.max(2, startPage); i <= Math.min(totalPages - 1, endPage); i++) {
+      pages.push(i);
+    }
+
+    // Add ellipsis if needed
+    if (endPage < totalPages - 1) {
+      pages.push("...");
+    }
+
+    // Always include last page if more than one page
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  // Chat bubble event handlers
+  const fetchUnreadMessagesCount = () => {
+    get("/messages/unread")
+      .then((data) => {
+        setUnreadMessages(data?.count || 0);
+      })
+      .catch((error) => {
+        console.error("Error fetching unread messages:", error);
+      });
+  };
+
+  const handleSelectTutor = (tutor) => {
+    setSelectedTutor(tutor);
+    setShowContactList(false);
+    setShowChatBubble(false);
+    setUnreadMessages((prev) => Math.max(0, prev - 1));
+  };
+
+  const toggleContactList = () => {
+    setShowContactList(true);
+    setShowChatBubble(false);
+  };
+
+  const closeContactList = () => {
+    setShowContactList(false);
+    setShowChatBubble(!selectedTutor);
+  };
+
+  const handleCloseChatbox = () => {
+    setSelectedTutor(null);
+    setShowChatBubble(true);
   };
 
   const getProjectName = (projectId) => {
@@ -532,7 +667,36 @@ const TaskManager = () => {
   useEffect(() => {
     fetchTasks();
     fetchProjects();
-  }, []);
+
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      console.log("Token stored in localStorage:", token);
+      navigate("/tasks", { replace: true });
+    }
+
+    get("/users/getAll")
+      .then((data) => {
+        const tutors = data.filter((user) => user.role === "tutor");
+        setTutors(tutors);
+      })
+      .catch((error) => {
+        console.error("Error fetching tutors:", error);
+        toast.error("Error fetching tutors", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      });
+
+    fetchUnreadMessagesCount();
+
+    const messageInterval = setInterval(fetchUnreadMessagesCount, 30000);
+
+    return () => {
+      clearInterval(messageInterval);
+    };
+  }, [location, navigate]);
 
   useEffect(() => {
     if (error) {
@@ -549,6 +713,8 @@ const TaskManager = () => {
         setShowRiskModal(false);
         setShowCommitsModal(false);
         setShowProjectModal(false);
+        setShowContactList(false);
+        setShowChatBubble(true);
       }
     };
     window.addEventListener("keydown", handleEscape);
@@ -1211,6 +1377,34 @@ const TaskManager = () => {
           </div>
         )}
 
+        <div className="chat-bubble-container">
+          {showChatBubble && !selectedTutor && (
+            <div 
+              className={`chat-bubble ${showContactList ? 'active' : ''}`} 
+              onClick={toggleContactList}
+            >
+              <i className="fas fa-comments"></i>
+              {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
+            </div>
+          )}
+          
+          {showContactList && (
+            <div className="contact-list-panel">
+              <div className="panel-header">
+                <h3>Contacts</h3>
+                <button className="close-btn" onClick={closeContactList}>×</button>
+              </div>
+              <div className="panel-body">
+                <Contact tutors={tutors} onSelectTutor={handleSelectTutor} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {selectedTutor && (
+          <Chatbox user={selectedTutor} onClose={handleCloseChatbox} />
+        )}
+
         {isLoading && tasks.length === 0 ? (
           <div className="empty-state">
             <svg
@@ -1231,150 +1425,184 @@ const TaskManager = () => {
             <p>Loading your tasks...</p>
           </div>
         ) : tasks.length > 0 ? (
-          <div className="task-grid">
-            {tasks.map((task) => (
-              <div
-                key={task._id}
-                className={`task-card task-card-${task.priority}`}
-              >
-                <h3 className="task-title">{task.title}</h3>
-                <p className="task-description">{task.description}</p>
-                {task.taskDetails && (
-                  <p className="task-details">
-                    <strong>Details:</strong> {task.taskDetails}
-                  </p>
-                )}
-                <div className="task-status">
-                  <span
-                    className="status-badge"
-                    style={{ backgroundColor: getStatusColor(task.status) }}
-                  >
-                    {task.status
-                      ? task.status.charAt(0).toUpperCase() + task.status.slice(1)
-                      : "Pending"}
-                  </span>
-                </div>
-                {typeof task.progressPercentage === "number" &&
-                task.progressPercentage > 0 ? (
-                  <div
-                    className="task-progress"
-                    title="Progress based on GitHub activity"
-                  >
-                    <div className="progress-label">
-                      <BarChart2 size={14} />
-                      <span>Progress: {task.progressPercentage}%</span>
-                      {isTaskStalled(task) && (
+          <>
+            <div className="task-grid">
+              {paginatedTasks.map((task) => (
+                <div
+                  key={task._id}
+                  className={`task-card task-card-${task.priority}`}
+                >
+                  <h3 className="task-title">{task.title}</h3>
+                  <p className="task-description">{task.description}</p>
+                  {task.taskDetails && (
+                    <p className="task-details">
+                      <strong>Details:</strong> {task.taskDetails}
+                    </p>
+                  )}
+                  <div className="task-status">
+                    <span
+                      className="status-badge"
+                      style={{ backgroundColor: getStatusColor(task.status) }}
+                    >
+                      {task.status
+                        ? task.status.charAt(0).toUpperCase() + task.status.slice(1)
+                        : "Pending"}
+                    </span>
+                  </div>
+                  {typeof task.progressPercentage === "number" &&
+                  task.progressPercentage > 0 ? (
+                    <div
+                      className="task-progress"
+                      title="Progress based on GitHub activity"
+                    >
+                      <div className="progress-label">
+                        <BarChart2 size={14} />
+                        <span>Progress: {task.progressPercentage}%</span>
+                        {isTaskStalled(task) && (
+                          <AlertCircle
+                            size={14}
+                            color="#ef4444"
+                            title="No recent activity"
+                          />
+                        )}
+                      </div>
+                      <div className="progress-bar-container">
+                        <div
+                          className="progress-bar"
+                          style={{
+                            width: `${task.progressPercentage}%`,
+                            backgroundColor: getProgressColor(task.progressPercentage),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="task-progress"
+                      title="Progress based on GitHub activity"
+                    >
+                      <div className="progress-label">
+                        <BarChart2 size={14} />
+                        <span>Progress: Awaiting activity</span>
                         <AlertCircle
                           size={14}
                           color="#ef4444"
-                          title="No recent activity"
+                          title="No activity detected"
                         />
-                      )}
+                      </div>
                     </div>
-                    <div className="progress-bar-container">
-                      <div
-                        className="progress-bar"
-                        style={{
-                          width: `${task.progressPercentage}%`,
-                          backgroundColor: getProgressColor(task.progressPercentage),
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="task-progress"
-                    title="Progress based on GitHub activity"
-                  >
-                    <div className="progress-label">
-                      <BarChart2 size={14} />
-                      <span>Progress: Awaiting activity</span>
-                      <AlertCircle
-                        size={14}
-                        color="#ef4444"
-                        title="No activity detected"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="task-meta">
-                  <div>
-                    <span
-                      className={`priority-badge priority-${task.priority}`}
-                    >
-                      {task.priority
-                        ? task.priority.charAt(0).toUpperCase() +
-                          task.priority.slice(1)
-                        : "Medium"}
-                    </span>
-                    <span className="margin-left-half">
-                      • {getProjectName(task.project)}
-                    </span>
-                  </div>
-                  <div className="task-button-group">
-                    <button
-                      className="button button-secondary"
-                      onClick={() => openUpdateModal(task._id)}
-                      disabled={isLoading}
-                      title="Update Task"
-                    >
-                      <Edit size={14} />
-                    </button>
-                    <button
-                      className="button button-info"
-                      onClick={() => openRiskModal(task._id)}
-                      disabled={isLoading}
-                      title="View AI Risk Assessment"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                  )}
+                  <div className="task-meta">
+                    <div>
+                      <span
+                        className={`priority-badge priority-${task.priority}`}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      className="button button-primary"
-                      onClick={() => openProjectModal(task.project?._id || task.project)}
-                      disabled={isLoading || !task.project}
-                      title="View Project Details"
-                    >
-                      <Eye size={14} />
-                    </button>
-                    <button
-                      className="button button-danger"
-                      onClick={() => deleteTask(task._id)}
-                      disabled={isLoading}
-                      title="Delete Task"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        {task.priority
+                          ? task.priority.charAt(0).toUpperCase() +
+                            task.priority.slice(1)
+                          : "Medium"}
+                      </span>
+                      <span className="margin-left-half">
+                        • {getProjectName(task.project)}
+                      </span>
+                    </div>
+                    <div className="task-button-group">
+                      <button
+                        className="button button-secondary"
+                        onClick={() => openUpdateModal(task._id)}
+                        disabled={isLoading}
+                        title="Update Task"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        className="button button-info"
+                        onClick={() => openRiskModal(task._id)}
+                        disabled={isLoading}
+                        title="View AI Risk Assessment"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className="button button-primary"
+                        onClick={() => openProjectModal(task.project?._id || task.project)}
+                        disabled={isLoading || !task.project}
+                        title="View Project Details"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        className="button button-danger"
+                        onClick={() => deleteTask(task._id)}
+                        disabled={isLoading}
+                        title="Delete Task"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            {tasks.length > 0 && (
+              <div className="pagination">
+                <button
+                  className="pagination-button"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <div className="pagination-pages">
+                  {getPageNumbers().map((page, index) => (
+                    <button
+                      key={index}
+                      className={`pagination-page ${
+                        page === currentPage ? "active" : ""
+                      } ${page === "..." ? "ellipsis" : ""}`}
+                      onClick={() => typeof page === "number" && goToPage(page)}
+                      disabled={page === "..."}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="pagination-button"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="empty-state">
             <svg
@@ -1402,6 +1630,197 @@ const TaskManager = () => {
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .chat-bubble-container {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          z-index: 1000;
+        }
+        
+        .chat-bubble {
+          width: 60px;
+          height: 60px;
+          background-color: #007bff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 24px;
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          transition: all 0.3s ease;
+          position: relative;
+        }
+        
+        .chat-bubble:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chat-bubble.active {
+          background-color: #0056b3;
+        }
+        
+        .badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background-color: #ff4136;
+          color: white;
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .contact-list-panel {
+          position: absolute;
+          bottom: 75px;
+          right: 0;
+          width: 300px;
+          max-height: 400px;
+          background-color: white;
+          border-radius: 10px;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .panel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px;
+          background-color: #f8f9fa;
+          border-bottom: 1px solid #e4e6eb;
+        }
+        
+        .panel-header h3 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        
+        .close-btn {
+          border: none;
+          background: none;
+          font-size: 20px;
+          cursor: pointer;
+          color: #6c757d;
+        }
+        
+        .close-btn:hover {
+          color: #343a40;
+        }
+        
+        .panel-body {
+          padding: 10px;
+          overflow-y: auto;
+          flex-grow: 1;
+        }
+
+        .pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-top: 20px;
+          gap: 10px;
+        }
+
+        .pagination-button {
+          padding: 8px 16px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background-color 0.2s;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+          background-color: #0056b3;
+        }
+
+        .pagination-button:disabled {
+          background-color: #6c757d;
+          cursor: not-allowed;
+        }
+
+        .pagination-pages {
+          display: flex;
+          gap: 5px;
+        }
+
+        .pagination-page {
+          padding: 8px 12px;
+          background-color: #f8f9fa;
+          color: #343a40;
+          border: 1px solid #e4e6eb;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s;
+        }
+
+        .pagination-page:hover:not(.ellipsis):not(.active) {
+          background-color: #e4e6eb;
+        }
+
+        .pagination-page.active {
+          background-color: #007bff;
+          color: white;
+          border-color: #007bff;
+        }
+
+        .pagination-page.ellipsis {
+          background-color: transparent;
+          border: none;
+          cursor: default;
+          display: flex;
+          align-items: center;
+        }
+
+        @media (max-width: 767.98px) {
+          .chat-bubble-container {
+            bottom: 20px;
+            right: 20px;
+          }
+          .chat-bubble {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+          }
+          .contact-list-panel {
+            width: 250px;
+            max-height: 300px;
+          }
+          .badge {
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+          }
+          .pagination {
+            flex-wrap: wrap;
+            gap: 5px;
+          }
+          .pagination-button {
+            padding: 6px 12px;
+            font-size: 12px;
+          }
+          .pagination-page {
+            padding: 6px 10px;
+            font-size: 12px;
+          }
+        }
+      `}</style>
     </LayoutStudent>
   );
 };

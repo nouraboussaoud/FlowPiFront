@@ -155,14 +155,12 @@ const LayoutTutor = ({ children }) => {
   return (
     <div>
        <>
-  <title>Eduport - LMS, Education and Course Theme</title>
+  <title>FlowPi</title>
   <meta charSet="utf-8" />
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, shrink-to-fit=no"
   />
-  <meta name="author" content="Webestica.com" />
-  <meta name="description" content="Eduport- LMS, Education and Course Theme" />
   {/* Dark mode */}
   {/* Favicon */}
   <link rel="shortcut icon" href="assets/images/favicon.ico" />
@@ -193,11 +191,7 @@ const LayoutTutor = ({ children }) => {
     <nav className="navbar navbar-expand-xl">
       <div className="container">
         <a className="navbar-brand" href="index.html">
-          <img
-            className="light-mode-item navbar-brand-item"
-            src="assets/images/logo.svg"
-            alt="logo"
-          />
+          
           <img
             className="dark-mode-item navbar-brand-item"
             src="assets/images/logo-light.svg"
@@ -1134,16 +1128,7 @@ const LayoutTutor = ({ children }) => {
                     RTL demo
                   </a>
                 </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="https://themes.getbootstrap.com/store/webestica/"
-                    target="_blank"
-                  >
-                    <i className="text-success fa-fw bi bi-cloud-download-fill me-2" />
-                    Buy Eduport!
-                  </a>
-                </li>
+                
                 <li>
                   {" "}
                   <hr className="dropdown-divider" />
@@ -1225,60 +1210,6 @@ const LayoutTutor = ({ children }) => {
     </section>
 
   </main>
-  <footer className="bg-dark p-3">
-    <div className="container">
-      <div className="row align-items-center">
-        <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">
-          <a href="index.html">
-            {" "}
-            <img
-              className="h-20px"
-              src="assets/images/logo-light.svg"
-              alt="logo"
-            />{" "}
-          </a>
-        </div>
-        {/* Widget */}
-        <div className="col-md-4 mb-3 mb-md-0">
-          <div className="text-center text-white text-primary-hover">
-            Copyrights ©2024 Eduport. Build by{" "}
-            <a
-              href="https://www.webestica.com/"
-              target="_blank"
-              className="text-white"
-            >
-              Webestica
-            </a>
-            .
-          </div>
-        </div>
-        <div className="col-md-4">
-          <ul className="list-inline mb-0 text-center text-md-end">
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-facebook" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-instagram" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-linkedin-in" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-twitter" />
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </footer>
   <div className="back-top">
     <i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" />
   </div>
