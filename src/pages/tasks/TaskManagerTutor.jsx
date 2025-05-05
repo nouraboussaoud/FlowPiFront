@@ -18,6 +18,14 @@ const TaskManagerTutor = () => {
     explanation: "",
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 6;
+
+  // Pagination calculations
+  const totalPages = Math.ceil(tasks.length / tasksPerPage);
+  const startIndex = (currentPage - 1) * tasksPerPage;
+  const endIndex = startIndex + tasksPerPage;
+  const paginatedTasks = tasks.slice(startIndex, endIndex);
 
   // Helper functions for risk assessment
   const getRiskColor = (risk) => {
@@ -201,15 +209,6 @@ const TaskManagerTutor = () => {
         )
       );
 
-      // Optionally update progress in backend (uncomment if persistence is needed)
-      /*
-      await axios.put(
-        `http://localhost:5000/api/tasks/updateTaskProgress/${taskId}`,
-        { progressPercentage: calculatedProgress },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      */
-
       setGithubData({
         commits: commits || [],
         pull_requests: pull_requests || []
@@ -247,6 +246,7 @@ const TaskManagerTutor = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTasks(response.data);
+      setCurrentPage(1); // Reset to first page when tasks are fetched
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setError(error.response?.data?.message || "Error fetching tasks");
@@ -308,6 +308,13 @@ const TaskManagerTutor = () => {
       });
       setTasks(tasks.filter((task) => task._id !== taskId));
       setError(null);
+      // Adjust current page if necessary
+      const newTotalPages = Math.ceil((tasks.length - 1) / tasksPerPage);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) {
+        setCurrentPage(1);
+      }
     } catch (error) {
       console.error("Error deleting task:", error);
       setError(error.response?.data?.message || "Error deleting task");
@@ -344,8 +351,65 @@ const TaskManagerTutor = () => {
   const isTaskStalled = (task) => {
     if (task.status === "completed") return false;
     if (!task.progressPercentage || task.progressPercentage === 0) return true;
-    // Could fetch recent commits/PRs to check, but for simplicity, assume stalled if low progress
     return task.progressPercentage < 30;
+  };
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage, endPage;
+
+    if (totalPages <= maxPagesToShow) {
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      const halfMax = Math.floor(maxPagesToShow / 2);
+      if (currentPage <= halfMax + 1) {
+        startPage = 1;
+        endPage = maxPagesToShow - 1;
+      } else if (currentPage + halfMax >= totalPages) {
+        startPage = totalPages - maxPagesToShow + 2;
+        endPage = totalPages;
+      } else {
+        startPage = currentPage - halfMax;
+        endPage = currentPage + halfMax - 1;
+      }
+    }
+
+    pages.push(1);
+    if (startPage > 2) {
+      pages.push("...");
+    }
+    for (let i = Math.max(2, startPage); i <= Math.min(totalPages - 1, endPage); i++) {
+      pages.push(i);
+    }
+    if (endPage < totalPages - 1) {
+      pages.push("...");
+    }
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
+
+    return pages;
   };
 
   const taskStats = {
@@ -620,133 +684,167 @@ const TaskManagerTutor = () => {
             <p>Loading tasks...</p>
           </div>
         ) : tasks.length > 0 ? (
-          <div className="task-grid">
-            {tasks.map((task) => (
-              <div
-                key={task._id}
-                className={`task-card task-card-${task.priority}`}
-              >
-                <h3 className="task-title">{task.title}</h3>
-                <p className="task-description">{task.description}</p>
+          <>
+            <div className="task-grid">
+              {paginatedTasks.map((task) => (
+                <div
+                  key={task._id}
+                  className={`task-card task-card-${task.priority}`}
+                >
+                  <h3 className="task-title">{task.title}</h3>
+                  <p className="task-description">{task.description}</p>
 
-                {task.taskDetails && (
-                  <p className="task-details">
-                    <strong>Details:</strong> {task.taskDetails}
-                  </p>
-                )}
+                  {task.taskDetails && (
+                    <p className="task-details">
+                      <strong>Details:</strong> {task.taskDetails}
+                    </p>
+                  )}
 
-                <div className="task-status">
-                  <span
-                    className="status-badge"
-                    style={{ backgroundColor: getStatusColor(task.status) }}
-                  >
-                    {task.status
-                      ? task.status.charAt(0).toUpperCase() + task.status.slice(1)
-                      : "Pending"}
-                  </span>
-                </div>
-
-                {typeof task.progressPercentage === "number" &&
-                task.progressPercentage > 0 ? (
-                  <div className="task-progress" title="Progress based on GitHub activity">
-                    <div className="progress-label">
-                      <BarChart2 size={14} />
-                      <span>Progress: {task.progressPercentage}%</span>
-                      {isTaskStalled(task) && (
-                        <AlertCircle size={14} color="#ef4444" title="No recent activity" />
-                      )}
-                    </div>
-                    <div className="progress-bar-container">
-                      <div
-                        className="progress-bar"
-                        style={{
-                          width: `${task.progressPercentage}%`,
-                          backgroundColor: getProgressColor(task.progressPercentage),
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="task-progress" title="Progress based on GitHub activity">
-                    <div className="progress-label">
-                      <BarChart2 size={14} />
-                      <span>Progress: Awaiting activity</span>
-                      <AlertCircle size={14} color="#ef4444" title="No activity detected" />
-                    </div>
-                  </div>
-                )}
-
-                <div className="task-meta">
-                  <div>
-                    <span className={`priority-badge priority-${task.priority}`}>
-                      {task.priority
-                        ? task.priority.charAt(0).toUpperCase() +
-                          task.priority.slice(1)
-                        : "Medium"}
-                    </span>
-                    <span className="margin-left-half">
-                      • {getProjectName(task.project)}
+                  <div className="task-status">
+                    <span
+                      className="status-badge"
+                      style={{ backgroundColor: getStatusColor(task.status) }}
+                    >
+                      {task.status
+                        ? task.status.charAt(0).toUpperCase() + task.status.slice(1)
+                        : "Pending"}
                     </span>
                   </div>
 
-                  <div className="task-button-group">
-                    <button
-                      className="button button-info"
-                      onClick={() => openRiskModal(task._id)}
-                      disabled={isLoading}
-                      title="View AI Risk Assessment"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                    </button>
+                  {typeof task.progressPercentage === "number" &&
+                  task.progressPercentage > 0 ? (
+                    <div className="task-progress" title="Progress based on GitHub activity">
+                      <div className="progress-label">
+                        <BarChart2 size={14} />
+                        <span>Progress: {task.progressPercentage}%</span>
+                        {isTaskStalled(task) && (
+                          <AlertCircle size={14} color="#ef4444" title="No recent activity" />
+                        )}
+                      </div>
+                      <div className="progress-bar-container">
+                        <div
+                          className="progress-bar"
+                          style={{
+                            width: `${task.progressPercentage}%`,
+                            backgroundColor: getProgressColor(task.progressPercentage),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="task-progress" title="Progress based on GitHub activity">
+                      <div className="progress-label">
+                        <BarChart2 size={14} />
+                        <span>Progress: Awaiting activity</span>
+                        <AlertCircle size={14} color="#ef4444" title="No activity detected" />
+                      </div>
+                    </div>
+                  )}
 
-                    <button
-                      className="button button-primary"
-                      onClick={() => trackCommits(task._id)}
-                      disabled={isLoading}
-                      title="Track GitHub Activity"
-                    >
-                      <GitCommit size={14} />
-                    </button>
+                  <div className="task-meta">
+                    <div>
+                      <span className={`priority-badge priority-${task.priority}`}>
+                        {task.priority
+                          ? task.priority.charAt(0).toUpperCase() +
+                            task.priority.slice(1)
+                          : "Medium"}
+                      </span>
+                      <span className="margin-left-half">
+                        • {getProjectName(task.project)}
+                      </span>
+                    </div>
 
-                    <button
-                      className="button button-danger"
-                      onClick={() => deleteTask(task._id)}
-                      disabled={isLoading}
-                      title="Delete Task"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                    <div className="task-button-group">
+                      <button
+                        className="button button-info"
+                        onClick={() => openRiskModal(task._id)}
+                        disabled={isLoading}
+                        title="View AI Risk Assessment"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          width="14"
+                          height="14"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                      </button>
+
+                      <button
+                        className="button button-primary"
+                        onClick={() => trackCommits(task._id)}
+                        disabled={isLoading}
+                        title="Track GitHub Activity"
+                      >
+                        <GitCommit size={14} />
+                      </button>
+
+                      <button
+                        className="button button-danger"
+                        onClick={() => deleteTask(task._id)}
+                        disabled={isLoading}
+                        title="Delete Task"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            {tasks.length > tasksPerPage && (
+              <div className="pagination">
+                <button
+                  className="pagination-button"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <div className="pagination-pages">
+                  {getPageNumbers().map((page, index) => (
+                    <button
+                      key={index}
+                      className={`pagination-page ${
+                        page === currentPage ? "active" : ""
+                      } ${page === "..." ? "ellipsis" : ""}`}
+                      onClick={() => typeof page === "number" && goToPage(page)}
+                      disabled={page === "..."}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="pagination-button"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="empty-state">
             <svg
@@ -768,6 +866,85 @@ const TaskManagerTutor = () => {
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-top: 20px;
+          gap: 10px;
+        }
+
+        .pagination-button {
+          padding: 8px 16px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background-color 0.2s;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+          background-color: #0056b3;
+        }
+
+        .pagination-button:disabled {
+          background-color: #6c757d;
+          cursor: not-allowed;
+        }
+
+        .pagination-pages {
+          display: flex;
+          gap: 5px;
+        }
+
+        .pagination-page {
+          padding: 8px 12px;
+          background-color: #f8f9fa;
+          color: #343a40;
+          border: 1px solid #e4e6eb;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s;
+        }
+
+        .pagination-page:hover:not(.ellipsis):not(.active) {
+          background-color: #e4e6eb;
+        }
+
+        .pagination-page.active {
+          background-color: #007bff;
+          color: white;
+          border-color: #007bff;
+        }
+
+        .pagination-page.ellipsis {
+          background-color: transparent;
+          border: none;
+          cursor: default;
+          display: flex;
+          align-items: center;
+        }
+
+        @media (max-width: 767.98px) {
+          .pagination {
+            flex-wrap: wrap;
+            gap: 5px;
+          }
+          .pagination-button {
+            padding: 6px 12px;
+            font-size: 12px;
+          }
+          .pagination-page {
+            padding: 6px 10px;
+            font-size: 12px;
+          }
+        }
+      `}</style>
     </LayoutTutor>
   );
 };

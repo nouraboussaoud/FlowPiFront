@@ -16,6 +16,7 @@ function StudentDashboard() {
   const [tasks, setTasks] = useState([]);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showContactList, setShowContactList] = useState(false);
+  const [showChatBubble, setShowChatBubble] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [groupForm, setGroupForm] = useState({
     name: "",
@@ -61,20 +62,18 @@ function StudentDashboard() {
         });
       });
       
-    // Fetch unread messages count (example implementation)
+    // Fetch unread messages count
     fetchUnreadMessagesCount();
     
     // Set up message polling interval
-    const messageInterval = setInterval(fetchUnreadMessagesCount, 30000); // Check every 30 seconds
+    const messageInterval = setInterval(fetchUnreadMessagesCount, 30000);
     
     return () => {
-      clearInterval(messageInterval); // Cleanup on unmount
+      clearInterval(messageInterval);
     };
   }, [location, navigate]);
   
-  // Function to fetch unread messages count
   const fetchUnreadMessagesCount = () => {
-    // Replace this with your actual API call to get unread messages
     get("/messages/unread")
       .then((data) => {
         setUnreadMessages(data?.count || 0);
@@ -86,15 +85,24 @@ function StudentDashboard() {
 
   const handleSelectTutor = (tutor) => {
     setSelectedTutor(tutor);
-    setShowContactList(false); // Hide contact list after selecting tutor
-    
-    // Reset unread messages when opening chat
-    // This is just an example - you would typically only reset messages for this specific tutor
+    setShowContactList(false);
+    setShowChatBubble(false); // Keep bubble hidden when chatbox is open
     setUnreadMessages(prev => Math.max(0, prev - 1));
   };
 
   const toggleContactList = () => {
-    setShowContactList(!showContactList);
+    setShowContactList(true);
+    setShowChatBubble(false); // Hide bubble when opening contact list
+  };
+
+  const closeContactList = () => {
+    setShowContactList(false);
+    setShowChatBubble(!selectedTutor); // Show bubble only if no chatbox is open
+  };
+
+  const handleCloseChatbox = () => {
+    setSelectedTutor(null);
+    setShowChatBubble(true); // Show bubble when closing chatbox
   };
 
   const handleGroupInputChange = (e) => {
@@ -206,27 +214,29 @@ function StudentDashboard() {
             </button>
           </div>
           {selectedTutor && (
-            <Chatbox user={selectedTutor} onClose={() => setSelectedTutor(null)} />
+            <Chatbox user={selectedTutor} onClose={handleCloseChatbox} />
           )}
         </div>
 
         {/* Chat Bubble & Contact List */}
         <div className="chat-bubble-container">
           {/* Chat Bubble Icon */}
-          <div 
-            className={`chat-bubble ${showContactList ? 'active' : ''}`} 
-            onClick={toggleContactList}
-          >
-            <i className="fas fa-comments"></i>
-            {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
-          </div>
+          {showChatBubble && !selectedTutor && (
+            <div 
+              className={`chat-bubble ${showContactList ? 'active' : ''}`} 
+              onClick={toggleContactList}
+            >
+              <i className="fas fa-comments"></i>
+              {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
+            </div>
+          )}
           
           {/* Expandable Contact List */}
           {showContactList && (
             <div className="contact-list-panel">
               <div className="panel-header">
                 <h3>Contacts</h3>
-                <button className="close-btn" onClick={toggleContactList}>&times;</button>
+                <button className="close-btn" onClick={closeContactList}>×</button>
               </div>
               <div className="panel-body">
                 <Contact tutors={tutors} onSelectTutor={handleSelectTutor} />
@@ -393,7 +403,7 @@ function StudentDashboard() {
           align-items: center;
           padding: 15px;
           background-color: #f8f9fa;
-          border-bottom: 1px solid #e9ecef;
+          border-bottom: 1px solid #e4e6eb;
         }
         
         .panel-header h3 {
@@ -418,6 +428,28 @@ function StudentDashboard() {
           padding: 10px;
           overflow-y: auto;
           flex-grow: 1;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 767.98px) {
+          .chat-bubble-container {
+            bottom: 20px;
+            right: 20px;
+          }
+          .chat-bubble {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+          }
+          .contact-list-panel {
+            width: 250px;
+            max-height: 300px;
+          }
+          .badge {
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+          }
         }
       `}</style>
     </LayoutStudent>
