@@ -736,28 +736,15 @@ const TaskManager = () => {
           theme="light"
         />
         
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">My Assigned Tasks</h1>
-            <div className="stats-pills">
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.total}</span>
-                <span className="stat-label">Total</span>
-              </div>
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.pending}</span>
-                <span className="stat-label">Pending</span>
-              </div>
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.inProgress}</span>
-                <span className="stat-label">In Progress</span>
-              </div>
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.completed}</span>
-                <span className="stat-label">Completed</span>
-              </div>
-            </div>
+        <div className="simple-header">
+          <div className="task-counts">
+            <span>Total: <strong>{taskStats.total}</strong></span>
+            <span>•</span>
+            <span>Pending: <strong>{taskStats.pending}</strong></span>
+            <span>•</span>
+            <span>Completed: <strong>{taskStats.completed}</strong></span>
           </div>
+          
           <button
             className="button button-primary"
             onClick={() => setShowModal(true)}
@@ -1636,6 +1623,28 @@ const TaskManager = () => {
       </div>
 
       <style jsx>{`
+        .simple-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .task-counts {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #6b7280;
+          font-size: 14px;
+        }
+        
+        .task-counts strong {
+          color: #1f2937;
+          font-weight: 600;
+        }
+        
         .chat-bubble-container {
           position: fixed;
           bottom: 30px;

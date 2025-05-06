@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LayoutTutorss from './LayoutTutorss';
 import UsersTable from '../tutor-interfaces/UsersTable';
+import Dashboard from '../tutor-interfaces/DashboardStat';
 
 const TutorDashboard = () => {
   const location = useLocation();
@@ -9,6 +10,7 @@ const TutorDashboard = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'users'
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -88,11 +90,10 @@ const TutorDashboard = () => {
   if (loading) {
     return (
       <LayoutTutorss>
-        <div className="flex justify-center items-center min-h-screen">
-          <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+        <div className="d-flex justify-content-center align-items-center min-vh-50">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
         </div>
       </LayoutTutorss>
     );
@@ -101,9 +102,10 @@ const TutorDashboard = () => {
   if (error) {
     return (
       <LayoutTutorss>
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
-            <p>{error}</p>
+        <div className="container">
+          <div className="alert alert-danger" role="alert">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
           </div>
         </div>
       </LayoutTutorss>
@@ -112,12 +114,56 @@ const TutorDashboard = () => {
 
   return (
     <LayoutTutorss>
-      <div className="container mx-auto px-4 py-2 sm:px-6 sm:py-4 lg:px-8 lg:py-6">
-        <div className="grid grid-cols-1 gap-4">
-          <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
-            <div className="overflow-x-auto">
-              <UsersTable />
+      <div className="container-fluid px-4 py-3">
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="card shadow-sm border-0">
+             
             </div>
+          </div>
+        </div>
+
+        <div className="row mb-4">
+          <div className="col-12">
+            <ul className="nav nav-tabs">
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('dashboard')}
+                >
+                  <i className="bi bi-speedometer2 me-2"></i>
+                  Dashboard
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('users')}
+                >
+                  <i className="bi bi-people-fill me-2"></i>
+                  Students List
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-12">
+            {activeTab === 'dashboard' ? (
+              <div className="card shadow-sm border-0">
+                <div className="card-body">
+                  <Dashboard />
+                </div>
+              </div>
+            ) : (
+              <div className="card shadow-sm border-0">
+                <div className="card-body">
+                  
+                  <UsersTable />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
