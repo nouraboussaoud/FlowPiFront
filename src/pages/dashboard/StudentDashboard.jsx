@@ -20,7 +20,7 @@ function StudentDashboard() {
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');
     const userParam = queryParams.get('user');
-   
+
     if (token && userParam) {
       try {
         const decodedUser = decodeURIComponent(userParam);
@@ -30,16 +30,15 @@ function StudentDashboard() {
           throw new Error('Invalid or missing user _id');
         }
         // Store user data in localStorage
-      localStorage.setItem('token', token);
         localStorage.setItem('token', token);
         localStorage.setItem('userId', userData._id);
-      
+
+        // Clean the URL by removing query parameters
+        navigate('/student-dashboard', { replace: true });
       } catch (error) {
         console.error("Error decoding user data:", error);
         // Optionally, redirect to an error page or show a message
       }
-      // Redirect to the dashboard after storing the token
-   
     }
     // Fetch the list of tutors
     get('/users/getAll') // Update the endpoint as per your backend API

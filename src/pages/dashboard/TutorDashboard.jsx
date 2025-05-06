@@ -9,35 +9,34 @@ function TutorDashboard(){
     const location = useLocation();
     const navigate = useNavigate();
     
-      
-      useEffect(() => {
-        // Handle token storage
-        const queryParams = new URLSearchParams(location.search);
-        const token = queryParams.get('token');
-        const userParam = queryParams.get('user');
-       
-        if (token && userParam) {
-          try {
-            const decodedUser = decodeURIComponent(userParam);
-            const userData = JSON.parse(decodedUser);
-            // Validate userData
-            if (!userData._id || typeof userData._id !== 'string') {
-              throw new Error('Invalid or missing user _id');
-            }
-            // Store user data in localStorage
-          localStorage.setItem('token', token);
-            localStorage.setItem('token', token);
-            localStorage.setItem('userId', userData._id);
-          
-          } catch (error) {
-            console.error("Error decoding user data:", error);
-            
-            // Optionally, redirect to an error page or show a message
-          }
-          // Redirect to the dashboard after storing the token
-          const userId = localStorage.getItem("userId");
-          console.log("Fetching data with userId:", userId);
-        } }, [location, navigate]);
+   
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get('token');
+    const userParam = queryParams.get('user');
+
+    if (token && userParam) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userParam));
+        
+        // Stocker le token et les données utilisateur dans sessionStorage (effacé à la fermeture du navigateur)
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('userData', JSON.stringify(userData));
+
+        // Supprimer les paramètres de l'URL sans recharger la page
+        navigate(location.pathname, { replace: true });
+      } catch (error) {
+        console.error("Error decoding user data:", error);
+        navigate("/login?error=invalid_auth_data");
+      }
+    } else {
+      // Si aucun token n'est trouvé, vérifier s'il est déjà en sessionStorage
+      const storedToken = sessionStorage.getItem('token');
+      if (!storedToken) {
+        navigate("/login?error=no_auth_data");
+      }
+    }
+  }, [location, navigate]);
     
     return (
         <div>

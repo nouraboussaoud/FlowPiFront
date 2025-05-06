@@ -303,53 +303,6 @@ const ProjectManager = () => {
     }
   };
 
-  // Effet pour écouter les invitations d'appel
-// Replace your current socket useEffect with this improved version
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (!token) return;
-
-  const socket = io('http://localhost:5000', {
-    auth: { token },
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-    transports: ['websocket'] // Force WebSocket transport
-  });
-
-  // Debugging logs
-  socket.on('connect', () => {
-    console.log('✅ Socket connected with ID:', socket.id);
-  });
-
-  socket.on('connect_error', (err) => {
-    console.error('❌ Socket connection error:', err.message);
-  });
-
-  socket.on('video-call-invitation', (data) => {
-    console.log('📩 Received call invitation:', data);
-    setIncomingCall(data);
-    setShowCallModal(true);
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.log('⚠️ Socket disconnected:', reason);
-  });
-
-  return () => {
-    console.log('🧹 Cleaning up socket connection');
-    socket.disconnect();
-  };
-}, []);
-// In ProjectManager.jsx, add this temporary useEffect
-useEffect(() => {
-  const socket = io('http://localhost:5000', { auth: { token: localStorage.getItem('token') } });
-  socket.on('test-event', (data) => {
-    console.log('Test message received:', data);
-    alert('Test message received!');
-  });
-  return () => socket.disconnect();
-}, []);
 
   // Fonction pour répondre à l'appel
   const respondToCall = async (response) => {
@@ -439,49 +392,55 @@ useEffect(() => {
     }
   };
 
-// Enhanced socket effect with reconnection logic
-useEffect(() => {
-  let socket;
-  const connectSocket = () => {
-      socket = io('http://localhost:5000', {
-          auth: {
-              token: localStorage.getItem('token')
-          },
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No token found. Please login.');
+      return;
+    }
+  
+    const socket = io('http://localhost:5000', {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      transports: ['websocket'],
+    });
+  
+    // Gestion des événements Socket.IO
+    socket.on('connect', () => {
+      console.log('✅ Socket connected with ID:', socket.id);
+    });
+  
+    socket.on('connect_error', (err) => {
+      console.error('❌ Socket connection error:', err.message);
+      setError('Failed to connect to the server. Please try again later.');
+    });
+  
+    socket.on('video-call-invitation', (data) => {
+      console.log('📩 Received call invitation:', data);
+      setIncomingCall({
+        ...data,
+        timestamp: new Date().toISOString(),
       });
-
-      socket.on('connect', () => {
-          console.log('Socket connected');
-      });
-
-      socket.on('connect_error', (err) => {
-          console.error('Socket connection error:', err);
-          setTimeout(connectSocket, 5000); // Reconnect after 5 seconds
-      });
-
-      socket.on('video-call-invitation', (data) => {
-          console.log('Received call invitation:', data);
-          setIncomingCall({
-              ...data,
-              timestamp: new Date().toISOString()
-          });
-          setShowCallModal(true);
-      });
-
-      socket.on('disconnect', () => {
-          console.log('Socket disconnected');
-      });
-  };
-
-  connectSocket();
-
-  return () => {
-      if (socket) {
-          socket.disconnect();
-      }
-  };
-}, []);
+      setShowCallModal(true);
+    });
+  
+    socket.on('test-event', (data) => {
+      console.log('Test message received:', data);
+      alert('Test message received!');
+    });
+  
+    socket.on('disconnect', (reason) => {
+      console.log('⚠️ Socket disconnected:', reason);
+    });
+  
+    // Nettoyage lors du démontage du composant
+    return () => {
+      console.log('🧹 Cleaning up socket connection');
+      socket.disconnect();
+    };
+  }, []);
 
   // Récupération des données
   const fetchData = async () => {
