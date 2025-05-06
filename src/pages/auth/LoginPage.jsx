@@ -1,19 +1,68 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState,useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
 import Layout from "./Layout";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+
   const googleAuth = () => {
-    // Rediriger vers l'authentification Google
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   };
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const userParam = params.get('user');
   
+    if (token && userParam) {
+      try {
+        const decodedUser = decodeURIComponent(userParam);
+        const userData = JSON.parse(decodedUser);
+  
+        if (!userData._id || typeof userData._id !== 'string') {
+          throw new Error('Invalid or missing user _id');
+        }
+  
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userData._id);
+        localStorage.setItem('name', userData.name || '');
+        localStorage.setItem('email', userData.email || '');
+        localStorage.setItem('profilePic', userData.profilePic || '');
+        localStorage.setItem('role', userData.role || '');
+  
+        console.log('Google Auth - Stored data:', {
+          token,
+          userId: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+        });
+  
+        window.history.replaceState({}, document.title, window.location.pathname);
+  
+        if (userData.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (userData.role === 'student') {
+          navigate('/student-dashboard');
+        } else if (userData.role === 'tutor') {
+          navigate('/tutor-dashboard');
+        } else {
+          navigate('/home');
+        }
+      } catch (error) {
+        console.error('Google Auth processing failed:', error);
+        toast.error('Authentication failed. Please try again.');
+        localStorage.clear();
+        navigate('/login');
+      }
+    }
+  }, [location, navigate]);
+ 
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl"; // Your GitHub OAuth App Client ID
   const REDIRECT_URI = "http://localhost:5000/api/users/auth/github/callback"; // Change to your callback URL
 

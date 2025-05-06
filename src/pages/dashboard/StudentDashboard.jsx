@@ -19,13 +19,28 @@ function StudentDashboard() {
     // Handle token storage
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');
-    if (token) {
+    const userParam = queryParams.get('user');
+   
+    if (token && userParam) {
+      try {
+        const decodedUser = decodeURIComponent(userParam);
+        const userData = JSON.parse(decodedUser);
+        // Validate userData
+        if (!userData._id || typeof userData._id !== 'string') {
+          throw new Error('Invalid or missing user _id');
+        }
+        // Store user data in localStorage
       localStorage.setItem('token', token);
-      console.log('Token stored in localStorage:', token);
-      console.log('on est ici');
-      navigate('/student-dashboard', { replace: true });
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userData._id);
+      
+      } catch (error) {
+        console.error("Error decoding user data:", error);
+        // Optionally, redirect to an error page or show a message
+      }
+      // Redirect to the dashboard after storing the token
+   
     }
-
     // Fetch the list of tutors
     get('/users/getAll') // Update the endpoint as per your backend API
       .then((data) => {

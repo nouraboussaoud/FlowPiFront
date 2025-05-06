@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { JitsiMeeting } from '@jitsi/react-sdk';
+import io from 'socket.io-client';
 import LayoutStudent from './dashboard/LayoutStudent';
 
 const ProjectManager = () => {
@@ -24,6 +25,10 @@ const ProjectManager = () => {
   // États pour Jitsi Meet
   const [showJitsi, setShowJitsi] = useState(false);
   const [currentMeeting, setCurrentMeeting] = useState(null);
+  
+  // États pour la gestion des appels
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [showCallModal, setShowCallModal] = useState(false);
 
   // Styles CSS-in-JS
   const styles = {
@@ -298,30 +303,206 @@ const ProjectManager = () => {
     }
   };
 
-  // Effet pour le débogage
-  useEffect(() => {
-    console.log("User Groups:", userGroups);
-    console.log("Available Groups:", groups);
-  }, [userGroups, groups]);
+  // Effet pour écouter les invitations d'appel
+// Replace your current socket useEffect with this improved version
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  const socket = io('http://localhost:5000', {
+    auth: { token },
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    transports: ['websocket'] // Force WebSocket transport
+  });
+
+  // Debugging logs
+  socket.on('connect', () => {
+    console.log('✅ Socket connected with ID:', socket.id);
+  });
+
+  socket.on('connect_error', (err) => {
+    console.error('❌ Socket connection error:', err.message);
+  });
+
+  socket.on('video-call-invitation', (data) => {
+    console.log('📩 Received call invitation:', data);
+    setIncomingCall(data);
+    setShowCallModal(true);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('⚠️ Socket disconnected:', reason);
+  });
+
+  return () => {
+    console.log('🧹 Cleaning up socket connection');
+    socket.disconnect();
+  };
+}, []);
+// In ProjectManager.jsx, add this temporary useEffect
+useEffect(() => {
+  const socket = io('http://localhost:5000', { auth: { token: localStorage.getItem('token') } });
+  socket.on('test-event', (data) => {
+    console.log('Test message received:', data);
+    alert('Test message received!');
+  });
+  return () => socket.disconnect();
+}, []);
+
+  // Fonction pour répondre à l'appel
+  const respondToCall = async (response) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `http://localhost:5000/api/projects/${incomingCall.projectId}/respond-call`,
+        {
+          response,
+          roomName: incomingCall.roomName,
+          from: incomingCall.from
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response === 'accept') {
+        setCurrentMeeting({
+          roomName: incomingCall.roomName,
+          projectName: incomingCall.projectName
+        });
+        setShowJitsi(true);
+      }
+
+      setShowCallModal(false);
+      setIncomingCall(null);
+    } catch (error) {
+      setError("Error responding to call: " + error.message);
+    }
+  };
+
+  const startMeeting = async (project) => {
+    try {
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
+        
+        if (!userId) {
+            setError("User ID not found. Please log in again.");
+            return;
+        }
+  
+        // Generate a unique room name
+        const roomName = `project-${project._id}-${Date.now()}`;
+        
+        // Get group details
+        const groupRes = await axios.get(
+            `http://localhost:5000/api/groups/getGroupById/${project.group._id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        const group = groupRes.data;
+        
+        // Validate group data
+        if (!group?.members || !Array.isArray(group.members)) {
+            throw new Error("Invalid group data structure");
+        }
+  
+        // Filter members (excluding current user)
+        const members = group.members.filter(memberId => memberId !== userId);
+        
+        if (members.length === 0) {
+            setError("No other members in the group to invite");
+            return;
+        }
+  
+        // Send invitations (remove the assignment to a variable since we don't use it)
+        await axios.post(
+            `http://localhost:5000/api/projects/${project._id}/invite-call`,
+            { 
+                roomName, 
+                projectId: project._id,
+                userIds: members 
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        // Start the meeting
+        setCurrentMeeting({
+            roomName,
+            projectName: project.name,
+            participants: members.length
+        });
+        setShowJitsi(true);
+  
+    } catch (error) {
+        console.error("Meeting error:", error);
+        setError(error.response?.data?.message || error.message);
+    }
+  };
+
+// Enhanced socket effect with reconnection logic
+useEffect(() => {
+  let socket;
+  const connectSocket = () => {
+      socket = io('http://localhost:5000', {
+          auth: {
+              token: localStorage.getItem('token')
+          },
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000
+      });
+
+      socket.on('connect', () => {
+          console.log('Socket connected');
+      });
+
+      socket.on('connect_error', (err) => {
+          console.error('Socket connection error:', err);
+          setTimeout(connectSocket, 5000); // Reconnect after 5 seconds
+      });
+
+      socket.on('video-call-invitation', (data) => {
+          console.log('Received call invitation:', data);
+          setIncomingCall({
+              ...data,
+              timestamp: new Date().toISOString()
+          });
+          setShowCallModal(true);
+      });
+
+      socket.on('disconnect', () => {
+          console.log('Socket disconnected');
+      });
+  };
+
+  connectSocket();
+
+  return () => {
+      if (socket) {
+          socket.disconnect();
+      }
+  };
+}, []);
 
   // Récupération des données
   const fetchData = async () => {
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+    console.log("Fetching data with userId:", userId);
     if (!token) {
       setError("No token found. Please login.");
       setIsLoading(false);
       return;
     }
-
+  
     try {
       // 1. Récupérer les groupes de l'utilisateur
       const groupsResponse = await axios.get(
-        "http://localhost:5000/api/groups/my-group",
+        "http://localhost:5000/api/groups/my-groups",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUserGroups(groupsResponse.data);
       const userGroupIds = groupsResponse.data.map(group => group._id);
-
+  
       // 2. Récupérer les projets filtrés par groupes
       const projectsRes = await axios.get(
         "http://localhost:5000/api/projects/projects",
@@ -332,39 +513,34 @@ const ProjectManager = () => {
         project.group && userGroupIds.includes(project.group._id)
       );
       setProjects(filteredProjects);
-
+  
       // 3. Récupérer les groupes disponibles
       const groupsRes = await axios.get(
         "http://localhost:5000/api/groups/dropdown",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Filtrer pour n'afficher que les groupes de l'utilisateur
-      const userGroupsForCreation = groupsRes.data.filter(group => 
-        userGroupIds.includes(group._id)
-      );
-
-      // Marquer les groupes déjà utilisés dans des projets
-      const usedGroupIds = filteredProjects
-        .map(p => p.group?._id)
-        .filter(id => id);
-
-      const groupsWithUsage = userGroupsForCreation.map(group => ({
-        ...group,
-        isUsed: usedGroupIds.includes(group._id)
-      }));
-
+  
+      // Remove the unused variable assignments and directly use the filtered data
+      const groupsWithUsage = groupsRes.data
+        .filter(group => userGroupIds.includes(group._id))
+        .map(group => ({
+          ...group,
+          isUsed: filteredProjects.some(p => p.group?._id === group._id)
+        }));
+  
       setGroups(groupsWithUsage);
-
+  
     } catch (error) {
       setError("Error fetching data: " + error.message);
-      console.error(error);
+      console.error("Fetch error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log("localStorage userId:", localStorage.getItem("userId"));
+    console.log("localStorage token:", localStorage.getItem("token"));
     fetchData();
   }, []);
 
@@ -505,17 +681,6 @@ const ProjectManager = () => {
     setEditMode(false);
   };
 
-  // Démarrer une réunion Jitsi
-  const startMeeting = (project) => {
-    // Créer un nom de salle unique basé sur l'ID du projet
-    const roomName = `project-${project._id}-${Math.random().toString(36).substring(7)}`;
-    setCurrentMeeting({
-      roomName,
-      projectName: project.name
-    });
-    setShowJitsi(true);
-  };
-
   // Fermer la réunion Jitsi
   const closeMeeting = () => {
     setShowJitsi(false);
@@ -535,6 +700,42 @@ const ProjectManager = () => {
           </div>
         )}
 
+        {/* Modal pour les appels entrants */}
+        {showCallModal && incomingCall && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modalContent}>
+              <div style={styles.modalHeader}>
+                <h2 style={styles.modalTitle}>
+                  Appel vidéo entrant
+                </h2>
+              </div>
+              <div style={styles.formGroup}>
+                <p>Appel de {incomingCall.callerName} pour le projet: {incomingCall.projectName}</p>
+              </div>
+              <div style={styles.buttonGroup}>
+                <button 
+                  style={{
+                    ...styles.button,
+                    ...styles.buttonDanger
+                  }}
+                  onClick={() => respondToCall('decline')}
+                >
+                  Refuser
+                </button>
+                <button 
+                  style={{
+                    ...styles.button,
+                    ...styles.buttonSuccess
+                  }}
+                  onClick={() => respondToCall('accept')}
+                >
+                  Accepter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Fenêtre Jitsi Meet */}
         {showJitsi && currentMeeting && (
           <div style={styles.jitsiContainer}>
@@ -545,7 +746,8 @@ const ProjectManager = () => {
               Fermer la réunion
             </button>
             <JitsiMeeting
-             domain="jitsi.riot.im" 
+              domain="jitsi.riot.im" 
+           
               roomName={currentMeeting.roomName}
               configOverwrite={{
                 startWithAudioMuted: true,
@@ -598,7 +800,7 @@ const ProjectManager = () => {
                   style={styles.closeButton}
                   onClick={() => setShowModal(false)}
                 >
-                  &times;
+                  ×
                 </button>
               </div>
               <form onSubmit={editMode ? updateProject : createProject}>
