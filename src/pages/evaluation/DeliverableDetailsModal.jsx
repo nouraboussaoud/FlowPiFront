@@ -4,11 +4,14 @@ import axios from 'axios';
 import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 import Editor from '@monaco-editor/react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import PropTypes from 'prop-types';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const navigate = useNavigate();
+  
   // State declarations
   const [aiScore, setAiScore] = useState(null);
   const [aiScoreLoading, setAiScoreLoading] = useState(false);
@@ -42,10 +45,18 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [pdfError, setPdfError] = useState(null);
 
+  // Safe filename extraction
+  const getFileNameFromPath = (path) => {
+    if (!path || typeof path !== 'string') return 'file';
+    const parts = path.split('/');
+    return parts.length > 0 ? parts[parts.length - 1] : 'file';
+  };
+
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPdfError(null);
   };
+
   const onDocumentLoadError = (error) => {
     console.error('PDF load error:', error);
     setPdfError('Failed to load PDF document');
@@ -62,11 +73,16 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     rubric.reduce((acc, criterion) => ({ ...acc, [criterion.name]: 0 }), {})
   );
 
-  // Enhanced file type detection for Monaco
+  // Enhanced file type detection for Monaco with null checks
   const getFileLanguage = (filename) => {
-    if (!filename) return 'plaintext';
+    if (!filename || typeof filename !== 'string') return 'plaintext';
     
-    const extension = filename.split('.').pop().toLowerCase();
+    const parts = filename.split('.');
+    if (parts.length === 0) return 'plaintext';
+    
+    const extension = parts.pop()?.toLowerCase();
+    if (!extension) return 'plaintext';
+
     switch(extension) {
       case 'js': return 'javascript';
       case 'jsx': return 'javascript';
@@ -118,7 +134,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
         setUploadedFiles([
           {
             path: file.url,
-            name: file.url.split('/').pop(),
+            name: getFileNameFromPath(file.url),
             public_id: file.public_id
           }
         ]);
@@ -130,36 +146,22 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   };
 
-  /*const downloadPdf = async () => {
-    try {
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement('a');
-      link.href = deliverable.file.url;
-      link.download = deliverable.file.url.split('/').pop() || 'report.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Download failed:', error);
-      // Fallback to opening in new tab if download fails
-      window.open(deliverable.file.url, '_blank');
-    }
-  };*/
-
   const openPdfInNewTab = () => {
+    if (!deliverable?.file?.url) {
+      toast.error('No PDF file available');
+      return;
+    }
+    
     try {
-      // Open the PDF URL in a new tab
       window.open(deliverable.file.url, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Failed to open PDF:', error);
-      // Fallback option if window.open fails
       const newWindow = window.open();
       if (newWindow) {
         newWindow.opener = null;
         newWindow.location.href = deliverable.file.url;
       } else {
-        // If popups are blocked, show the user a message
-        alert('Popup blocked. Please allow popups for this site or click the file link to view the PDF.');
+        toast.error('Popup blocked. Please allow popups for this site.');
       }
     }
   };
@@ -208,7 +210,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   
       // Prepare evaluation data
       const evaluationData = {
-        evaluationScore: parseFloat(evaluationScore), // Convert to number
+        evaluationScore: parseFloat(evaluationScore),
         notes,
       };
   
@@ -237,13 +239,12 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const fetchAiDetectionScore = async () => {
     setAiScoreLoading(true);
     try {
-      // You might need to adjust the API endpoint to include the file path
       const res = await axios.get(`/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`);
       const score = res.data?.ai_probability;
-      setAiScore(score); // e.g. 82.34
+      setAiScore(score);
     } catch (error) {
       console.error("AI detection fetch error:", error);
-      setAiScore("Erreur");
+      setAiScore("Error");
     } finally {
       setAiScoreLoading(false);
     }
@@ -304,7 +305,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (cache[filePath]) {
         setSelectedFileContent(cache[filePath]);
         setLoading(prev => ({...prev, content: false}));
-        // Still trigger AI detection even if content is from cache
         setAiScore(null);
         fetchAiDetectionScore();
         return;
@@ -323,7 +323,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (response.data) {
         setSelectedFileContent(response.data);
         setCache((prevCache) => ({ ...prevCache, [filePath]: response.data }));
-        // Call AI detection when a file is selected
         setAiScore(null);
         fetchAiDetectionScore();
       } else {
@@ -402,7 +401,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     });
   };
 
-
   const renderFileTree = (tree, level = 0) => {
     const items = Object.values(tree);
     const folders = items.filter(item => item.isFolder)
@@ -476,7 +474,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       fetchCommitDetails();
       fetchFileTree();
       
-      // Initialize form with existing evaluation data if available
       if (deliverable.evaluation) {
         if (deliverable.evaluation.evaluationScore) {
           setEvaluationScore(deliverable.evaluation.evaluationScore);
@@ -489,15 +486,38 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   }, [deliverable]);
 
-  // Effect to handle file path changes
   useEffect(() => {
     if (selectedFilePath) {
-      // Reset AI score when file path changes
       setAiScore(null);
     }
   }, [selectedFilePath]);
 
-  if (!deliverable) return null;
+  if (!deliverable) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          textAlign: 'center'
+        }}>
+          <p>No deliverable data available</p>
+          <button onClick={onClose}>Close</button>
+        </div>
+      </div>
+    );
+  }
 
   if (fullScreenEditor) {
     return (
@@ -523,7 +543,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <FaFile style={{ marginRight: '8px', color: '#80868b' }} />
-            {selectedFilePath.split('/').pop() || 'No file selected'}
+            {selectedFilePath ? getFileNameFromPath(selectedFilePath) : 'No file selected'}
           </div>
           <div>
             <button 
@@ -939,7 +959,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                           textDecoration: 'underline'
                         }}
                       >
-                        {selectedFilePath.split('/').pop()}
+                        {getFileNameFromPath(selectedFilePath)}
                       </a>
                       <div>
                         <strong>AI Detection Score :</strong>{' '}
@@ -955,37 +975,39 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               </div>
               <div style={{ marginBottom: '20px' }}>
                 <h5>Uploaded Report</h5>
-                <p>
-                  <strong>File:</strong>{' '}
-                  <a
-                    href={deliverable.file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#007bff', textDecoration: 'underline' }}
-                  >
-                    {deliverable.file.url.split('/').pop()}
-                  </a>
-                  
-                  <button
-                    onClick={openPdfInNewTab}
-                    style={{
-                      marginTop:'10px',
-                      marginLeft: '10px',
-                      padding: '5px 15px',
-                      backgroundColor: '#6b7280',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s',
-                      '&:hover': {
-                        backgroundColor: '#4b5563'
-                      }
-                    }}
-                  >
-                    Open PDF
-                  </button>
-                </p>
+                {deliverable?.file?.url ? (
+                  <>
+                    <p>
+                      <strong>File:</strong>{' '}
+                      <a
+                        href={deliverable.file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#007bff', textDecoration: 'underline' }}
+                      >
+                        {getFileNameFromPath(deliverable.file.url)}
+                      </a>
+                    </p>
+                    <button
+                      onClick={openPdfInNewTab}
+                      style={{
+                        marginTop: '10px',
+                        marginLeft: '10px',
+                        padding: '5px 15px',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      Open PDF
+                    </button>
+                  </>
+                ) : (
+                  <p>No file attached to this deliverable</p>
+                )}
               </div>
 
               <div style={{ marginBottom: '20px' }}>
@@ -1048,12 +1070,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   justifyContent: 'center',
                   alignItems: 'center'
                 }}
-                onMouseOver={(e) => {
-                  if (!loading.submission) e.currentTarget.style.backgroundColor = '#218838';
-                }}
-                onMouseOut={(e) => {
-                  if (!loading.submission) e.currentTarget.style.backgroundColor = '#28a745';
-                }}
               >
                 {loading.submission ? 'Submitting...' : 'Submit Evaluation'}
               </button>
@@ -1063,6 +1079,26 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       </div>
     </div>
   );
+};
+
+DeliverableDetails.propTypes = {
+  deliverable: PropTypes.shape({
+    _id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    submission_date: PropTypes.string,
+    status: PropTypes.string,
+    student_email: PropTypes.string,
+    file: PropTypes.shape({
+      url: PropTypes.string
+    }),
+    evaluation: PropTypes.shape({
+      evaluationScore: PropTypes.number,
+      notes: PropTypes.string
+    })
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSubmitEvaluation: PropTypes.func.isRequired
 };
 
 export default DeliverableDetails;
