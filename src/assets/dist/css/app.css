@@ -18810,3 +18810,34 @@ html body{
         color: rgb(var(--color-success) / var(--tw-text-opacity));
     }
 }
+/* In each component's CSS */
+.section {
+  padding: 1rem 0;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 2rem 0;
+  }
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* For mobile menu toggle */
+.navbar-toggler {
+  border: none;
+  padding: 0.5rem;
+}
+
+@media (max-width: 991px) {
+  .navbar-collapse {
+    background: white;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+  }
+}

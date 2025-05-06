@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
 import Layout from "./Layout";
+import './style/LoginPage.css';
 
 const useAnimatedBackground = (images, duration = 5000) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -94,109 +95,126 @@ const LoginPage = () => {
   };
 
   return (
-    <div>
+    <div className="login-page-container">
       <title>FlowPi</title>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-      <meta name="author" content="Webestica.com" />
-      <meta name="description" content="Eduport- LMS, Education and Course Theme" />
-      <link rel="shortcut icon" href="assets/images/favicon.ico" />
-      <link rel="preconnect" href="https://fonts.googleapis.com/" />
-      <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin />
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/font-awesome/css/all.min.css" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap-icons/bootstrap-icons.css" />
-      <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
-
+      
       <main>
-        <section className="p-0 d-flex align-items-center position-relative overflow-hidden">
-          <div className="container-fluid">
-            <div className="row">
-              {/* Left Column - Background Images */}
-              <div className="col-12 col-lg-6 p-0 position-relative vh-100">
+        <section className="login-section">
+          <div className="container-fluid h-100">
+            <div className="row g-0 h-100">
+              {/* Left Column - Background Images (hidden on mobile) */}
+              <div className="col-lg-6 d-none d-lg-flex login-bg-container">
                 <div 
-                  className="position-absolute w-100 h-100"
+                  className="login-bg-image"
                   style={{
                     backgroundImage: `url(${currentBg})`,
-                    backgroundSize: '700px',
-                    backgroundPosition: 'top center',
-                    backgroundRepeat: 'no-repeat',
                     transition: 'background-image 1s ease-in-out',
-                    zIndex: 0
                   }}
                 />
-                </div>
-              <div className="col-12 col-lg-6 m-auto">
-                <div className="row my-5">
-                  <div className="col-sm-10 col-xl-8 m-auto">
-                    <span className="mb-0 fs-1">👋</span>
-                    <h1 className="fs-2">Login into FlowPi!</h1>
-                    <p className="lead mb-4">Nice to see you! Please log in with your account.</p>
-                    <form onSubmit={handleLogin}>
-                      <div className="mb-4">
-                        <label htmlFor="exampleInputEmail1" className="form-label">Email address *</label>
-                        <div className="input-group input-group-lg">
-                          <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3"><i className="bi bi-envelope-fill" /></span>
-                          <input type="email" className="form-control border-0 bg-light rounded-end ps-1" placeholder="E-mail" id="exampleInputEmail1" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label htmlFor="inputPassword5" className="form-label">Password *</label>
-                        <div className="input-group input-group-lg">
-                          <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3"><i className="fas fa-lock" /></span>
-                          <input type="password" className="form-control border-0 bg-light rounded-end ps-1" placeholder="password" id="inputPassword5" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        </div>
-                        <div id="passwordHelpBlock" className="form-text">
-                          Your password must be 8 characters at least
-                        </div>
-                      </div>
-                      <div className="mb-4 d-flex justify-content-between">
-                        <div className="form-check">
-                          <input type="checkbox" className="form-check-input" id="exampleCheck1" />
-                          <label className="form-check-label" htmlFor="exampleCheck1">Remember me</label>
-                        </div>
-                        <div className="text-primary-hover">
-                          <button
-                            type="button"
-                            className="btn btn-link text-secondary p-0"
-                            onClick={() => navigate("/forgot-password")}
-                          >
-                            <u>Forgot password?</u>
-                          </button>
-                        </div>
-                      </div>
-                      <div className="align-items-center mt-0">
-                        <div className="d-grid">
-                          <button className="btn btn-primary mb-0" type="submit" >Login</button>
-                        </div>
-                      </div>
-                      <div className="align-items-center mt-0">
-                        <span>Don't have an account? </span>
-                        <br></br>
-                        <div className="d-grid">
-                          <button
-                            type="button"
-                            className="btn btn-secondary mb-0"
-                            onClick={() => navigate("/register")}
-                          >
-                            Sign up here
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                    <div className="row">
-                      <div className="position-relative my-4">
-                        <hr />
-                        <p className="small position-absolute top-50 start-50 translate-middle bg-body px-5">Or</p>
-                      </div>
-                      <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-google mb-2 mb-xxl-0" onClick={googleAuth}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
-                      </div>
-                      <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-facebook mb-0" onClick={handleGitHubLogin}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
+              </div>
+              
+              {/* Right Column - Login Form */}
+              <div className="col-12 col-lg-6 d-flex align-items-center login-form-container">
+                <div className="login-form-wrapper mx-auto">
+                  <div className="login-header">
+                    <span className="login-emoji">👋</span>
+                    <h1 className="login-title">Login into FlowPi!</h1>
+                    <p className="login-subtitle">Nice to see you! Please log in with your account.</p>
+                  </div>
+                  
+                  <form onSubmit={handleLogin} className="login-form">
+                    <div className="form-group mb-4">
+                      <label htmlFor="exampleInputEmail1" className="form-label">Email address *</label>
+                      <div className="input-group input-group-lg">
+                        <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3">
+                          <i className="bi bi-envelope-fill" />
+                        </span>
+                        <input 
+                          type="email" 
+                          className="form-control border-0 bg-light rounded-end ps-1" 
+                          placeholder="E-mail" 
+                          id="exampleInputEmail1" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          required 
+                        />
                       </div>
                     </div>
-                  </div>
+                    
+                    <div className="form-group mb-4">
+                      <label htmlFor="inputPassword5" className="form-label">Password *</label>
+                      <div className="input-group input-group-lg">
+                        <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3">
+                          <i className="fas fa-lock" />
+                        </span>
+                        <input 
+                          type="password" 
+                          className="form-control border-0 bg-light rounded-end ps-1" 
+                          placeholder="password" 
+                          id="inputPassword5" 
+                          value={password} 
+                          onChange={(e) => setPassword(e.target.value)} 
+                          required 
+                        />
+                      </div>
+                      <div id="passwordHelpBlock" className="form-text">
+                        Your password must be 8 characters at least
+                      </div>
+                    </div>
+                    
+                    <div className="form-options d-flex justify-content-between mb-4">
+                      <div className="form-check">
+                        <input type="checkbox" className="form-check-input" id="exampleCheck1" />
+                        <label className="form-check-label" htmlFor="exampleCheck1">Remember me</label>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-link text-secondary p-0 forgot-password-btn"
+                        onClick={() => navigate("/forgot-password")}
+                      >
+                        <u>Forgot password?</u>
+                      </button>
+                    </div>
+                    
+                    <div className="d-grid gap-3">
+                      <button className="btn btn-primary btn-login" type="submit">Login</button>
+                      
+                      <div className="signup-prompt" style={{ textAlign: "center" }}>
+                        <span>Don't have an account? </span>
+                        <br></br>
+                        <br></br>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-signup"
+                          onClick={() => navigate("/register")}
+                        >
+                          Sign up here
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="social-login-separator">
+                      <hr />
+                      <span className="separator-text">Or</span>
+                    </div>
+                    
+                    <div className="row g-2 social-login-buttons">
+                      <div className="col-md-6">
+                        <button className="btn btn-google w-100" onClick={googleAuth}>
+                          <i className="fab fa-fw fa-google text-white me-2"></i>
+                          Login with Google
+                        </button>
+                      </div>
+                      <div className="col-md-6">
+                        <button className="btn btn-github w-100" onClick={handleGitHubLogin}>
+                          <i className="fab fa-fw fa-github me-2"></i>
+                          Login with GitHub
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
