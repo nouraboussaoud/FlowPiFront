@@ -231,68 +231,8 @@ const LayoutTutor = ({ children }) => {
               <ul className="dropdown-menu" aria-labelledby="demoMenu">
                 <li>
                   {" "}
-                  <a className="dropdown-item" href="index.html">
+                  <a className="dropdown-item" href="/tutor-dashboard">
                     Home Default
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-3.html">
-                    Home Education
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-4.html">
-                    Home Academy
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-5.html">
-                    Home Course
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-6.html">
-                    Home University
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-7.html">
-                    Home Kindergarten
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-8.html">
-                    Home Landing
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-9.html">
-                    Home Tutor
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-10.html">
-                    Home School
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-11.html">
-                    Home Abroad
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-12.html">
-                    Home Workshop
                   </a>
                 </li>
               </ul>

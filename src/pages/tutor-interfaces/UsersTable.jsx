@@ -46,6 +46,8 @@ const ModalPortal = ({ children, onClose }) => {
 
 const UsersTable = () => {
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [chatUser, setChatUser] = useState(null);
@@ -72,6 +74,7 @@ const UsersTable = () => {
         const response = await Promise.race([axiosPromise, timeoutPromise]);
         const studentUsers = response.data.filter((user) => user.role === "student");
         setStudents(studentUsers);
+        setFilteredStudents(studentUsers);
       } catch (err) {
         setError(err.response?.data?.message || err.message || "Failed to fetch students");
       } finally {
@@ -103,6 +106,33 @@ const UsersTable = () => {
     }
   }, [chatUser]);
 
+  useEffect(() => {
+    const debouncedSearch = debounce(() => {
+      const lowerQuery = searchQuery.toLowerCase();
+      const filtered = students.filter(
+        (student) =>
+          student.name.toLowerCase().includes(lowerQuery) ||
+          (student.email && student.email.toLowerCase().includes(lowerQuery))
+      );
+      setFilteredStudents(filtered);
+      setCurrentPage(1); // Reset to page 1 on search
+    }, 300);
+
+    debouncedSearch();
+
+    return () => debouncedSearch.cancel();
+  }, [searchQuery, students]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setFilteredStudents(students);
+    setCurrentPage(1);
+  };
+
   const handleViewDetails = (user) => {
     console.log("Viewing details for user:", user._id);
     setDetailsModalUser(user);
@@ -131,6 +161,7 @@ const UsersTable = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStudents(students.filter((student) => student._id !== userId));
+      setFilteredStudents(filteredStudents.filter((student) => student._id !== userId));
       if (paginatedStudents.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
@@ -159,6 +190,13 @@ const UsersTable = () => {
             : student
         )
       );
+      setFilteredStudents(
+        filteredStudents.map((student) =>
+          student._id === userId
+            ? { ...student, isActive: response.data.user.isActive }
+            : student
+        )
+      );
     } catch (error) {
       console.error("Error toggling status:", error);
       setError(error.response?.data?.message || "Error toggling status");
@@ -179,6 +217,11 @@ const UsersTable = () => {
       );
       setStudents(
         students.map((student) =>
+          student._id === userId ? { ...student, isBanned: !isBanned } : student
+        )
+      );
+      setFilteredStudents(
+        filteredStudents.map((student) =>
           student._id === userId ? { ...student, isBanned: !isBanned } : student
         )
       );
@@ -214,6 +257,11 @@ const UsersTable = () => {
           s._id === updateModalUser._id ? response.data.user : s
         )
       );
+      setFilteredStudents(
+        filteredStudents.map((s) =>
+          s._id === updateModalUser._id ? response.data.user : s
+        )
+      );
       setUpdateModalUser(null);
     } catch (error) {
       setError(error.response?.data?.message || "Error updating user");
@@ -222,8 +270,8 @@ const UsersTable = () => {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const paginatedStudents = students.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(students.length / itemsPerPage);
+  const paginatedStudents = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
@@ -343,6 +391,31 @@ const UsersTable = () => {
   return (
     <div className="container my-2">
       <h2 className="mb-3 text-2xl font-bold text-dark">Student List</h2>
+      <div className="mb-4">
+        <div className="input-group">
+          <span className="input-group-text">
+            <i className="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            aria-label="Search students"
+          />
+          {searchQuery && (
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              onClick={clearSearch}
+              aria-label="Clear search"
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          )}
+        </div>
+      </div>
       {error && (
         <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert">
           <i className="bi bi-exclamation-circle me-2"></i>
@@ -360,10 +433,12 @@ const UsersTable = () => {
           <div className="spinner"></div>
           <p className="loading-text">Please wait, we're loading student data...</p>
         </div>
-      ) : students.length === 0 ? (
+      ) : filteredStudents.length === 0 ? (
         <div className="card text-center p-4">
           <i className="bi bi-person-x display-4 text-muted mb-2"></i>
-          <p className="text-muted">No students found.</p>
+          <p className="text-muted">
+            {searchQuery ? "No students match your search." : "No students found."}
+          </p>
         </div>
       ) : (
         <>
@@ -677,7 +752,7 @@ const UsersTable = () => {
         }
 
         .loading-text {
-          margin Wtop: 10px;
+          margin-top: 10px;
           color: #495057;
           font-size: 1rem;
         }
@@ -707,6 +782,10 @@ const UsersTable = () => {
         .pagination .page-item.disabled .page-link {
           cursor: not-allowed;
           opacity: 0.6;
+        }
+
+        .input-group {
+          max-width: 400px;
         }
 
         @keyframes spin {
@@ -847,6 +926,10 @@ const UsersTable = () => {
 
           .page-link {
             padding: 0.5rem 0.75rem;
+          }
+
+          .input-group {
+            max-width: 100%;
           }
         }
 
