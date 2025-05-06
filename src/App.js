@@ -24,7 +24,6 @@ import DouaaComp from "./pages/test/DouaaComp";
 import ReturnDeliverable from "./pages/evaluation/ReturnDeliverable";
 import DeliverablesHistory from "./pages/evaluation/DeliverablesDashboard";
 import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
-import ReportViewer from "./pages/evaluation/ReportViewer"
 import { Toaster } from "sonner";
 import {Navigate} from "react-router-dom";
 import { useEffect ,useState } from "react";
@@ -70,7 +69,6 @@ function App() {
           <Route path="/return-deliverable" element={<ReturnDeliverable />} />
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
-          <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

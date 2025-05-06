@@ -7,6 +7,67 @@ import { useNavigate } from 'react-router-dom';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
+const PlagiarismChecker = ({ fileUrl }) => {
+  const [summary, setSummary] = useState('');
+  const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [plagiarized, setPlagiarized] = useState(null);
+  const [error, setError] = useState('');
+  const [usedFallback, setUsedFallback] = useState(false);
+  
+  const handleCheckPlagiarism = async () => {
+    if (!fileUrl) {
+      alert('No file URL provided.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setSummary('');
+    setScore(null);
+    setPlagiarized(null);
+    setUsedFallback(false);
+    try {
+      const response = await axios.post('http://localhost:5000/api/summary', {
+        fileUrl,
+      });
+      const { summary, plagiarismScore, plagiarized, usedFallback } = response.data;
+      setSummary(summary);
+      setScore(plagiarismScore);
+      setPlagiarized(plagiarized);
+      setUsedFallback(usedFallback);
+    } catch (err) {
+      console.error(err);
+      setError('An error occurred while checking plagiarism.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div style={{ marginTop: '20px' }}>
+      <button onClick={handleCheckPlagiarism} disabled={loading}>
+        {loading ? 'Checking...' : 'Check Plagiarism'}
+      </button>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {summary && (
+        <div style={{ marginTop: '20px' }}>
+          <h3>Summary:</h3>
+          <p>{summary}</p>
+        </div>
+      )}
+      {score !== null && (
+        <div style={{ marginTop: '10px' }}>
+          <p><strong>Plagiarism Score:</strong> {score}%</p>
+          <p style={{ color: plagiarized ? 'red' : 'green' }}>
+            {plagiarized ? '❌ Report is Plagiarized' : '✅ Report is Clean'}
+          </p>
+          {usedFallback && <p style={{ fontStyle: 'italic' }}>Fallback summary was used.</p>}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const navigate = useNavigate();
   // State declarations
@@ -21,6 +82,10 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     requirement3: false,
   });
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState("");
+  const [summary, setSummary] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const [commitURL, setCommitURL] = useState('');
   const [fileTree, setFileTree] = useState([]);
   const [selectedFileContent, setSelectedFileContent] = useState('');
@@ -39,15 +104,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
   const [pdfError, setPdfError] = useState(null);
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-    setPdfError(null);
-  };
-  const onDocumentLoadError = (error) => {
-    console.error('PDF load error:', error);
-    setPdfError('Failed to load PDF document');
-  };
-
   // Rubric data
   const rubric = [
     { name: 'Code Quality', weight: 40 },
@@ -58,6 +114,61 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [rubricScores, setRubricScores] = useState(
     rubric.reduce((acc, criterion) => ({ ...acc, [criterion.name]: 0 }), {})
   );
+
+  // Document handlers
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+    setPdfError(null);
+  };
+
+  const onDocumentLoadError = (error) => {
+    console.error('PDF load error:', error);
+    setPdfError('Failed to load PDF document');
+  };
+
+  const openPdfInNewTab = () => {
+    if (deliverable.file && deliverable.file.url) {
+      try {
+        window.open(deliverable.file.url, '_blank', 'noopener,noreferrer');
+      } catch (error) {
+        console.error('Failed to open PDF:', error);
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.opener = null;
+          newWindow.location.href = deliverable.file.url;
+        } else {
+          alert('Popup blocked. Please allow popups for this site or click the file link to view the PDF.');
+        }
+      }
+    }
+  };
+
+  const handleSummarize = async () => {
+    if (isLoading) return;
+    
+    try {
+      setIsLoading(true);
+      
+      if (!deliverable.file || !deliverable.file.url) {
+        console.error("Missing deliverable file URL");
+        return;
+      }
+      
+      const fileUrl = deliverable.file.url.replace(/\?.*$/, '');
+      
+      const response = await axios.post('http://localhost:5000/api/summary', {
+        fileUrl: fileUrl
+      });
+      
+      setSummary(response.data.summary);
+    } catch (error) {
+      console.error('Failed to summarize the document:', error);
+      setSummary(null);
+      alert("Failed to summarize the document. Please check if the file is accessible.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Enhanced file type detection for Monaco
   const getFileLanguage = (filename) => {
@@ -127,40 +238,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   };
 
-  /*const downloadPdf = async () => {
-    try {
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement('a');
-      link.href = deliverable.file.url;
-      link.download = deliverable.file.url.split('/').pop() || 'report.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Download failed:', error);
-      // Fallback to opening in new tab if download fails
-      window.open(deliverable.file.url, '_blank');
-    }
-  };*/
-
-  const openPdfInNewTab = () => {
-    try {
-      // Open the PDF URL in a new tab
-      window.open(deliverable.file.url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('Failed to open PDF:', error);
-      // Fallback option if window.open fails
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.opener = null;
-        newWindow.location.href = deliverable.file.url;
-      } else {
-        // If popups are blocked, show the user a message
-        alert('Popup blocked. Please allow popups for this site or click the file link to view the PDF.');
-      }
-    }
-  };
-
   const runAiDetectionOnUploadedFile = async (fileId) => {
     setAiScoreLoading(true);
     try {
@@ -199,10 +276,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const fetchAiDetectionScore = async () => {
     setAiScoreLoading(true);
     try {
-      // You might need to adjust the API endpoint to include the file path
       const res = await axios.get(`/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`);
       const score = res.data?.ai_probability;
-      setAiScore(score); // e.g. 82.34
+      setAiScore(score);
     } catch (error) {
       console.error("AI detection fetch error:", error);
       setAiScore("Erreur");
@@ -257,6 +333,76 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   };
 
+  const openSummaryInNewPage = () => {
+    if (!summary) return;
+    
+    const newWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    if (newWindow) {
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Document Summary</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              margin: 20px;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            h1 {
+              color: #333;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 10px;
+            }
+            .summary-content {
+              background-color: #f9f9f9;
+              padding: 15px;
+              border-radius: 5px;
+              border-left: 4px solid #007bff;
+            }
+            .file-info {
+              margin-bottom: 20px;
+              color: #666;
+            }
+            .print-button {
+              background-color: #007bff;
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 4px;
+              cursor: pointer;
+              margin-top: 20px;
+            }
+            .print-button:hover {
+              background-color: #0056b3;
+            }
+            @media print {
+              .print-button {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Document Summary</h1>
+          <div class="file-info">
+            <strong>Original File:</strong> ${deliverable.file.url.split('/').pop()}
+          </div>
+          <div class="summary-content">
+            ${summary.replace(/\n/g, '<br>')}
+          </div>
+          <button class="print-button" onclick="window.print()">Print Summary</button>
+        </body>
+        </html>
+      `);
+      newWindow.document.close();
+    }
+  };
+
   const fetchFileContent = async (filePath) => {
     setSelectedFilePath(filePath);
     setError(prev => ({...prev, content: null}));
@@ -266,7 +412,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (cache[filePath]) {
         setSelectedFileContent(cache[filePath]);
         setLoading(prev => ({...prev, content: false}));
-        // Still trigger AI detection even if content is from cache
         setAiScore(null);
         fetchAiDetectionScore();
         return;
@@ -285,7 +430,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       if (response.data) {
         setSelectedFileContent(response.data);
         setCache((prevCache) => ({ ...prevCache, [filePath]: response.data }));
-        // Call AI detection when a file is selected
         setAiScore(null);
         fetchAiDetectionScore();
       } else {
@@ -364,7 +508,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     });
   };
 
-
   const renderFileTree = (tree, level = 0) => {
     const items = Object.values(tree);
     const folders = items.filter(item => item.isFolder)
@@ -425,7 +568,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     );
   };
 
-  // Effects
+  // Effects - moved to top level
   useEffect(() => {
     if (fileTree.length > 0) {
       const structuredTree = buildFileTree(fileTree);
@@ -441,10 +584,8 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     }
   }, [deliverable]);
 
-  // Effect to handle file path changes
   useEffect(() => {
     if (selectedFilePath) {
-      // Reset AI score when file path changes
       setAiScore(null);
     }
   }, [selectedFilePath]);
@@ -692,7 +833,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 <p><strong>Submission Date:</strong> {new Date(deliverable.submission_date).toLocaleDateString()}</p>
                 <p><strong>Description:</strong> {deliverable.description}</p>
                 
-
                 <div style={{ margin: '15px 0' }}>
                   <h5>Quick Links</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -903,37 +1043,55 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               </div>
               <div style={{ marginBottom: '20px' }}>
                 <h5>Uploaded Report</h5>
-                <p>
-                  <strong>File:</strong>{' '}
-                  <a
-                    href={deliverable.file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#007bff', textDecoration: 'underline' }}
-                  >
-                    {deliverable.file.url.split('/').pop()}
-                  </a>
-                  
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <p style={{ margin: 0 }}>
+                    <strong>File:</strong>{' '}
+                    <a
+                      href={deliverable.file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#007bff',
+                        textDecoration: 'underline',
+                        wordBreak: 'break-all'
+                      }}
+                    >
+                      {deliverable.file.url.split('/').pop()}
+                    </a>
+                  </p>
+
                   <button
                     onClick={openPdfInNewTab}
-                    style={{
-                      marginTop:'10px',
-                      marginLeft: '10px',
-                      padding: '5px 15px',
-                      backgroundColor: '#6b7280',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s',
-                      '&:hover': {
-                        backgroundColor: '#4b5563'
-                      }
-                    }}
+                    className="btn open-pdf-btn"
                   >
                     Open PDF
                   </button>
-                </p>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary mt-2 ms-2"
+                    onClick={handleSummarize}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Summarizing...' : 'Summarize File'}
+                  </button>
+                </div>
+
+                {summary && (
+                  <div className="mt-3">
+                    <h5>Summary:</h5>
+                    <p>{summary}</p>
+                    <button 
+                      className="btn btn-primary mt-2"
+                      onClick={openSummaryInNewPage}
+                    >
+                      Open Summary in New Page
+                    </button>
+                  </div>
+                )}
+
+                {/* Added Plagiarism Checker component */}
+                <PlagiarismChecker fileUrl={deliverable.file?.url} />
               </div>
 
               <div style={{ marginBottom: '20px' }}>
@@ -968,6 +1126,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
               >
                 Submit Evaluation
+              
               </button>
             </div>
           </div>
