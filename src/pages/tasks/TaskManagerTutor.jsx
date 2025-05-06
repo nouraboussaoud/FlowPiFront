@@ -422,34 +422,45 @@ const TaskManagerTutor = () => {
   return (
     <LayoutTutor>
       <div className="container">
-        <div className="dashboard-overview">
-          <div className="dashboard-header">
-            <h1 className="dashboard-title">Task Management</h1>
-          </div>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <h3>{taskStats.total}</h3>
-              <p>Total Tasks</p>
-            </div>
-            <div className="stat-card">
-              <h3>{taskStats.pending}</h3>
-              <p>Pending</p>
-            </div>
-            <div className="stat-card">
-              <h3>{taskStats.inProgress}</h3>
-              <p>In Progress</p>
-            </div>
-            <div className="stat-card">
-              <h3>{taskStats.completed}</h3>
-              <p>Completed</p>
+        <div className="page-header">
+          <div className="header-content">
+            <h1 className="page-title">Task Management</h1>
+            <div className="stats-pills">
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.total}</span>
+                <span className="stat-label">Total</span>
+              </div>
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.pending}</span>
+                <span className="stat-label">Pending</span>
+              </div>
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.inProgress}</span>
+                <span className="stat-label">In Progress</span>
+              </div>
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.completed}</span>
+                <span className="stat-label">Completed</span>
+              </div>
             </div>
           </div>
         </div>
 
         {error && (
           <div className="error-message">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#ef4444">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="#ef4444"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             {error}
           </div>
@@ -509,7 +520,7 @@ const TaskManagerTutor = () => {
                         className="risk-label"
                         style={{ color: getRiskColor(riskAssessment.risk) }}
                       >
-                        {riskAssessment.risk} Risk
+                        {riskAssessment.risk}
                       </span>
                       <span className="confidence-pill">
                         {(riskAssessment.confidence * 100).toFixed(0)}% confidence
@@ -812,7 +823,7 @@ const TaskManagerTutor = () => {
                 </div>
               ))}
             </div>
-            {tasks.length > tasksPerPage && (
+            {tasks.length > 0 && (
               <div className="pagination">
                 <button
                   className="pagination-button"

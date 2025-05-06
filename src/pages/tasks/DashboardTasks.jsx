@@ -51,26 +51,21 @@ const TaskManager = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  // Chat bubble states
   const [tutors, setTutors] = useState([]);
   const [selectedTutor, setSelectedTutor] = useState(null);
   const [showContactList, setShowContactList] = useState(false);
   const [showChatBubble, setShowChatBubble] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const tasksPerPage = 6; // Set to 6 tasks per page
+  const tasksPerPage = 6;
 
-  // Status enum
   const statusOptions = ["pending", "in-progress", "completed"];
 
-  // Pagination calculations
   const totalPages = Math.ceil(tasks.length / tasksPerPage);
   const startIndex = (currentPage - 1) * tasksPerPage;
   const endIndex = startIndex + tasksPerPage;
   const paginatedTasks = tasks.slice(startIndex, endIndex);
 
-  // Helper functions for risk assessment
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
       case "high risk":
@@ -129,7 +124,6 @@ const TaskManager = () => {
     }
   };
 
-  // Helper function for status badge color
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -143,7 +137,6 @@ const TaskManager = () => {
     }
   };
 
-  // Helper function to calculate progress based on GitHub activity
   const calculateProgress = (commits, pullRequests, taskStatus) => {
     let progress = 0;
 
@@ -171,7 +164,7 @@ const TaskManager = () => {
     progress = Math.min(progress, 90);
 
     const hasRecentActivity =
-      (commits || []).some((c) => new Date(c.date) > oneWeekAgo) ||
+      ( commits || []).some((c) => new Date(c.date) > oneWeekAgo) ||
       (pullRequests || []).some((pr) => new Date(pr.merge_date) > oneWeekAgo);
     if (!hasRecentActivity && taskStatus !== "completed") {
       progress = Math.min(progress, 30);
@@ -180,7 +173,6 @@ const TaskManager = () => {
     return Math.round(Math.min(progress, 100));
   };
 
-  // Event handlers for tasks
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTask((prevTask) => ({
@@ -204,14 +196,12 @@ const TaskManager = () => {
         setError("No token found. Please login.");
         return;
       }
-
+  
       const response = await axios.get(
         `http://localhost:5000/api/tasks/getTaskById/${taskId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       const task = response.data;
       if (task.risk && task.riskConfidence) {
         setRiskAssessment({
@@ -220,7 +210,7 @@ const TaskManager = () => {
           explanation:
             task.riskExplanation ||
             `AI analysis based on task details: "${
-              task.taskDetails || "No details provided"
+              task.taskDetails || "No details(fragment) provided"
             }". ${
               task.risk.toLowerCase() === "high risk"
                 ? "Identified potential challenges that may delay completion."
@@ -229,12 +219,15 @@ const TaskManager = () => {
         });
         setShowRiskModal(true);
       } else {
-        setError("No risk assessment available for this task");
+        setError(
+          "No risk assessment available. This may be due to missing task details or an issue with the AI service. Please ensure task details are provided and try again."
+        );
       }
     } catch (error) {
       console.error("Error fetching task risk:", error);
       setError(
-        error.response?.data?.message || "Error fetching risk assessment"
+        error.response?.data?.message ||
+          "Failed to fetch risk assessment. Please check your network connection and try again."
       );
     }
   };
@@ -402,8 +395,22 @@ const TaskManager = () => {
       const response = await axios.get("http://localhost:5000/api/tasks/myTasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTasks(response.data || []);
-      // Reset to first page when tasks are fetched
+      // Include risk level in task data
+      const tasksWithRisk = await Promise.all(
+        response.data.map(async (task) => {
+          try {
+            const taskResponse = await axios.get(
+              `http://localhost:5000/api/tasks/getTaskById/${task._id}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            return { ...task, risk: taskResponse.data.risk || "unknown" };
+          } catch (error) {
+            console.error(`Error fetching risk for task ${task._id}:`, error);
+            return { ...task, risk: "unknown" };
+          }
+        })
+      );
+      setTasks(tasksWithRisk || []);
       setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching assigned tasks:", error);
@@ -453,7 +460,12 @@ const TaskManager = () => {
         newTask,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTasks([...tasks, response.data.task]);
+      // Fetch risk for the new task
+      const taskResponse = await axios.get(
+        `http://localhost:5000/api/tasks/getTaskById/${response.data.task._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTasks([...tasks, { ...response.data.task, risk: taskResponse.data.risk || "unknown" }]);
       setNewTask({
         title: "",
         description: "",
@@ -465,7 +477,6 @@ const TaskManager = () => {
       });
       setShowModal(false);
       setError(null);
-      // Adjust current page if new task pushes tasks to a new page
       const newTotalPages = Math.ceil((tasks.length + 1) / tasksPerPage);
       if (currentPage > newTotalPages) {
         setCurrentPage(newTotalPages);
@@ -493,13 +504,18 @@ const TaskManager = () => {
         updateTaskData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+      // Fetch updated risk
+      const taskResponse = await axios.get(
+        `http://localhost:5000/api/tasks/getTaskById/${selectedTaskId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setTasks((prev) =>
         prev.map((task) =>
-          task._id === selectedTaskId ? response.data.task : task
+          task._id === selectedTaskId
+            ? { ...response.data.task, risk: taskResponse.data.risk || "unknown" }
+            : task
         )
       );
-
       setShowUpdateModal(false);
       setError(null);
     } catch (error) {
@@ -524,7 +540,6 @@ const TaskManager = () => {
       });
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
       setError(null);
-      // Adjust current page if the last task on the current page is deleted
       const newTotalPages = Math.ceil((tasks.length - 1) / tasksPerPage);
       if (currentPage > newTotalPages && newTotalPages > 0) {
         setCurrentPage(newTotalPages);
@@ -539,7 +554,6 @@ const TaskManager = () => {
     }
   };
 
-  // Pagination handlers
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -558,7 +572,6 @@ const TaskManager = () => {
     }
   };
 
-  // Generate page numbers with ellipses
   const getPageNumbers = () => {
     const pages = [];
     const maxPagesToShow = 5;
@@ -581,25 +594,16 @@ const TaskManager = () => {
       }
     }
 
-    // Always include first page
     pages.push(1);
-
-    // Add ellipsis if needed
     if (startPage > 2) {
       pages.push("...");
     }
-
-    // Add middle pages
     for (let i = Math.max(2, startPage); i <= Math.min(totalPages - 1, endPage); i++) {
       pages.push(i);
     }
-
-    // Add ellipsis if needed
     if (endPage < totalPages - 1) {
       pages.push("...");
     }
-
-    // Always include last page if more than one page
     if (totalPages > 1) {
       pages.push(totalPages);
     }
@@ -607,7 +611,6 @@ const TaskManager = () => {
     return pages;
   };
 
-  // Chat bubble event handlers
   const fetchUnreadMessagesCount = () => {
     get("/messages/unread")
       .then((data) => {
@@ -690,12 +693,8 @@ const TaskManager = () => {
       });
 
     fetchUnreadMessagesCount();
-
     const messageInterval = setInterval(fetchUnreadMessagesCount, 30000);
-
-    return () => {
-      clearInterval(messageInterval);
-    };
+    return () => clearInterval(messageInterval);
   }, [location, navigate]);
 
   useEffect(() => {
@@ -736,49 +735,50 @@ const TaskManager = () => {
           pauseOnHover
           theme="light"
         />
-        <div className="dashboard-overview">
-          <div className="dashboard-header">
-            <h1 className="dashboard-title">My Assigned Tasks</h1>
-            <button
-              className="button button-primary"
-              onClick={() => setShowModal(true)}
-              disabled={isLoading}
+        
+        <div className="page-header">
+          <div className="header-content">
+            <h1 className="page-title">My Assigned Tasks</h1>
+            <div className="stats-pills">
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.total}</span>
+                <span className="stat-label">Total</span>
+              </div>
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.pending}</span>
+                <span className="stat-label">Pending</span>
+              </div>
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.inProgress}</span>
+                <span className="stat-label">In Progress</span>
+              </div>
+              <div className="stat-pill">
+                <span className="stat-value">{taskStats.completed}</span>
+                <span className="stat-label">Completed</span>
+              </div>
+            </div>
+          </div>
+          <button
+            className="button button-primary"
+            onClick={() => setShowModal(true)}
+            disabled={isLoading}
+          >
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              New Task
-            </button>
-          </div>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <h3>{taskStats.total}</h3>
-              <p>Total Assigned</p>
-            </div>
-            <div className="stat-card">
-              <h3>{taskStats.pending}</h3>
-              <p>Pending</p>
-            </div>
-            <div className="stat-card">
-              <h3>{taskStats.inProgress}</h3>
-              <p>In Progress</p>
-            </div>
-            <div className="stat-card">
-              <h3>{taskStats.completed}</h3>
-              <p>Completed</p>
-            </div>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            New Task
+          </button>
         </div>
 
         {error && (
@@ -1172,7 +1172,7 @@ const TaskManager = () => {
                         className="risk-label"
                         style={{ color: getRiskColor(riskAssessment.risk) }}
                       >
-                        {riskAssessment.risk} Risk
+                        {riskAssessment.risk}
                       </span>
                       <span className="confidence-pill">
                         {(riskAssessment.confidence * 100).toFixed(0)}% confidence
@@ -1520,6 +1520,10 @@ const TaskManager = () => {
                         onClick={() => openRiskModal(task._id)}
                         disabled={isLoading}
                         title="View AI Risk Assessment"
+                        style={{
+                          backgroundColor: getRiskColor(task.risk),
+                          borderColor: getRiskColor(task.risk),
+                        }}
                       >
                         <svg
                           width="14"

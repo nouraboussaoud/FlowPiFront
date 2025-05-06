@@ -7,6 +7,7 @@ function ContactList({ tutors, onSelectTutor }) {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const socketRef = useRef(null);
+  const audioRef = useRef(new Audio("/notifications.mp3"));
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -36,6 +37,9 @@ function ContactList({ tutors, onSelectTutor }) {
       console.log("📨 New message received in ContactList:", message);
 
       if (message.receiver._id === userId) {
+        // Play notification sound
+        playNotificationSound();
+        
         setUnreadCounts((prev) => ({
           ...prev,
           [message.sender._id]: (prev[message.sender._id] || 0) + 1,
@@ -61,6 +65,21 @@ function ContactList({ tutors, onSelectTutor }) {
       socketRef.current.disconnect();
     };
   }, []);
+
+  // Function to play notification sound
+  const playNotificationSound = () => {
+    try {
+      // Reset the audio to the beginning
+      audioRef.current.currentTime = 0;
+      
+      // Play the notification sound
+      audioRef.current.play().catch(error => {
+        console.warn("Could not play notification sound:", error);
+      });
+    } catch (error) {
+      console.error("Error playing notification sound:", error);
+    }
+  };
 
   const fetchUnreadCounts = async () => {
     try {

@@ -46,6 +46,7 @@ import {Navigate} from "react-router-dom";
 import ProjectManager from "./pages/ProjectManager";
 import ProjectTutor from "./pages/ProjectTutor";
 import TaskManagerTutor from "./pages/tasks/TaskManagerTutor";
+import Dashboard from "./pages/tutor-interfaces/DashboardStat";
  
 
 
@@ -91,6 +92,7 @@ function App() {
           <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
           <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
+          <Route path="/dashboard-stat" element={<Dashboard />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >
