@@ -47,7 +47,7 @@ import ProjectManager from "./pages/ProjectManager";
 import ProjectTutor from "./pages/ProjectTutor";
 import TaskManagerTutor from "./pages/tasks/TaskManagerTutor";
 import Dashboard from "./pages/tutor-interfaces/DashboardStat";
- 
+ import UsersTable from "./pages/tutor-interfaces/UsersTable";
 
 
 function App() {
@@ -72,6 +72,7 @@ function App() {
           <Route path="/Subject-Form" element={<SubjectForm />} />
           <Route path="/Subject-List" element={<SubjectList />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />
           <Route path="/SubjectAdmin" element={<SubjectAdmin />} />
@@ -93,6 +94,7 @@ function App() {
           <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
           <Route path="/dashboard-stat" element={<Dashboard />} />
+          <Route path="/users-table" element={<UsersTable />} />
 
     
 <Route path="/nour" element={<NoursDashboar/>} >

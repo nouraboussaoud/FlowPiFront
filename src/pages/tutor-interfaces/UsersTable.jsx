@@ -582,7 +582,6 @@ const UsersTable = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        Student List
       </motion.h2>
       <div className="mb-4">
         <div className="input-group">

@@ -422,45 +422,20 @@ const TaskManagerTutor = () => {
   return (
     <LayoutTutor>
       <div className="container">
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">Task Management</h1>
-            <div className="stats-pills">
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.total}</span>
-                <span className="stat-label">Total</span>
-              </div>
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.pending}</span>
-                <span className="stat-label">Pending</span>
-              </div>
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.inProgress}</span>
-                <span className="stat-label">In Progress</span>
-              </div>
-              <div className="stat-pill">
-                <span className="stat-value">{taskStats.completed}</span>
-                <span className="stat-label">Completed</span>
-              </div>
-            </div>
+        <div className="simple-header">
+          <div className="task-counts">
+            <span>Total: <strong>{taskStats.total}</strong></span>
+            <span>•</span>
+            <span>Pending: <strong>{taskStats.pending}</strong></span>
+            <span>•</span>
+            <span>Completed: <strong>{taskStats.completed}</strong></span>
           </div>
         </div>
 
         {error && (
           <div className="error-message">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="#ef4444"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#ef4444">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {error}
           </div>
@@ -823,7 +798,7 @@ const TaskManagerTutor = () => {
                 </div>
               ))}
             </div>
-            {tasks.length > 0 && (
+            {tasks.length > tasksPerPage && (
               <div className="pagination">
                 <button
                   className="pagination-button"
@@ -879,6 +854,28 @@ const TaskManagerTutor = () => {
       </div>
 
       <style jsx>{`
+        .simple-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .task-counts {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #6b7280;
+          font-size: 14px;
+        }
+        
+        .task-counts strong {
+          color: #1f2937;
+          font-weight: 600;
+        }
+        
         .pagination {
           display: flex;
           justify-content: center;
