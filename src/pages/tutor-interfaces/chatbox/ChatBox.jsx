@@ -1,18 +1,31 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { get, post, put, del } from "../../../apiHelper";
 import io from "socket.io-client";
-import { get, post, del } from "../../../apiHelper";
+import { toast } from "react-toastify";
 import "./ChatBox.css";
 
 const Chatbox = ({ user, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [messageToDelete, setMessageToDelete] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const socketRef = useRef(null);
   const messageEndRef = useRef(null);
+  const audioRef = useRef(new Audio("/notifications.mp3"));
   const userId = localStorage.getItem('userId');
   
   useEffect(() => {
-    get(`/messages/conversation/${user._id}`).then(setMessages);
+    get(`/messages/conversation/${user._id}`)
+      .then(data => {
+        setMessages(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching messages:", err);
+        setError("Failed to load messages");
+        setLoading(false);
+      });
     
     const token = localStorage.getItem('token');
     
@@ -35,6 +48,11 @@ const Chatbox = ({ user, onClose }) => {
         message.receiver._id === user._id
       ) {
         setMessages((prev) => [...prev, message]);
+        
+        // Play notification sound if the message is from the other user
+        if (message.sender._id === user._id) {
+          playNotificationSound();
+        }
       }
     });
     
@@ -48,6 +66,21 @@ const Chatbox = ({ user, onClose }) => {
     };
   }, [user._id]);
 
+  // Function to play notification sound
+  const playNotificationSound = () => {
+    try {
+      // Reset the audio to the beginning
+      audioRef.current.currentTime = 0;
+      
+      // Play the notification sound
+      audioRef.current.play().catch(error => {
+        console.warn("Could not play notification sound:", error);
+      });
+    } catch (error) {
+      console.error("Error playing notification sound:", error);
+    }
+  };
+  
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,7 +89,17 @@ const Chatbox = ({ user, onClose }) => {
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
     
+    // Clear any previous errors
+    setError(null);
+    
     try {
+      // Check if user is banned or inactive
+      if (user.isBanned || !user.isActive) {
+        const status = user.isBanned ? "banned" : "inactive";
+        setError(`This user's account is currently ${status}. Messages cannot be sent.`);
+        return;
+      }
+      
       const message = { receiverId: user._id, content: newMessage };
       const response = await post("/messages/send", message);
       const sentMessage = response.data;
@@ -71,6 +114,15 @@ const Chatbox = ({ user, onClose }) => {
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
+      
+      // Check for specific error messages from the API
+      if (error.message?.includes("banned")) {
+        setError("Cannot send message to banned user.");
+      } else if (error.message?.includes("inactive")) {
+        setError("Cannot send message to inactive user.");
+      } else {
+        setError("Failed to send message. Please try again.");
+      }
     }
   };
   
@@ -89,6 +141,7 @@ const Chatbox = ({ user, onClose }) => {
       setMessageToDelete(null);
     } catch (error) {
       console.error("Error deleting message:", error);
+      toast.error("Failed to delete message");
     }
   };
   
@@ -98,12 +151,34 @@ const Chatbox = ({ user, onClose }) => {
     }
   };
   
+  // Determine if user is banned or inactive
+  const isUserRestricted = user.isBanned || !user.isActive;
+  const restrictionReason = user.isBanned ? "banned" : "inactive";
+  
   return (
     <div className="chat-box">
       <div className="chat-header">
-        <span>{user.name}</span>
+        <div className="user-info">
+          <span>{user.name}</span>
+          {isUserRestricted && (
+            <span className={`user-status ${restrictionReason}`}>
+              {restrictionReason === "banned" ? "Banned" : "Inactive"}
+            </span>
+          )}
+        </div>
         <button className="close-btn" onClick={onClose}>X</button>
       </div>
+      
+      {isUserRestricted && (
+        <div className={`restriction-banner ${restrictionReason}`}>
+          <i className="bi bi-exclamation-triangle-fill"></i>
+          <span>
+            {restrictionReason === "banned" 
+              ? "This user is banned. You cannot exchange messages." 
+              : "This user's account is inactive. Messages cannot be delivered."}
+          </span>
+        </div>
+      )}
       
       <div className="chat-messages">
         {messages.length === 0 ? (
@@ -152,15 +227,29 @@ const Chatbox = ({ user, onClose }) => {
         <div ref={messageEndRef} />
       </div>
       
+      {error && (
+        <div className="error-message">
+          <i className="bi bi-exclamation-circle"></i>
+          <span>{error}</span>
+        </div>
+      )}
+      
       <div className="chat-input">
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type a message..."
+          placeholder={isUserRestricted ? "Cannot send messages to this user" : "Type a message..."}
+          disabled={isUserRestricted}
         />
-        <button onClick={sendMessage}>Send</button>
+        <button 
+          onClick={sendMessage} 
+          disabled={isUserRestricted}
+          className={isUserRestricted ? "disabled" : ""}
+        >
+          Send
+        </button>
       </div>
     </div>
   );
