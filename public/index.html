@@ -9,8 +9,7 @@
     />
 
     <title>
-      Study Course - Education Category Bootstrap Responsive Template | Home :
-      W3layouts
+      FlowPi
     </title>
 
     <!-- google fonts -->
@@ -27,8 +26,12 @@
     
 
     <!-- Template CSS -->
-    <link rel="stylesheet" href="/assets/css/style-starter.css" />
-    <link rel="stylesheet" href="/assets/css/app.css" />
+    <link rel="stylesheet" href="%PUBLIC_URL%/assets/vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="%PUBLIC_URL%/assets/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="%PUBLIC_URL%/assets/vendor/choices/css/choices.min.css">
+    <link rel="stylesheet" href="%PUBLIC_URL%/assets/vendor/aos/aos.css">
+    <link rel="stylesheet" href="%PUBLIC_URL%/assets/css/style-starter.css">
+    <link rel="stylesheet" href="%PUBLIC_URL%/assets/css/app.css">
     
   </head>
 
@@ -171,13 +174,14 @@
       };
 
       function scrollFunction() {
-        if (
-          document.body.scrollTop > 20 ||
-          document.documentElement.scrollTop > 20
-        ) {
-          document.getElementById("movetop").style.display = "block";
-        } else {
-          document.getElementById("movetop").style.display = "none";
+        // Add a null check before accessing the style property
+        var movetopButton = document.getElementById("movetop");
+        if (movetopButton) {
+          if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            movetopButton.style.display = "block";
+          } else {
+            movetopButton.style.display = "none";
+          }
         }
       }
 

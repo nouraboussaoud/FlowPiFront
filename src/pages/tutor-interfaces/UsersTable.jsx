@@ -8,6 +8,8 @@ import ChatBox from "./chatbox/ChatBox";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import "./messageslist/MessagesList.css";
+import LayoutTutor from "../dashboard/LayoutTutorss";
+import LayoutTutorss from "../dashboard/LayoutTutorss";
 
 const PLACEHOLDER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23d3d3d3'/%3E%3C/svg%3E";
@@ -74,11 +76,11 @@ const UsersTable = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch only student users (role === "student")
     const fetchStudents = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("No token found. Please login.");
+        console.log("Fetching students with token:", token); // Debug log
 
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error("Request timed out")), 10000)
@@ -92,32 +94,36 @@ const UsersTable = () => {
         setStudents(studentUsers);
         setFilteredStudents(studentUsers);
       } catch (err) {
-        setError(err.response?.data?.message || err.message || "Failed to fetch students");
+        const message =
+          err.response?.data?.message || err.message || "Failed to fetch students";
+        setError(message);
+        if (message.includes("token") || err.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchStudents();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
-    // Fetch initial unread message counts for students who sent messages to the tutor
     const fetchUnreadMessages = async () => {
       try {
         const token = localStorage.getItem("token");
-        const counts = {};
+        if (!token) throw new Error("No token found");
 
         const response = await axios.get(
           "http://localhost:5000/api/messages/unread-counts-by-sender",
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const unreadCounts = response.data.counts;
-
+        const unreadCounts = response.data.counts || {};
+        const counts = {};
         students.forEach((student) => {
           counts[student._id] = unreadCounts[student._id] || 0;
         });
-
         setUnreadMessages(counts);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch unread messages");
@@ -130,75 +136,87 @@ const UsersTable = () => {
   }, [students]);
 
   useEffect(() => {
-    // Get token from localStorage
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No authentication token found");
+      setError("Please log in to receive real-time notifications");
+      navigate("/login");
       return;
     }
 
-    // Initialize socket connection with proper authentication
     socketRef.current = io("http://localhost:5000", {
-      auth: { token }, // Pass token in auth object
+      auth: { token },
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      transports: ["websocket", "polling"]
+      transports: ["websocket", "polling"],
     });
 
-    // Handle connection
+    let tutorId = null;
+
     socketRef.current.on("connect", () => {
-      console.log("Socket connected successfully for real-time notifications");
-      
+      console.log("Socket connected successfully");
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
-        const tutorId = decoded._id || decoded.userId; // Check both formats
-        socketRef.current.emit('join', tutorId);
+        tutorId = decoded.userId || decoded._id;
+        socketRef.current.emit("join", tutorId);
         console.log("Joined room:", tutorId);
       } catch (error) {
         console.error("Error decoding token:", error);
+        setError("Failed to initialize real-time notifications");
       }
     });
 
-    // Handle new messages
+    socketRef.current.on("reconnect", () => {
+      console.log("Socket reconnected");
+      if (tutorId) {
+        socketRef.current.emit("join", tutorId);
+        console.log("Rejoined room:", tutorId);
+      }
+    });
+
     socketRef.current.on("new_message", (message) => {
       console.log("New message received via socket:", message);
-      
-      // Make sure we have the necessary data
-      const senderId = message.sender?._id || message.sender;
+      let senderId;
+      if (typeof message.sender === "object" && message.sender?._id) {
+        senderId = message.sender._id;
+      } else if (typeof message.sender === "string") {
+        senderId = message.sender;
+      } else {
+        console.error("Invalid sender format in message:", message.sender);
+        return;
+      }
+
       const senderRole = message.sender?.role || "unknown";
-      
-      // Only update for student messages and if not currently chatting with this student
       if (senderId !== chatUser?._id && senderRole === "student") {
-        setUnreadMessages(prev => {
+        setUnreadMessages((prev) => {
           const newCounts = { ...prev };
           newCounts[senderId] = (newCounts[senderId] || 0) + 1;
           console.log("Updated unread counts:", newCounts);
           return newCounts;
         });
-        
-        // Show toast notification
         toast.info(`New message from ${message.sender?.name || "Student"}`, {
           position: "top-right",
-          autoClose: 3000
+          autoClose: 3000,
         });
       }
     });
 
-    // Handle connection errors with more detailed logging
-    socketRef.current.on("connect_error", (err) => {
-      console.error("Socket connection error:", err.message);
-      console.error("Error details:", err);
+    socketRef.current.on("message_read", ({ senderId }) => {
+      console.log(`Messages from sender ${senderId} marked as read`);
+      setUnreadMessages((prev) => ({
+        ...prev,
+        [senderId]: 0,
+      }));
     });
 
-    // Clean up on unmount
     return () => {
       console.log("Disconnecting socket");
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
     };
-  }, [chatUser]);
+  }, [navigate, chatUser]); // Added chatUser to dependencies
 
   useEffect(() => {
     if (chatUser) {
@@ -258,16 +276,39 @@ const UsersTable = () => {
     e.stopPropagation();
     try {
       const token = localStorage.getItem("token");
-      // Mark all messages from this student as read
+      if (!token) throw new Error("No token found");
+      setActionLoading((prev) => ({ ...prev, [`chat-${user._id}`]: true }));
+
+      // Mark messages as read
       await axios.put(
         `http://localhost:5000/api/messages/mark-all-read/${user._id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUnreadMessages((prev) => ({ ...prev, [user._id]: 0 }));
+
+      // Update badge immediately
+      setUnreadMessages((prev) => ({
+        ...prev,
+        [user._id]: 0,
+      }));
+
+      // Emit socket event to notify other clients
+      socketRef.current.emit("mark_messages_read", {
+        senderId: user._id,
+        tutorId: JSON.parse(atob(token.split('.')[1])).userId,
+      });
+
       setChatUser(user);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to mark messages as read");
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        setError(err.response?.data?.message || "Failed to mark messages as read");
+      }
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [`chat-${user._id}`]: false }));
     }
   };
 
@@ -277,6 +318,7 @@ const UsersTable = () => {
     setActionLoading((prev) => ({ ...prev, [`delete-${userId}`]: true }));
     try {
       const token = localStorage.getItem("token");
+      console.log("Deleting user with token:", token); // Debug log
       await axios.delete(`http://localhost:5000/api/users/delete/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -291,7 +333,13 @@ const UsersTable = () => {
         setCurrentPage(currentPage - 1);
       }
     } catch (error) {
-      setError(error.response?.data?.message || "Error deleting student");
+      if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        setError(error.response?.data?.message || "Error deleting student");
+      }
     } finally {
       setActionLoading((prev) => ({ ...prev, [`delete-${userId}`]: false }));
     }
@@ -301,6 +349,7 @@ const UsersTable = () => {
     setActionLoading((prev) => ({ ...prev, [`toggle-${userId}`]: true }));
     try {
       const token = localStorage.getItem("token");
+      console.log("Toggling status with token:", token); // Debug log
       const response = await axios.put(
         `http://localhost:5000/api/users/toggle-status/${userId}`,
         { isActive: !isActive },
@@ -321,7 +370,13 @@ const UsersTable = () => {
         )
       );
     } catch (error) {
-      setError(error.response?.data?.message || "Error toggling status");
+      if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        setError(error.response?.data?.message || "Error toggling status");
+      }
     } finally {
       setActionLoading((prev) => ({ ...prev, [`toggle-${userId}`]: false }));
     }
@@ -331,6 +386,7 @@ const UsersTable = () => {
     setActionLoading((prev) => ({ ...prev, [`ban-${userId}`]: true }));
     try {
       const token = localStorage.getItem("token");
+      console.log("Banning/unbanning with token:", token); // Debug log
       const response = await axios.put(
         `http://localhost:5000/api/users/ban-user/${userId}`,
         { action: isBanned ? "unban" : "ban" },
@@ -347,7 +403,13 @@ const UsersTable = () => {
         )
       );
     } catch (error) {
-      setError(error.response?.data?.message || "Error banning/unbanning student");
+      if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        setError(error.response?.data?.message || "Error banning/unbanning student");
+      }
     } finally {
       setActionLoading((prev) => ({ ...prev, [`ban-${userId}`]: false }));
     }
@@ -363,6 +425,7 @@ const UsersTable = () => {
   const handleUpdateUser = async () => {
     try {
       const token = localStorage.getItem("token");
+      console.log("Updating user with token:", token); // Debug log
       const response = await axios.put(
         `http://localhost:5000/api/users/update/${updateModalUser._id}`,
         {
@@ -384,7 +447,13 @@ const UsersTable = () => {
       );
       setUpdateModalUser(null);
     } catch (error) {
-      setError(error.response?.data?.message || "Error updating student");
+      if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        setError(error.response?.data?.message || "Error updating student");
+      }
     }
   };
 
@@ -538,20 +607,22 @@ const UsersTable = () => {
           >
             <i className="bi bi-chat-dots"></i>
             {unreadMessages[student._id] > 0 && (
-              <div style={{
-                display: "inline-block",
-                marginLeft: "5px",
-                backgroundColor: "#dc3545",
-                color: "white",
-                borderRadius: "4px",
-                padding: "0 4px",
-                fontSize: "0.75rem",
-                fontWeight: "bold",
-                lineHeight: "1.2",
-                verticalAlign: "text-top"
-              }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  marginLeft: "5px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  borderRadius: "4px",
+                  padding: "0 4px",
+                  fontSize: "0.75rem",
+                  fontWeight: "bold",
+                  lineHeight: "1.2",
+                  verticalAlign: "text-top",
+                }}
+              >
                 {unreadMessages[student._id]}
-              </div>
+              </span>
             )}
           </motion.button>
           <motion.button
@@ -575,6 +646,7 @@ const UsersTable = () => {
   ));
 
   return (
+    <LayoutTutorss>
     <div className="container my-4">
       <motion.h2
         className="mb-4 text-3xl font-bold text-dark"
@@ -582,6 +654,7 @@ const UsersTable = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
+        Students
       </motion.h2>
       <div className="mb-4">
         <div className="input-group">
@@ -954,26 +1027,6 @@ const UsersTable = () => {
           transition: all 0.2s ease;
         }
 
-        .position-relative {
-          position: relative;
-        }
-
-        .notification-badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          background-color: #dc3545;
-          color: white;
-          font-size: 10px;
-          font-weight: 600;
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
         .badge {
           font-size: 0.8rem;
           padding: 0.4em 0.8em;
@@ -1110,14 +1163,6 @@ const UsersTable = () => {
         @media (max-width: 767.98px) {
           .input-group {
             max-width: 100%;
-          }
-
-          .notification-badge {
-            width: 14px;
-            height: 14px;
-            font-size: 9px;
-            top: -3px;
-            right: -3px;
           }
 
           .table-responsive {
@@ -1261,7 +1306,7 @@ const UsersTable = () => {
         }
 
         .modal-content {
-          border-radius: 10px;
+          border-radius: 10 кафеpx;
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
           background-color: #fff;
         }
@@ -1319,6 +1364,7 @@ const UsersTable = () => {
         }
       `}</style>
     </div>
+    </LayoutTutorss>
   );
 };
 

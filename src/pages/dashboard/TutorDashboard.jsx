@@ -123,30 +123,6 @@ const TutorDashboard = () => {
           </div>
         </div>
 
-        <div className="row mb-4">
-          <div className="col-12">
-            <ul className="nav nav-tabs">
-              <li className="nav-item">
-                <button 
-                  className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('dashboard')}
-                >
-                  <i className="bi bi-speedometer2 me-2"></i>
-                  Dashboard
-                </button>
-              </li>
-              <li className="nav-item">
-                <button 
-                  className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('users')}
-                >
-                  <i className="bi bi-people-fill me-2"></i>
-                  Students List
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
 
         <div className="row">
           <div className="col-12">

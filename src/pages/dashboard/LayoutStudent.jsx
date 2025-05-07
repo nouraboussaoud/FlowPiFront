@@ -1,145 +1,63 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
-import TaskManager from '../tasks/DashboardTasks';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faHome, faTasks, faUsers, faProjectDiagram, 
+  faEnvelope, faBell, faMoon, faSun, faUserEdit, 
+  faSignOutAlt, faGraduationCap, faChalkboardTeacher,
+  faClipboardList, faFileUpload, faInbox, faCaretDown,
+  faCode // For FlowPi logo
+} from "@fortawesome/free-solid-svg-icons";
+import "./LayoutStudent.css";
 
 const LayoutStudent = ({ children }) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
-  const [imgKey, setImgKey] = useState(Date.now());
-  const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState(null);
   const [showTaskManager, setShowTaskManager] = useState(false);
-
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showAccountsDropdown, setShowAccountsDropdown] = useState(false);
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const [showInstructorDropdown, setShowInstructorDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
   
-  console.log(localStorage.getItem("role"));
+  // Default profile image
+  const DEFAULT_PROFILE_PIC = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+
   useEffect(() => {
-   
-    // Get profile picture filename from local storage
-    const storedProfilePic = localStorage.getItem("profilePic");
-   
-    if (storedProfilePic) {
-      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
-    }
-  }, []);
-  const handleEditProfile = () => {
-    navigate("/edit-profile"); 
-  };
-  
-
-
-  const handleNavigateToDeliverables = () => {
-    navigate("/deliverables-history");
-  };
-
-  const handleNavigateToReturnDeliverable= () =>{
-    navigate("/return-deliverable");
-  };
-
-  const handleNavigateToTutorsDeliverables=()=>{
-    navigate("/tutors-deliverables");
-  };
-
-  const handleNavigationToReportViewer=()=>{
-    navigate("/report-viewer");
-  }
-  
-  const logoutUser = async () => {
-    console.log("🔄 Tentative de déconnexion...");
-  
-    // Vérifier si le token est présent
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.warn("⚠️ Aucun token trouvé. Redirection vers /login.");
-      navigate("/login");
-      return;
-    }
-  
-    try {
-      const response = await fetch("http://localhost:5000/api/users/logout", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-  
-      if (response.status === 401) {
-        console.warn("🚫 Token expiré. Nettoyage et redirection.");
-        localStorage.clear();
-        navigate("/login");
-        return;
-      }
-  
-      if (response.ok) {
-        console.log("✅ Déconnexion réussie !");
-        localStorage.clear();
-        navigate("/login");
-      } else {
-        throw new Error("Erreur lors de la déconnexion !");
-      }
-    } catch (error) {
-      console.error("❌ Erreur de déconnexion :", error);
-      alert("Erreur de connexion au serveur !");
-    }
-  };
-
-  // Toggle TaskManager visibility and navigate to /tasks
-  const toggleTaskManager = () => {
-    setShowTaskManager(!showTaskManager);
-    navigate("/tasks");  // This will navigate to the /tasks path
-  };
-  
-  const fetchUserData = () => {
-    const storedUser = localStorage.getItem("user");
-    const storedProfilePic = localStorage.getItem("profilePic");
-  
-    if (storedUser) {
+    // Get user data and profile picture from localStorage
+    const fetchUserData = () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        console.log("🔍 Utilisateur récupéré :", parsedUser);
-  
-        let newProfilePic = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
-  
-        if (parsedUser.profilePic && parsedUser.profilePic.trim() !== "") {
-          console.log("✅ Image détectée :", parsedUser.profilePic);
-          newProfilePic = parsedUser.profilePic; // Image Google ou manuelle
-        } else if (storedProfilePic) {
-          newProfilePic = storedProfilePic;
-        } else {
-          console.warn("⚠️ Aucune `profilePic` trouvée, utilisation de l'image par défaut.");
+        const storedUser = localStorage.getItem("user");
+        const storedProfilePic = localStorage.getItem("profilePic");
+        
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          
+          // Set profile picture with appropriate path
+          if (storedProfilePic) {
+            setProfilePic(
+              storedProfilePic.startsWith("http") 
+                ? storedProfilePic 
+                : `http://localhost:5000/uploads/${storedProfilePic}`
+            );
+          } else {
+            setProfilePic(DEFAULT_PROFILE_PIC);
+          }
         }
-  
-        setProfilePic(newProfilePic);
-        setImgKey(Date.now()); // 🔄 Force le rechargement de l'image
-      } catch (error) {
-        console.error("❌ Erreur de parsing `user` :", error);
-      }
-    }
-  };
-  
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedProfilePic = localStorage.getItem("profilePic");
-  
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setProfilePic(storedProfilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
       } catch (error) {
         console.error("Error parsing user data:", error);
+        setProfilePic(DEFAULT_PROFILE_PIC);
       }
-    }
-  }, []);
-  useEffect(() => {
-    fetchUserData();
-  }, [user]); // Met à jour lorsque `user` change
-  
+    };
 
-  useEffect(() => {
+    fetchUserData();
+
+    // Listen for localStorage changes
     const handleStorageChange = () => {
-      console.log("♻️ Changement détecté dans `localStorage` !");
       fetchUserData();
     };
 
@@ -149,610 +67,436 @@ const LayoutStudent = ({ children }) => {
     };
   }, []);
 
+  // Check for URL parameters (token and user) after login
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
     const user = urlParams.get("user");
 
     if (token) {
-      console.log("🔑 Token récupéré :", token);
       localStorage.setItem("token", token);
     }
 
     if (user) {
       try {
-        console.log("👤 Utilisateur récupéré :", user);
         const parsedUser = JSON.parse(user);
-        console.log("👀 Données utilisateur après parsing :", parsedUser);
-
         localStorage.setItem("user", JSON.stringify(parsedUser));
-        localStorage.setItem("profilePic", parsedUser.profilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
-
-        fetchUserData(); // 🔄 Met à jour l'image immédiatement après connexion
+        localStorage.setItem("profilePic", parsedUser.profilePic || DEFAULT_PROFILE_PIC);
       } catch (error) {
-        console.error("❌ Erreur de parsing des données utilisateur :", error);
+        console.error("Error parsing user data from URL:", error);
       }
-    } else {
-      console.warn("⚠️ Aucune donnée utilisateur dans l'URL après connexion.");
     }
   }, []);
 
- 
+  // Add click outside listener to close dropdowns
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // Close dropdowns when clicking outside
+      if (!event.target.closest('.accounts-dropdown-container') && 
+          !event.target.closest('.accounts-toggle')) {
+        setShowAccountsDropdown(false);
+        setShowStudentDropdown(false);
+        setShowInstructorDropdown(false);
+      }
+      
+      if (!event.target.closest('.profile-dropdown') && 
+          !event.target.closest('.profile-section')) {
+        setShowProfileDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Navigation handlers
+  const handleEditProfile = () => {
+    navigate("/edit-profile");
+    setShowProfileDropdown(false);
+  };
   
+  const handleNavigateToDeliverables = () => {
+    navigate("/deliverables-history");
+    setShowMobileMenu(false);
+    setShowAccountsDropdown(false);
+    setShowStudentDropdown(false);
+  };
+  
+  const handleNavigateToReturnDeliverable = () => {
+    navigate("/return-deliverable");
+    setShowMobileMenu(false);
+    setShowAccountsDropdown(false);
+    setShowStudentDropdown(false);
+  };
+  
+  const handleNavigateToTutorsDeliverables = () => {
+    navigate("/tutors-deliverables");
+    setShowMobileMenu(false);
+    setShowAccountsDropdown(false);
+    setShowInstructorDropdown(false);
+  };
+  
+  const toggleTaskManager = () => {
+    setShowTaskManager(!showTaskManager);
+    navigate("/tasks");
+    setShowMobileMenu(false);
+  };
+
+  // Add these navigation handlers
+  const handleNavigateToHome = () => {
+    navigate("/");
+    setShowMobileMenu(false);
+  };
+
+  const handleNavigateToInvitations = () => {
+    navigate("/InvitationList");
+    setShowMobileMenu(false);
+  };
+
+  const handleNavigateToGroups = () => {
+    navigate("/create-group");
+    setShowMobileMenu(false);
+  };
+
+  const handleNavigateToProjects = () => {
+    navigate("/Project-Manager");
+    setShowMobileMenu(false);
+  };
+
+  const handleNavigateToStudentDashboard = () => {
+    navigate("/student-dashboard");
+    setShowMobileMenu(false);
+    setShowAccountsDropdown(false);
+    setShowStudentDropdown(false);
+  };
+
+  // Logout handler
+  const logoutUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("http://localhost:5000/api/users/logout", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 401 || response.ok) {
+        localStorage.clear();
+        navigate("/login");
+      } else {
+        throw new Error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("Server connection error!");
+    }
+  };
+
+  // Toggle dropdowns
+  const toggleProfileDropdown = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const toggleAccountsDropdown = (e) => {
+    e.preventDefault();
+    setShowAccountsDropdown(!showAccountsDropdown);
+    if (showAccountsDropdown) {
+      setShowStudentDropdown(false);
+      setShowInstructorDropdown(false);
+    }
+  };
+
+  const toggleStudentDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowStudentDropdown(!showStudentDropdown);
+    setShowInstructorDropdown(false);
+  };
+
+  const toggleInstructorDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowInstructorDropdown(!showInstructorDropdown);
+    setShowStudentDropdown(false);
+  };
+
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setShowMobileMenu(!showMobileMenu);
+  };
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.setAttribute("data-theme", "light");
+      localStorage.setItem("theme", "light");
+      setDarkMode(false);
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+      setDarkMode(true);
+    }
+  };
+
+  // Check if a nav link is active
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const navbarStyles = {
+    navbar: {
+      height: '50px',
+      minHeight: '50px'
+    },
+    navLink: {
+      padding: '0.5rem 1rem'
+    }
+  };
+
   return (
-    <div>
-       <>
-  <title>FlowPi</title>
-  <meta charSet="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
-  />
-  
-  {/* Dark mode */}
-  {/* Favicon */}
-  <link rel="shortcut icon" href="assets/images/favicon.ico" />
-  <link rel="preconnect" href="https://fonts.googleapis.com/" />
-  <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin="" />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap"
-  />
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="assets/vendor/font-awesome/css/all.min.css"
-  />
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="assets/vendor/bootstrap-icons/bootstrap-icons.css"
-  />
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="assets/vendor/choices/css/choices.min.css"
-  />
-  <link rel="stylesheet" type="text/css" href="assets/vendor/aos/aos.css" />
-  <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
-  <header className="navbar-light navbar-sticky">
-    <nav className="navbar navbar-expand-xl">
-      <div className="container">
-       
-        {/* Logo END */}
-        {/* Responsive navbar toggler */}
-        <button
-          className="navbar-toggler ms-auto"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarCollapse"
-          aria-controls="navbarCollapse"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-animation">
-            <span />
-            <span />
-            <span />
-          </span>
-        </button>
-        <div className="navbar-collapse w-100 collapse" id="navbarCollapse">
-          <ul className="navbar-nav navbar-nav-scroll mx-auto">
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                id="demoMenu"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                Demos
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="demoMenu">
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="">
-                    Home Default
-                  </a>
-                </li>
-              </ul>
-            </li>
-            {/* Nav item 2 Pages */}
+    <div className="layout-container">
+      <header className="navbar-header fixed-top">
+        <nav className="navbar navbar-expand-xl shadow-sm" style={navbarStyles.navbar}>
+          <div className="container">
+            {/* Logo */}
+            <div className="navbar-brand" onClick={handleNavigateToHome} style={{ cursor: 'pointer' }}>
+              <FontAwesomeIcon icon={faCode} className="me-2" />
+              FlowPi
+            </div>
             
-              
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                id="accounntMenu"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                Accounts
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="accounntMenu">
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    <i className="fas fa-user-tie fa-fw me-1" />
-                    Instructor
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="instructor-dashboard.html"
-                      >
-                        <i className="bi bi-grid-fill fa-fw me-1" />
-                        Dashboard
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={handleNavigateToTutorsDeliverables}
-                      >
-                        <i className="bi bi-basket-fill fa-fw me-1" />
-                          Deliverables
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="course-added.html">
-                        <i className="bi bi-file-check-fill fa-fw me-1" />
-                        Course Added
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="instructor-quiz.html">
-                        <i className="bi bi-question-diamond fa-fw me-1" />
-                        Quiz
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="instructor-earning.html"
-                      >
-                        <i className="fas fa-chart-line fa-fw me-1" />
-                        Earnings
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="instructor-studentlist.html"
-                      >
-                        <i className="fas fa-user-graduate fa-fw me-1" />
-                        Students
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="instructor-order.html">
-                        <i className="bi bi-cart-check-fill fa-fw me-1" />
-                        Orders
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="instructor-review.html"
-                      >
-                        <i className="bi bi-star-fill fa-fw me-1" />
-                        Reviews
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="instructor-payout.html"
-                      >
-                        <i className="fas fa-wallet fa-fw me-1" />
-                        Payout
-                      </a>{" "}
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    <i className="fas fa-user-graduate fa-fw me-1" />
-                    Student
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="student-dashboard.html"
-                      >
-                        <i className="bi bi-grid-fill fa-fw me-1" />
-                        Dashboard
-                      </a>{" "}
-                    </li>
-                    <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    <i className="fas fa-user-graduate fa-fw me-1" />
-                    My Deliverables
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={handleNavigateToDeliverables}
-                      >
-                        <i className="bi bi-card-checklist fa-fw me-1" />
-                        My Deliverables History
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={handleNavigateToReturnDeliverable}
-                      >
-                        <i className="bi bi-card-checklist fa-fw me-1" />
-                        Add Deliverable
-                      </a>{" "}
-                    </li>
-                    
-                  </ul>
-                </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={handleNavigateToDeliverables}
-                      >
-                        <i className="bi bi-card-checklist fa-fw me-1" />
-                        My Deliverables
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="student-course-list.html"
-                      >
-                        <i className="bi bi-basket-fill fa-fw me-1" />
-                        Courses
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="student-course-resume.html"
-                      >
-                        <i className="far fa-fw fa-file-alt me-1" />
-                        Course Resume
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="student-quiz.html">
-                        <i className="bi bi-question-diamond fa-fw me-1" />
-                        Quiz{" "}
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="student-payment-info.html"
-                      >
-                        <i className="bi bi-credit-card-2-front-fill fa-fw me-1" />
-                        Payment Info
-                      </a>{" "}
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="student-bookmark.html">
-                        <i className="fas bi-cart-check-fill fa-fw me-1" />
-                        Wishlist
-                      </a>{" "}
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="admin-dashboard.html">
-                    <i className="fas fa-user-cog fa-fw me-1" />
-                    Admin
-                  </a>{" "}
-                </li>
-                <li>
-                  {" "}
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  {" "}
-                  <a
-                    className="dropdown-item"
-                    href=""
-                  >
-                    <a className=""onClick={handleEditProfile} >
-                    <i className="fas fa-fw fa-cog me-1" />
-                    Edit Profile
-                    </a>
-                  </a>{" "}
-                </li>
-                
-                <li>
-                  {" "}
-                  <a
-                    className="dropdown-item"
-                    href=""
-                  >
-                  <a onClick={toggleTaskManager}>
-                  <i  className="fas fa-solid fa-list-check me-1"/>
-                  Tasks 
-                  </a>
-                  </a>{" "}
-                  </li>
-                <li>
-                  {" "}
-                  <a
-                    className="dropdown-item"
-                    href="instructor-delete-account.html"
-                  >
-                    <i className="fas fa-fw fa-trash-alt me-1" />
-                    Delete Profile
-                  </a>{" "}
-                </li>
-                <li>
-                  {" "}
-                  <hr className="dropdown-divider" />
-                </li>
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Dropdown levels
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li className="dropdown-submenu dropend">
-                      <a className="dropdown-item dropdown-toggle" href="#">
-                        Dropdown (end)
-                      </a>
-                      <ul className="dropdown-menu" data-bs-popper="none">
-                        <li>
-                          {" "}
-                          <a className="dropdown-item" href="#">
-                            Dropdown item
-                          </a>{" "}
-                        </li>
-                        <li>
-                          {" "}
-                          <a className="dropdown-item" href="#">
-                            Dropdown item
-                          </a>{" "}
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="#">
-                        Dropdown item
-                      </a>{" "}
-                    </li>
-                    <li className="dropdown-submenu dropstart">
-                      <a className="dropdown-item dropdown-toggle" href="#">
-                        Dropdown (start)
-                      </a>
-                      <ul
-                        className="dropdown-menu dropdown-menu-end"
-                        data-bs-popper="none"
-                      >
-                        <li>
-                          {" "}
-                          <a className="dropdown-item" href="#">
-                            Dropdown item
-                          </a>{" "}
-                        </li>
-                        <li>
-                          {" "}
-                          <a className="dropdown-item" href="#">
-                            Dropdown item
-                          </a>{" "}
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="#">
-                        Dropdown item
-                      </a>{" "}
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </li>
-            
-            <li className="nav-item">
-              <a className="nav-link" href="http://localhost:3000/InvitationList">
-                Invitations to Join Groups
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="create-group">
-                Create Groups
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="Project-Manager">
-                Projects
-                {/* Add the new Tasks button with icon here */}
-                
-                  
-              </a>
-            </li>
-
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link"
-                href="#"
-                id="advanceMenu"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i className="fas fa-ellipsis-h" />
-              </a>
-              <ul
-                className="dropdown-menu dropdown-menu-end min-w-auto"
-                data-bs-popper="none"
-              >
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="https://support.webestica.com/"
-                    target="_blank"
-                  >
-                    <i className="text-warning fa-fw bi bi-life-preserver me-2" />
-                    Support
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="docs/index.html"
-                    target="_blank"
-                  >
-                    <i className="text-danger fa-fw bi bi-card-text me-2" />
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="https://themes.getbootstrap.com/store/webestica/"
-                    target="_blank"
-                  >
-                    <i className="text-success fa-fw bi bi-cloud-download-fill me-2" />
-                    Buy Flowpi!
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="docs/alerts.html"
-                    target="_blank"
-                  >
-                    <i className="text-orange fa-fw bi bi-puzzle-fill me-2" />
-                    Components
-                  </a>
-                </li>
-                <li>
-                  <a className="dropdown-item" href="docs/snippets.html">
-                    <i className="text-purple fa-fw bi bi-stickies-fill me-2" />
-                    Snippets
-                  </a>
-                </li>
-              </ul>
-            </li>
-          </ul>
-       
-   
-          
-           <div>
-           {profilePic ? (
-  <img
-    key={imgKey}
-    src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
-    alt="Profile"
-    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
-    onError={(e) => {
-      console.warn("⚠️ Image introuvable :", profilePic);
-      e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; 
-    }}
-  />
-) : (
-  <p>🚫 Aucune image trouvée</p>
-)}
-
-                </div>
-          <div className="nav my-3 my-xl-0 px-4 flex-nowrap align-items-center">
-           <button className='btn btn-light rounded btn-md' onClick={logoutUser}>logout</button>
-          </div>
-        </div>
-     
-      </div>
-    </nav>
-  </header>
- <main>
-    <section className="pt-0">
-      <div className="container">
-        <div className="row">
-          <div className="col-xl-3">
-            <div
-              className="offcanvas-xl offcanvas-end"
-              tabIndex={-1}
-              id="offcanvasSidebar"
+            {/* Responsive navbar toggler */}
+            <button
+              className="navbar-toggler"
+              type="button"
+              onClick={toggleMobileMenu}
+              aria-label="Toggle navigation"
             >
-              <div className="offcanvas-header bg-light">
-                <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                  My profile
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  data-bs-dismiss="offcanvas"
-                  data-bs-target="#offcanvasSidebar"
-                  aria-label="Close"
-                />
+              <span className="navbar-toggler-animation">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </button>
+            
+            {/* Navbar collapse */}
+            <div className={`navbar-collapse ${showMobileMenu ? 'show' : ''}`} id="navbarCollapse">
+              <ul className="navbar-nav navbar-nav-scroll mx-auto">
+                {/* Account dropdown */}
+                <li className="nav-item dropdown accounts-dropdown-container position-relative">
+                  <a
+                    className="nav-link dropdown-toggle accounts-toggle"
+                    href="#"
+                    onClick={toggleAccountsDropdown}
+                  >
+                    Accounts
+                  </a>
+                  
+                  {showAccountsDropdown && (
+                    <ul className="dropdown-menu show shadow" style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      zIndex: 1000,
+                      minWidth: '200px'
+                    }}>
+                      {/* Student section */}
+                      <li className="dropdown-item dropdown-submenu position-relative">
+                        <a href="#" className="d-flex justify-content-between align-items-center" onClick={toggleStudentDropdown}>
+                          <span>
+                            Student
+                          </span>
+                          <FontAwesomeIcon icon={faCaretDown} />
+                        </a>
+                        
+                        {showStudentDropdown && (
+                          <ul className="dropdown-menu submenu show shadow" style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '100%',
+                            zIndex: 1001,
+                            minWidth: '200px'
+                          }}>
+                            <li>
+                              <div 
+                                className="dropdown-item" 
+                                onClick={handleNavigateToStudentDashboard}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                Dashboard
+                              </div>
+                            </li>
+                            <li>
+                              <div 
+                                className="dropdown-item" 
+                                onClick={handleNavigateToDeliverables}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                My Deliverables
+                              </div>
+                            </li>
+                            <li>
+                              <div 
+                                className="dropdown-item" 
+                                onClick={handleNavigateToReturnDeliverable}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                Add Deliverable
+                              </div>
+                            </li>
+                          </ul>
+                        )}
+                      </li>
+                      
+                      {/* Instructor section */}
+                      <li className="dropdown-item dropdown-submenu position-relative">
+                        <a href="#" className="d-flex justify-content-between align-items-center" onClick={toggleInstructorDropdown}>
+                          <span>
+                            Instructor
+                          </span>
+                          <FontAwesomeIcon icon={faCaretDown} />
+                        </a>
+                        
+                        {showInstructorDropdown && (
+                          <ul className="dropdown-menu submenu show shadow" style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '100%',
+                            zIndex: 1001,
+                            minWidth: '200px'
+                          }}>
+                            <li>
+                              <div 
+                                className="dropdown-item" 
+                                onClick={handleNavigateToTutorsDeliverables}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                Deliverables
+                              </div>
+                            </li>
+                          </ul>
+                        )}
+                      </li>
+                    </ul>
+                  )}
+                </li>
+                
+                {/* Main navigation items */}
+                <li className="nav-item">
+                  <div 
+                    className={`nav-link ${isActive('/InvitationList') ? 'active' : ''}`} 
+                    onClick={handleNavigateToInvitations}
+                    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+                  >
+                    Invitations
+                  </div>
+                </li>
+                <li className="nav-item">
+                  <div 
+                    className={`nav-link ${isActive('/create-group') ? 'active' : ''}`} 
+                    onClick={handleNavigateToGroups}
+                    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+                  >
+                    Groups
+                  </div>
+                </li>
+                <li className="nav-item">
+                  <div 
+                    className={`nav-link ${isActive('/Project-Manager') ? 'active' : ''}`} 
+                    onClick={handleNavigateToProjects}
+                    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+                  >
+                    Projects
+                  </div>
+                </li>
+                <li className="nav-item">
+                  <a className={`nav-link ${isActive('/tasks') ? 'active' : ''}`} onClick={toggleTaskManager} style={{ cursor: 'pointer' }}>
+                    Tasks
+                  </a>
+                </li>
+              </ul>
+
+              {/* Right side controls */}
+              <div className="d-flex align-items-center">
+                {/* Dark mode toggle */}
+                <div className="nav-item me-3">
+                  <a className="nav-link px-2" onClick={toggleDarkMode} style={{ cursor: 'pointer' }}>
+                    <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
+                  </a>
+                </div>
+                
+
+
+                {/* Profile dropdown menu */}
+                <div className="profile-section position-relative">
+                  <div onClick={toggleProfileDropdown} style={{ cursor: 'pointer' }} className="d-flex align-items-center">
+                    {profilePic ? (
+                      <img
+                        src={profilePic}
+                        alt="Profile"
+                        className="profile-image"
+                        style={{ width: "40px", height: "40px", borderRadius: "50%" }}
+                        onError={(e) => {
+                          e.target.src = DEFAULT_PROFILE_PIC;
+                        }}
+                      />
+                    ) : (
+                      <img src={DEFAULT_PROFILE_PIC} alt="Default Profile" style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
+                    )}
+                    <FontAwesomeIcon icon={faCaretDown} className="ms-2" />
+                  </div>
+                  
+                  {/* Dropdown menu for profile actions */}
+                  {showProfileDropdown && (
+                    <div className="profile-dropdown shadow" style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: '50px',
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      padding: '8px 0',
+                      width: '200px',
+                      zIndex: 1000
+                    }}>
+                      <div 
+                        onClick={handleEditProfile} 
+                        className="dropdown-item d-flex align-items-center"
+                        style={{ padding: '10px 15px', cursor: 'pointer' }}
+                      >
+                        <FontAwesomeIcon icon={faUserEdit} className="me-2" />
+                        Edit Profile
+                      </div>
+                      <div 
+                        onClick={logoutUser} 
+                        className="dropdown-item d-flex align-items-center text-danger"
+                        style={{ padding: '10px 15px', cursor: 'pointer' }}
+                      >
+                        <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
+                        Logout
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      {/* Add a Tasks button in the main content area */}
+        </nav>
+      </header>
       
-      {children}
-    </section>
-
-  </main>
-  <div className="back-top">
-    <i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" />
-  </div>
- </>
+      {/* Add padding to the main content to prevent it from being hidden under the fixed navbar */}
+      <main style={{ paddingTop: '80px' }}>
+        <section>
+          {children}
+        </section>
+      </main>
     </div>
-  )
-}
+  );
+};
 
-export default LayoutStudent
+export default LayoutStudent;

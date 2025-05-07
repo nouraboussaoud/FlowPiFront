@@ -241,15 +241,7 @@ const Dashboard = () => {
           </h1>
           <p className="motivational-message">{getMotivationalMessage()}</p>
         </div>
-        <div className="welcome-actions">
-          <button
-            className="button button-primary"
-            onClick={() => window.location.href = "/subjects"}
-          >
-            <i className="fas fa-book-open me-2"></i>
-            Browse Subjects
-          </button>
-        </div>
+
       </div>
 
       {error && (
