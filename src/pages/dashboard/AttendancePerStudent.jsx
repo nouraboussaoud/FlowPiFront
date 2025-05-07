@@ -138,11 +138,11 @@ const AttendancePerStudent = () => {
           () => axios.get(`${API_BASE_URL}/attendance/group/${selectedGroup._id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          "Error fetching attendance data"
+          "No attendance data available"
         );
         setAttendanceData(response.data);
       } catch (error) {
-        console.error("Error fetching attendance data:", error);
+        console.error("No attendance data available:", error);
       } finally {
         setLoading(false);
       }
