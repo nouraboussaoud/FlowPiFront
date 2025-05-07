@@ -1,4 +1,4 @@
-import React, { useState,useRef } from "react";
+import React, { useState,useRef,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import { Eye, EyeOff } from "lucide-react"; // Install with `npm install lucide-react`
@@ -8,6 +8,20 @@ import {nanoid} from "nanoid";
 import Loader from "../components/loader";
 import { toast } from "sonner";
 
+const useAnimatedBackground = (images, duration = 5000) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }, duration);
+    return () => clearInterval(interval);
+  }, [images.length, duration]);
+  
+  return images[currentIndex];
+};
+
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -16,6 +30,15 @@ const RegisterPage = () => {
   const [role, setRole] = useState(""); // Default role
   const [profilePic, setProfilePic] = useState(null); // To store the selected file
   const [loading, setLoading] = useState(false);
+  const backgroundImages = [
+    "/assets/images/2885174.jpg",
+    "/assets/images/image3.png",
+    "/assets/images/Data_security_05.jpg",
+  ];
+  const currentBg = useAnimatedBackground(backgroundImages,5000);
+
+  
+    ///////////////////[[[]]]
 
   //Yessine
   const [suggestedPassword, setSuggestedPassword] = useState("");
@@ -97,32 +120,15 @@ const RegisterPage = () => {
             <section className="p-0 d-flex align-items-center position-relative overflow-hidden">
               <div className="container-fluid">
                 <div className="row">
-                  <div className="col-12 col-lg-6 d-md-flex align-items-center justify-content-center bg-primary bg-opacity-10 vh-lg-100">
-                    <div className="p-3 p-lg-5">
-                      <div className="text-center">
-                        <h2 className="fw-bold">Welcome to our largest community</h2>
-                        <p className="mb-0 h6 fw-light">Let's learn something new today!</p>
-                      </div>
-                      <img src="assets/images/element/02.svg" className="mt-5" alt="" />
-                      <div className="d-sm-flex mt-5 align-items-center justify-content-center">
-                        <ul className="avatar-group mb-2 mb-sm-0">
-                          <li className="avatar avatar-sm">
-                            <img className="avatar-img rounded-circle" src="assets/images/avatar/01.jpg" alt="avatar" />
-                          </li>
-                          <li className="avatar avatar-sm">
-                            <img className="avatar-img rounded-circle" src="assets/images/avatar/02.jpg" alt="avatar" />
-                          </li>
-                          <li className="avatar avatar-sm">
-                            <img className="avatar-img rounded-circle" src="assets/images/avatar/03.jpg" alt="avatar" />
-                          </li>
-                          <li className="avatar avatar-sm">
-                            <img className="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="avatar" />
-                          </li>
-                        </ul>
-                        <p className="mb-0 h6 fw-light ms-0 ms-sm-3">4k+ Students joined us, now it's your turn.</p>
-                      </div>
-                    </div>
-                  </div>
+                <div className="col-lg-6 d-none d-lg-flex login-bg-container">
+                <div 
+                  className="login-bg-image"
+                  style={{
+                    backgroundImage: `url(${currentBg})`,
+                    transition: 'background-image 1s ease-in-out',
+                  }}
+                />
+              </div>
                   <div className="col-12 col-lg-6 m-auto">
                     <div className="row my-5">
                       <div className="col-sm-10 col-xl-8 m-auto">
@@ -226,7 +232,7 @@ const RegisterPage = () => {
                             <button className="btn bg-google mb-2 mb-xxl-0" onClick={() => { /* Add Google signup logic here */ }}><i className="fab fa-fw fa-google text-white me-2"></i>Signup with Google</button>
                           </div>
                           <div className="col-xxl-6 d-grid">
-                            <button className="btn bg-facebook mb-0" onClick={() => { /* Add Facebook signup logic here */ }}><i className="fab fa-fw fa-facebook-f me-2"></i>Signup with Facebook</button>
+                            <button className="btn bg-facebook mb-0" onClick={() => { /* Add Facebook signup logic here */ }}><i className="fab fa-fw fa-facebook-f me-2"></i>Signup with Github</button>
                           </div>
                         </div>
                         <div className="mt-4 text-center">

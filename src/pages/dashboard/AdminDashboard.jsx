@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [profilePic, setProfilePic] = useState(null);
+  const [user, setUser] = useState(null);
+    const [profilePic, setProfilePic] = useState("");
+    const [imgKey, setImgKey] = useState(Date.now());
   useEffect(() => {
     // Get profile picture filename from local storage
     const storedProfilePic = localStorage.getItem("profilePic");
@@ -17,6 +19,94 @@ const AdminDashboard = () => {
     // Add your logout logic here
     navigate("/logout"); // Navigate to the logout page
   };
+     
+    const fetchUserData = () => {
+      const storedUser = localStorage.getItem("user");
+      const storedProfilePic = localStorage.getItem("profilePic");
+    
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          console.log("🔍 Utilisateur récupéré :", parsedUser);
+    
+          let newProfilePic = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+    
+          if (parsedUser.profilePic && parsedUser.profilePic.trim() !== "") {
+            console.log("✅ Image détectée :", parsedUser.profilePic);
+            newProfilePic = parsedUser.profilePic; // Image Google ou manuelle
+          } else if (storedProfilePic) {
+            newProfilePic = storedProfilePic;
+          } else {
+            console.warn("⚠️ Aucune `profilePic` trouvée, utilisation de l'image par défaut.");
+          }
+    
+          setProfilePic(newProfilePic);
+          setImgKey(Date.now()); // 🔄 Force le rechargement de l’image
+        } catch (error) {
+          console.error("❌ Erreur de parsing `user` :", error);
+        }
+      }
+    };
+    
+    useEffect(() => {
+      const storedUser = localStorage.getItem("user");
+      const storedProfilePic = localStorage.getItem("profilePic");
+    
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setProfilePic(storedProfilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
+    }, []);
+    useEffect(() => {
+      fetchUserData();
+    }, []);
+  
+    useEffect(() => {
+      const handleStorageChange = () => {
+        console.log("♻️ Changement détecté dans `localStorage` !");
+        fetchUserData();
+      };
+  
+      window.addEventListener("storage", handleStorageChange);
+      return () => {
+        window.removeEventListener("storage", handleStorageChange);
+      };
+    }, []);
+  
+    useEffect(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
+      const user = urlParams.get("user");
+  
+      if (token) {
+        console.log("🔑 Token récupéré :", token);
+        localStorage.setItem("token", token);
+      }
+  
+      if (user) {
+        try {
+          console.log("👤 Utilisateur récupéré :", user);
+          const parsedUser = JSON.parse(user);
+          console.log("👀 Données utilisateur après parsing :", parsedUser);
+  
+          localStorage.setItem("user", JSON.stringify(parsedUser));
+          localStorage.setItem("profilePic", parsedUser.profilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+  
+          fetchUserData(); // 🔄 Met à jour l’image immédiatement après connexion
+        } catch (error) {
+          console.error("❌ Erreur de parsing des données utilisateur :", error);
+        }
+      } else {
+        console.warn("⚠️ Aucune donnée utilisateur dans l'URL après connexion.");
+      }
+    }, []);
+  
+   
   return (
     <>
       <title>Eduport- LMS, Education and Course Theme</title>
@@ -155,6 +245,7 @@ const AdminDashboard = () => {
                     Reviews
                   </a>
                 </li>
+             
                 <li className="nav-item">
                   <a className="nav-link" href="admin-earning.html">
                     <i className="far fa-chart-bar fa-fw me-2" />
@@ -367,10 +458,16 @@ const AdminDashboard = () => {
                                     <div >
                                       {profilePic ? (
                                         <img
-                                          src={profilePic}
-                                          alt="Profile"
-                                          style={{ width: "50px", height: "50px", borderRadius: "50%" }}
-                                        />
+                                        key={imgKey}
+                                        src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
+                                        alt="Profile"
+                                        style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+                                        onError={(e) => {
+                                          console.warn("⚠️ Image introuvable :", profilePic);
+                                          e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+                                        }}
+                                      />
+                                      
                                       ) : (
                                         <p>No Profile Picture</p>
                                       )}
@@ -826,9 +923,17 @@ const AdminDashboard = () => {
                   <div className="card-header border-bottom d-flex justify-content-between align-items-center p-4">
                     <h5 className="card-header-title">Top Instructors</h5>
                     <a href="usersList" className="btn btn-link p-0 mb-0">
-                      View all
+                      View users
                     </a>
+                    <a href="groupList" className="btn btn-link p-0 mb-0">
+                      View Groups
+                    </a>
+                    <a href="dashboard-tasks" className="btn btn-link p-0 mb-0">
+                      View Tasks
+                    </a>
+                 
                   </div>
+                  
                   <div className="card-body p-4">
                     <div className="d-sm-flex justify-content-between align-items-center">
                       <div className="d-sm-flex align-items-center mb-1 mb-sm-0">
@@ -985,6 +1090,17 @@ const AdminDashboard = () => {
                 <div className="card shadow h-100">
                   <div className="card-header border-bottom p-4">
                     <h5 className="card-header-title">Notice board</h5>
+                    <a href="SubjectAdmin" className="btn btn-link p-0 mb-0">
+                      View Subjects
+                    </a><br></br>
+                    <a href="CreateSubjectAdmin" className="btn btn-link p-0 mb-0">
+                      Create Subjects
+                    </a><br></br>
+                    <a href="ProjectAdmin" className="btn btn-link p-0 mb-0">
+                     Projects
+                    </a>
+                    
+
                   </div>
                   <div className="card-body p-4">
                     <div className="custom-scrollbar h-300px">

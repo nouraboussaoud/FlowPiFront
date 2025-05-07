@@ -1,0 +1,134 @@
+.contact-list-container {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .contact-list-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+  }
+  
+  
+  .contact-search {
+    border-radius: 20px !important;
+    border: 1px solid #ced4da;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .contact-search:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    outline: none;
+  }
+  
+  .contact-list {
+    list-style: none;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contact-item {
+    padding: 10px 15px;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 50px; /* Ensure enough height for badge alignment */
+  }
+  
+  .contact-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .contact-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+  }
+  
+  .contact-name {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+    flex-grow: 1; /* Allow name to take available space */
+  }
+  
+  .contact-badge {
+    background-color: #dc3545; /* Bright red for visibility */
+    color: #fff;
+    font-size: 0.8rem; /* Slightly smaller for balance */
+    font-weight: 600;
+    padding: 4px 8px; /* Compact padding */
+    min-width: 22px; /* Minimum width for single digits */
+    height: 22px; /* Fixed height */
+    line-height: 14px; /* Center text vertically */
+    text-align: center;
+    border-radius: 11px; /* Smooth pill shape */
+    margin-left: 10px; /* Space from name/avatar */
+    flex-shrink: 0; /* Prevent badge from shrinking */
+  }
+  
+  /* Scrollbar styling for contact list */
+  .contact-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .contact-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .contact-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+  
+  .contact-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 576px) {
+    .contact-list-container {
+      max-width: 100%;
+      padding: 10px;
+    }
+  
+    .contact-list-title {
+      font-size: 1.1rem;
+    }
+  
+    .contact-item {
+      padding: 8px 12px;
+      min-height: 45px;
+    }
+  
+    .contact-avatar {
+      width: 35px;
+      height: 35px;
+    }
+  
+    .contact-name {
+      font-size: 0.9rem;
+    }
+  
+    .contact-badge {
+      font-size: 0.75rem;
+      padding: 3px 7px;
+      min-width: 20px;
+      height: 20px;
+      line-height: 14px;
+      margin-left: 8px;
+    }
+  }

@@ -1,0 +1,188 @@
+/* Mobile-first responsive styles */
+.login-page-container {
+  height: 100vh;
+  overflow: auto;
+  background-color: #f8f9fa;
+}
+
+.login-section {
+  height: 100%;
+}
+
+.login-bg-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.login-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
+.login-form-container {
+  padding: 2rem 1rem;
+  background-color: white;
+  display: flex;
+  align-items: center;
+}
+
+.login-form-wrapper {
+  width: 100%;
+  max-width: 450px;
+  padding: 0 15px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-emoji {
+  font-size: 2.5rem;
+  display: block;
+}
+
+.login-title {
+  font-size: 1.75rem;
+  margin: 0.5rem 0;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  color: #6c757d;
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.input-group-lg {
+  border-radius: 0.5rem;
+}
+
+.btn-login {
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  background-color: #2a58ee;
+  border: none;
+}
+
+.btn-login:hover {
+  background-color: #0230a4;
+}
+
+.btn-signup {
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+}
+
+.forgot-password-btn {
+  font-size: 0.875rem;
+}
+
+.social-login-separator {
+  position: relative;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.social-login-separator hr {
+  margin: 1rem 0;
+  border-top: 1px solid #dee2e6;
+}
+
+.separator-text {
+  position: relative;
+  padding: 0 10px;
+  background-color: white;
+  top: -0.8rem;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.btn-google {
+  background-color: #0095ff;
+  color: white;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.btn-google:hover {
+  background-color: #c23321;
+  color: white;
+}
+
+.btn-github {
+  background-color: #2aaaf9;
+  color: white;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.btn-github:hover {
+  background-color: #222;
+  color: white;
+}
+
+/* Tablet and larger */
+@media (min-width: 768px) {
+  .login-form-container {
+    padding: 3rem;
+  }
+  
+  .login-title {
+    font-size: 2rem;
+  }
+  
+  .login-subtitle {
+    font-size: 1.1rem;
+  }
+}
+
+/* Desktop */
+@media (min-width: 992px) {
+  .login-page-container {
+    overflow: hidden;
+  }
+  
+  .login-form-wrapper {
+    padding: 0 2rem;
+  }
+  
+  .login-bg-container {
+    min-height: 100vh;
+  }
+}
+
+/* Extra large screens */
+@media (min-width: 1200px) {
+  .login-form-wrapper {
+    max-width: 500px;
+  }
+}
+
+/* Loading state */
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

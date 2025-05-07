@@ -93,15 +93,18 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [selectedFilePath, setSelectedFilePath] = useState('');
   const [loading, setLoading] = useState({
     tree: true,
-    content: false
+    content: false,
+    submission: false
   });
   const [error, setError] = useState({
     tree: null,
-    content: null
+    content: null,
+    submission: null
   });
   const [cache, setCache] = useState({});
   const [nestedFileTree, setNestedFileTree] = useState({});
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [pdfError, setPdfError] = useState(null);
 
   // Rubric data
@@ -267,9 +270,44 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     setChecklist((prev) => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = () => {
-    onSubmitEvaluation(evaluationScore, checklist, rubricScores, notes);
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      // Clear previous errors
+      setError(prev => ({...prev, submission: null}));
+      setLoading(prev => ({...prev, submission: true}));
+      
+      // Validate the evaluation score
+      if (!evaluationScore || isNaN(evaluationScore) || evaluationScore < 0 || evaluationScore > 100) {
+        setError(prev => ({...prev, submission: 'Please enter a valid evaluation score between 0 and 100'}));
+        setLoading(prev => ({...prev, submission: false}));
+        return;
+      }
+  
+      // Prepare evaluation data
+      const evaluationData = {
+        evaluationScore: parseFloat(evaluationScore), // Convert to number
+        notes,
+      };
+  
+      // Call the onSubmitEvaluation prop with the evaluation data
+      await onSubmitEvaluation(deliverable._id, evaluationData);
+      
+      // Set success state
+      setSubmitSuccess(true);
+      
+      // Close the modal after a short delay to show success message
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (error) {
+      console.error('Error submitting evaluation:', error);
+      setError(prev => ({
+        ...prev, 
+        submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.'
+      }));
+    } finally {
+      setLoading(prev => ({...prev, submission: false}));
+    }
   };
 
   // AI detection
@@ -580,6 +618,16 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     if (deliverable) {
       fetchCommitDetails();
       fetchFileTree();
+      
+      // Initialize form with existing evaluation data if available
+      if (deliverable.evaluation) {
+        if (deliverable.evaluation.evaluationScore) {
+          setEvaluationScore(deliverable.evaluation.evaluationScore);
+        }
+        if (deliverable.evaluation.notes) {
+          setNotes(deliverable.evaluation.notes);
+        }
+      }
       fetchUploadedFiles();
     }
   }, [deliverable]);
@@ -832,7 +880,12 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 <p><strong>Title:</strong> {deliverable.title}</p>
                 <p><strong>Submission Date:</strong> {new Date(deliverable.submission_date).toLocaleDateString()}</p>
                 <p><strong>Description:</strong> {deliverable.description}</p>
+                <p><strong>Status:</strong> <span style={{
+                  color: deliverable.status === 'evaluated' ? '#28a745' : '#f0ad4e',
+                  fontWeight: 'bold'
+                }}>{deliverable.status.charAt(0).toUpperCase() + deliverable.status.slice(1)}</span></p>
                 
+
                 <div style={{ margin: '15px 0' }}>
                   <h5>Quick Links</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -1006,7 +1059,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                     border: '1px solid #ddd',
                     minHeight: '100px'
                   }}
-                  placeholder="Write your notes here..."
+                  placeholder="Write your feedback here..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 ></textarea>
@@ -1098,9 +1151,11 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 <h5>Final Mark</h5>
                 <input
                   type="number"
+                  min="0"
+                  max="100"
                   value={evaluationScore}
                   onChange={(e) => setEvaluationScore(e.target.value)}
-                  placeholder="Enter evaluation mark"
+                  placeholder="Enter evaluation mark (0-100)"
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -1110,23 +1165,56 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 />
               </div>
 
+              {error.submission && (
+                <div style={{ 
+                  marginBottom: '15px', 
+                  color: '#dc3545', 
+                  backgroundColor: '#f8d7da',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  border: '1px solid #f5c6cb'
+                }}>
+                  {error.submission}
+                </div>
+              )}
+
+              {submitSuccess && (
+                <div style={{ 
+                  marginBottom: '15px', 
+                  color: '#155724', 
+                  backgroundColor: '#d4edda',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  border: '1px solid #c3e6cb'
+                }}>
+                  Evaluation submitted successfully!
+                </div>
+              )}
+
               <button 
                 onClick={handleSubmit}
+                disabled={loading.submission}
                 style={{
-                  backgroundColor: '#28a745',
+                  backgroundColor: loading.submission ? '#6c757d' : '#28a745',
                   color: 'white',
                   border: 'none',
                   padding: '10px 15px',
                   borderRadius: '4px',
-                  cursor: 'pointer',
+                  cursor: loading.submission ? 'not-allowed' : 'pointer',
                   width: '100%',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+                onMouseOver={(e) => {
+                  if (!loading.submission) e.currentTarget.style.backgroundColor = '#218838';
+                }}
+                onMouseOut={(e) => {
+                  if (!loading.submission) e.currentTarget.style.backgroundColor = '#28a745';
+                }}
               >
-                Submit Evaluation
-              
+                {loading.submission ? 'Submitting...' : 'Submit Evaluation'}
               </button>
             </div>
           </div>

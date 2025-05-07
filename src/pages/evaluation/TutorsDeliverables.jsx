@@ -9,29 +9,39 @@ const TutorsDeliverables = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
 
-  useEffect(() => {
-    const fetchDeliverables = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/deliverables/history', {
-          headers: {
-            "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-          },
-          withCredentials: true
-        });
-        setDeliverables(response.data.deliverables);
-      } catch (error) {
-        console.error('Error fetching deliverables:', error);
-      } finally {
-        setLoading(false);
-      }
+    useEffect(() => {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    
+      const fetchDeliverables = async () => {
+        try {
+          const response = await axios.get('http://localhost:5000/api/deliverables/history', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+    
+          // Access the 'deliverables' property from the response
+          if (response.data && Array.isArray(response.data.deliverables)) {
+            setDeliverables(response.data.deliverables);
+          } else {
+            console.error('Unexpected response format:', response.data);
+            setDeliverables([]); // Set an empty array if the response is not valid
+          }
+        } catch (error) {
+          console.error('Error fetching deliverables:', error);
+          setDeliverables([]); // Set an empty array on error
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      fetchDeliverables();
+    }, []);
+
+    const handleViewDetails = (deliverable) => {
+      console.log('Selected Deliverable:', deliverable);
+      setSelectedDeliverable(deliverable);
     };
-
-    fetchDeliverables();
-  }, []);
-
-  const handleViewDetails = (deliverable) => {
-    setSelectedDeliverable(deliverable);
-  };
 
   const handleCloseModal = () => {
     setSelectedDeliverable(null);

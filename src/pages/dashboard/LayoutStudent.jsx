@@ -1,15 +1,23 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from 'react';
+
+import TaskManager from '../tasks/DashboardTasks';
 
 const LayoutStudent = ({ children }) => {
   const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [imgKey, setImgKey] = useState(Date.now());
   const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState(null);
+  const [showTaskManager, setShowTaskManager] = useState(false);
+
+  
+  console.log(localStorage.getItem("role"));
   useEffect(() => {
+   
     // Get profile picture filename from local storage
     const storedProfilePic = localStorage.getItem("profilePic");
-
+   
     if (storedProfilePic) {
       setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
     }
@@ -17,6 +25,8 @@ const LayoutStudent = ({ children }) => {
   const handleEditProfile = () => {
     navigate("/edit-profile"); 
   };
+  
+
 
   const handleNavigateToDeliverables = () => {
     navigate("/deliverables-history");
@@ -35,45 +45,150 @@ const LayoutStudent = ({ children }) => {
   }
   
   const logoutUser = async () => {
+    console.log("🔄 Tentative de déconnexion...");
+  
+    // Vérifier si le token est présent
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("⚠️ Aucun token trouvé. Redirection vers /login.");
+      navigate("/login");
+      return;
+    }
+  
     try {
-      // Send the POST request to the backend
       const response = await fetch("http://localhost:5000/api/users/logout", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,  // Send the JWT token
-          "Content-Type": "application/json"
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
-
-      const data = await response.json();
-
+  
+      if (response.status === 401) {
+        console.warn("🚫 Token expiré. Nettoyage et redirection.");
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
+  
       if (response.ok) {
-        // If the server responds with success, remove token and role from localStorage
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-
-        // Redirect to the login page
+        console.log("✅ Déconnexion réussie !");
+        localStorage.clear();
         navigate("/login");
       } else {
-        alert(data.message || "Logout failed!");
+        throw new Error("Erreur lors de la déconnexion !");
       }
     } catch (error) {
-      console.error("Error logging out:", error);
-      alert("Something went wrong during logout!");
+      console.error("❌ Erreur de déconnexion :", error);
+      alert("Erreur de connexion au serveur !");
     }
   };
 
+  // Toggle TaskManager visibility and navigate to /tasks
+  const toggleTaskManager = () => {
+    setShowTaskManager(!showTaskManager);
+    navigate("/tasks");  // This will navigate to the /tasks path
+  };
+  
+  const fetchUserData = () => {
+    const storedUser = localStorage.getItem("user");
+    const storedProfilePic = localStorage.getItem("profilePic");
+  
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("🔍 Utilisateur récupéré :", parsedUser);
+  
+        let newProfilePic = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+  
+        if (parsedUser.profilePic && parsedUser.profilePic.trim() !== "") {
+          console.log("✅ Image détectée :", parsedUser.profilePic);
+          newProfilePic = parsedUser.profilePic; // Image Google ou manuelle
+        } else if (storedProfilePic) {
+          newProfilePic = storedProfilePic;
+        } else {
+          console.warn("⚠️ Aucune `profilePic` trouvée, utilisation de l'image par défaut.");
+        }
+  
+        setProfilePic(newProfilePic);
+        setImgKey(Date.now()); // 🔄 Force le rechargement de l'image
+      } catch (error) {
+        console.error("❌ Erreur de parsing `user` :", error);
+      }
+    }
+  };
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedProfilePic = localStorage.getItem("profilePic");
+  
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setProfilePic(storedProfilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    fetchUserData();
+  }, [user]); // Met à jour lorsque `user` change
+  
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log("♻️ Changement détecté dans `localStorage` !");
+      fetchUserData();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const user = urlParams.get("user");
+
+    if (token) {
+      console.log("🔑 Token récupéré :", token);
+      localStorage.setItem("token", token);
+    }
+
+    if (user) {
+      try {
+        console.log("👤 Utilisateur récupéré :", user);
+        const parsedUser = JSON.parse(user);
+        console.log("👀 Données utilisateur après parsing :", parsedUser);
+
+        localStorage.setItem("user", JSON.stringify(parsedUser));
+        localStorage.setItem("profilePic", parsedUser.profilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+
+        fetchUserData(); // 🔄 Met à jour l'image immédiatement après connexion
+      } catch (error) {
+        console.error("❌ Erreur de parsing des données utilisateur :", error);
+      }
+    } else {
+      console.warn("⚠️ Aucune donnée utilisateur dans l'URL après connexion.");
+    }
+  }, []);
+
+ 
+  
   return (
     <div>
        <>
-  <title>Eduport - LMS, Education and Course Theme</title>
+  <title>FlowPi</title>
   <meta charSet="utf-8" />
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, shrink-to-fit=no"
   />
-  <meta name="author" content="Webestica.com" />
-  <meta name="description" content="Eduport- LMS, Education and Course Theme" />
+  
   {/* Dark mode */}
   {/* Favicon */}
   <link rel="shortcut icon" href="assets/images/favicon.ico" />
@@ -103,18 +218,7 @@ const LayoutStudent = ({ children }) => {
   <header className="navbar-light navbar-sticky">
     <nav className="navbar navbar-expand-xl">
       <div className="container">
-        <a className="navbar-brand" href="index.html">
-          <img
-            className="light-mode-item navbar-brand-item"
-            src="assets/images/logo.svg"
-            alt="logo"
-          />
-          <img
-            className="dark-mode-item navbar-brand-item"
-            src="assets/images/logo-light.svg"
-            alt="logo"
-          />
-        </a>
+       
         {/* Logo END */}
         {/* Responsive navbar toggler */}
         <button
@@ -148,470 +252,15 @@ const LayoutStudent = ({ children }) => {
               <ul className="dropdown-menu" aria-labelledby="demoMenu">
                 <li>
                   {" "}
-                  <a className="dropdown-item" href="index.html">
+                  <a className="dropdown-item" href="">
                     Home Default
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-3.html">
-                    Home Education
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-4.html">
-                    Home Academy
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-5.html">
-                    Home Course
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-6.html">
-                    Home University
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-7.html">
-                    Home Kindergarten
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-8.html">
-                    Home Landing
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-9.html">
-                    Home Tutor
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-10.html">
-                    Home School
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-11.html">
-                    Home Abroad
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="index-12.html">
-                    Home Workshop
                   </a>
                 </li>
               </ul>
             </li>
             {/* Nav item 2 Pages */}
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                id="pagesMenu"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                Pages
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="pagesMenu">
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Course
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="course-categories.html"
-                      >
-                        Course Categories
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <hr className="dropdown-divider" />
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="course-grid.html">
-                        Course Grid Classic
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="course-grid-2.html">
-                        Course Grid Minimal
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <hr className="dropdown-divider" />
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="course-list.html">
-                        Course List Classic
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="course-list-2.html">
-                        Course List Minimal
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <hr className="dropdown-divider" />
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="course-detail.html">
-                        Course Detail Classic
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="course-detail-min.html"
-                      >
-                        Course Detail Minimal
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="course-detail-adv.html"
-                      >
-                        Course Detail Advance
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="course-detail-module.html"
-                      >
-                        Course Detail Module
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="course-video-player.html"
-                      >
-                        Course Full Screen Video
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-                {/* Dropdown submenu */}
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    About
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="about.html">
-                        About Us
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="contact-us.html">
-                        Contact Us
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="blog-grid.html">
-                        Blog Grid
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="blog-masonry.html">
-                        Blog Masonry
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="blog-detail.html">
-                        Blog Detail
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="pricing.html">
-                        Pricing
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-                {/* Dropdown submenu */}
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Hero Banner
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="docs/snippet-hero-12.html"
-                      >
-                        Hero Form
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="docs/snippet-hero-13.html"
-                      >
-                        Hero Vector
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <p className="dropdown-item mb-0">Coming soon....</p>
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="instructor-list.html">
-                    Instructor List
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="instructor-single.html">
-                    Instructor Single
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="become-instructor.html">
-                    Become an Instructor
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="abroad-single.html">
-                    Abroad Single
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="workshop-detail.html">
-                    Workshop Detail
-                  </a>
-                </li>
-                <li>
-                  {" "}
-                  <a className="dropdown-item" href="event-detail.html">
-                    Event Detail
-                  </a>
-                </li>
-                {/* Dropdown submenu */}
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Shop
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="shop.html">
-                        Shop grid
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="shop-product-detail.html"
-                      >
-                        Product detail
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="cart.html">
-                        Cart
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="checkout.html">
-                        Checkout
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="empty-cart.html">
-                        Empty Cart
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="wishlist.html">
-                        Wishlist
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-                {/* Dropdown submenu */}
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Help
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="help-center.html">
-                        Help Center
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="help-center-detail.html"
-                      >
-                        Help Center Single
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="faq.html">
-                        FAQs
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Authentication
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="sign-in.html">
-                        Sign In
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="sign-up.html">
-                        Sign Up
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="forgot-password.html">
-                        Forgot Password
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-                {/* Dropdown submenu */}
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Form
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="request-demo.html">
-                        Request a demo
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="book-class.html">
-                        Book a Class
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="request-access.html">
-                        Free Access
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a
-                        className="dropdown-item"
-                        href="university-admission-form.html"
-                      >
-                        Admission Form
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu dropend">
-                  <a className="dropdown-item dropdown-toggle" href="#">
-                    Specialty
-                  </a>
-                  <ul
-                    className="dropdown-menu dropdown-menu-start"
-                    data-bs-popper="none"
-                  >
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="error-404.html">
-                        Error 404
-                      </a>
-                    </li>
-                    <li>
-                      {" "}
-                      <a className="dropdown-item" href="coming-soon.html">
-                        Coming Soon
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </li>
+            
+              
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle"
@@ -845,18 +494,25 @@ const LayoutStudent = ({ children }) => {
                     className="dropdown-item"
                     href=""
                   >
-                    <button className=""onClick={handleEditProfile} >
+                    <a className=""onClick={handleEditProfile} >
+                    <i className="fas fa-fw fa-cog me-1" />
                     Edit Profile
-                    </button>
+                    </a>
                   </a>{" "}
                 </li>
+                
                 <li>
                   {" "}
-                  <a className="dropdown-item" href="instructor-setting.html">
-                    <i className="fas fa-fw fa-cog me-1" />
-                    Settings
+                  <a
+                    className="dropdown-item"
+                    href=""
+                  >
+                  <a onClick={toggleTaskManager}>
+                  <i  className="fas fa-solid fa-list-check me-1"/>
+                  Tasks 
+                  </a>
                   </a>{" "}
-                </li>
+                  </li>
                 <li>
                   {" "}
                   <a
@@ -936,11 +592,26 @@ const LayoutStudent = ({ children }) => {
                 </li>
               </ul>
             </li>
+            
             <li className="nav-item">
-              <a className="nav-link" href="docs/alerts.html">
-                Components
+              <a className="nav-link" href="http://localhost:3000/InvitationList">
+                Invitations to Join Groups
               </a>
             </li>
+            <li className="nav-item">
+              <a className="nav-link" href="create-group">
+                Create Groups
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="Project-Manager">
+                Projects
+                {/* Add the new Tasks button with icon here */}
+                
+                  
+              </a>
+            </li>
+
             <li className="nav-item dropdown">
               <a
                 className="nav-link"
@@ -981,14 +652,7 @@ const LayoutStudent = ({ children }) => {
                   <hr className="dropdown-divider" />
                 </li>
                 <li>
-                  <a
-                    className="dropdown-item"
-                    href="rtl/index.html"
-                    target="_blank"
-                  >
-                    <i className="text-info fa-fw bi bi-toggle-off me-2" />
-                    RTL demo
-                  </a>
+                  
                 </li>
                 <li>
                   <a
@@ -997,7 +661,7 @@ const LayoutStudent = ({ children }) => {
                     target="_blank"
                   >
                     <i className="text-success fa-fw bi bi-cloud-download-fill me-2" />
-                    Buy Eduport!
+                    Buy Flowpi!
                   </a>
                 </li>
                 <li>
@@ -1023,17 +687,26 @@ const LayoutStudent = ({ children }) => {
               </ul>
             </li>
           </ul>
-          <div>
-          {profilePic ? (
-        <img 
-          src={profilePic} 
-          alt="Profile" 
-          style={{ width: "50px", height: "50px", borderRadius: "50%" }} 
-        />
-      ) : (
-        <img src='assets/images/avatar/avatar.png' alt="Profile" style={{ width: "50px", height: "50px", borderRadius: "50%" }} />
-      )}
-    </div>
+       
+   
+          
+           <div>
+           {profilePic ? (
+  <img
+    key={imgKey}
+    src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
+    alt="Profile"
+    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+    onError={(e) => {
+      console.warn("⚠️ Image introuvable :", profilePic);
+      e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; 
+    }}
+  />
+) : (
+  <p>🚫 Aucune image trouvée</p>
+)}
+
+                </div>
           <div className="nav my-3 my-xl-0 px-4 flex-nowrap align-items-center">
            <button className='btn btn-light rounded btn-md' onClick={logoutUser}>logout</button>
           </div>
@@ -1068,64 +741,12 @@ const LayoutStudent = ({ children }) => {
           </div>
         </div>
       </div>
+      {/* Add a Tasks button in the main content area */}
+      
       {children}
     </section>
 
   </main>
-  <footer className="bg-dark p-3">
-    <div className="container">
-      <div className="row align-items-center">
-        <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">
-          <a href="index.html">
-            {" "}
-            <img
-              className="h-20px"
-              src="assets/images/logo-light.svg"
-              alt="logo"
-            />{" "}
-          </a>
-        </div>
-        {/* Widget */}
-        <div className="col-md-4 mb-3 mb-md-0">
-          <div className="text-center text-white text-primary-hover">
-            Copyrights ©2024 Eduport. Build by{" "}
-            <a
-              href="https://www.webestica.com/"
-              target="_blank"
-              className="text-white"
-            >
-              Webestica
-            </a>
-            .
-          </div>
-        </div>
-        <div className="col-md-4">
-          <ul className="list-inline mb-0 text-center text-md-end">
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-facebook" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-instagram" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-linkedin-in" />
-              </a>
-            </li>
-            <li className="list-inline-item ms-2">
-              <a href="#">
-                <i className="text-white fab fa-twitter" />
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </footer>
   <div className="back-top">
     <i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" />
   </div>

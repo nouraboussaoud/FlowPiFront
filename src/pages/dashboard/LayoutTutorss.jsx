@@ -1,0 +1,1161 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
+const LayoutTutor = ({ children }) => {
+  const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [profilePic, setProfilePic] = useState("");
+  const [imgKey, setImgKey] = useState(Date.now());
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+   
+    // Get profile picture filename from local storage
+    const storedProfilePic = localStorage.getItem("profilePic");
+   
+    if (storedProfilePic) {
+      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
+    }
+  }, []);
+  const handleEditProfile = () => {
+    navigate("/edit-profile"); 
+  };
+  const logoutUser = async () => {
+    console.log("🔄 Tentative de déconnexion...");
+  
+    // Vérifier si le token est présent
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("⚠️ Aucun token trouvé. Redirection vers /login.");
+      navigate("/login");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:5000/api/users/logout", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (response.status === 401) {
+        console.warn("🚫 Token expiré. Nettoyage et redirection.");
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
+  
+      if (response.ok) {
+        console.log("✅ Déconnexion réussie !");
+        localStorage.clear();
+        navigate("/login");
+      } else {
+        throw new Error("Erreur lors de la déconnexion !");
+      }
+    } catch (error) {
+      console.error("❌ Erreur de déconnexion :", error);
+      alert("Erreur de connexion au serveur !");
+    }
+  };
+  
+  
+
+    
+  const fetchUserData = () => {
+    const storedUser = localStorage.getItem("user");
+    const storedProfilePic = localStorage.getItem("profilePic");
+  
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("🔍 Utilisateur récupéré :", parsedUser);
+  
+        let newProfilePic = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+  
+        if (parsedUser.profilePic && parsedUser.profilePic.trim() !== "") {
+          console.log("✅ Image détectée :", parsedUser.profilePic);
+          newProfilePic = parsedUser.profilePic; // Image Google ou manuelle
+        } else if (storedProfilePic) {
+          newProfilePic = storedProfilePic;
+        } else {
+          console.warn("⚠️ Aucune `profilePic` trouvée, utilisation de l'image par défaut.");
+        }
+  
+        setProfilePic(newProfilePic);
+        setImgKey(Date.now()); // 🔄 Force le rechargement de l’image
+      } catch (error) {
+        console.error("❌ Erreur de parsing `user` :", error);
+      }
+    }
+  };
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedProfilePic = localStorage.getItem("profilePic");
+  
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setProfilePic(storedProfilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    fetchUserData();
+  }, [user]); // Met à jour lorsque `user` change
+  
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log("♻️ Changement détecté dans `localStorage` !");
+      fetchUserData();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const user = urlParams.get("user");
+
+    if (token) {
+      console.log("🔑 Token récupéré :", token);
+      localStorage.setItem("token", token);
+    }
+
+    if (user) {
+      try {
+        console.log("👤 Utilisateur récupéré :", user);
+        const parsedUser = JSON.parse(user);
+        console.log("👀 Données utilisateur après parsing :", parsedUser);
+
+        localStorage.setItem("user", JSON.stringify(parsedUser));
+        localStorage.setItem("profilePic", parsedUser.profilePic || "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg");
+
+        fetchUserData(); // 🔄 Met à jour l’image immédiatement après connexion
+      } catch (error) {
+        console.error("❌ Erreur de parsing des données utilisateur :", error);
+      }
+    } else {
+      console.warn("⚠️ Aucune donnée utilisateur dans l'URL après connexion.");
+    }
+  }, []);
+
+ 
+  
+  return (
+    <div>
+       <>
+  <title>FlowPi</title>
+  <meta charSet="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+  {/* Dark mode */}
+  {/* Favicon */}
+  <link rel="shortcut icon" href="assets/images/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com/" />
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin="" />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="assets/vendor/font-awesome/css/all.min.css"
+  />
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="assets/vendor/bootstrap-icons/bootstrap-icons.css"
+  />
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="assets/vendor/choices/css/choices.min.css"
+  />
+  <link rel="stylesheet" type="text/css" href="assets/vendor/aos/aos.css" />
+  <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
+  <header className="navbar-light navbar-sticky">
+    <nav className="navbar navbar-expand-xl">
+      <div className="container">
+        <a className="navbar-brand" href="index.html">
+          
+          <img
+            className="dark-mode-item navbar-brand-item"
+            src="assets/images/logo-light.svg"
+            alt="logo"
+          />
+        </a>
+        {/* Logo END */}
+        {/* Responsive navbar toggler */}
+        <button
+          className="navbar-toggler ms-auto"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarCollapse"
+          aria-controls="navbarCollapse"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-animation">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+        <div className="navbar-collapse w-100 collapse" id="navbarCollapse">
+          <ul className="navbar-nav navbar-nav-scroll mx-auto">
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="demoMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                Demos
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="demoMenu">
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="/tutor-dashboard">
+                    Home Default
+                  </a>
+                </li>
+              </ul>
+            </li>
+       
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="demoMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                Subjects
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="demoMenu">
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="Subject-Form">
+                    Create subjects
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="Subject-List">
+                    All subjects
+                  </a>
+                </li>
+              
+               
+              </ul>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="Project-Tutor">
+                Projects
+              </a>
+            </li>
+            {/* Nav item 2 Pages */}
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="pagesMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                Pages
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="pagesMenu">
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Course
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="course-categories.html"
+                      >
+                        Course Categories
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="course-grid.html">
+                        Course Grid Classic
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="course-grid-2.html">
+                        Course Grid Minimal
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="course-list.html">
+                        Course List Classic
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="course-list-2.html">
+                        Course List Minimal
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="course-detail.html">
+                        Course Detail Classic
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="course-detail-min.html"
+                      >
+                        Course Detail Minimal
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="course-detail-adv.html"
+                      >
+                        Course Detail Advance
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="course-detail-module.html"
+                      >
+                        Course Detail Module
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="course-video-player.html"
+                      >
+                        Course Full Screen Video
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                {/* Dropdown submenu */}
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    About
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="about.html">
+                        About Us
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="contact-us.html">
+                        Contact Us
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="blog-grid.html">
+                        Blog Grid
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="blog-masonry.html">
+                        Blog Masonry
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="blog-detail.html">
+                        Blog Detail
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="pricing.html">
+                        Pricing
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                {/* Dropdown submenu */}
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Hero Banner
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="docs/snippet-hero-12.html"
+                      >
+                        Hero Form
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="docs/snippet-hero-13.html"
+                      >
+                        Hero Vector
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <p className="dropdown-item mb-0">Coming soon....</p>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="instructor-list.html">
+                    Instructor List
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="instructor-single.html">
+                    Instructor Single
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="become-instructor.html">
+                    Become an Instructor
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="abroad-single.html">
+                    Abroad Single
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="workshop-detail.html">
+                    Workshop Detail
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="event-detail.html">
+                    Event Detail
+                  </a>
+                </li>
+                {/* Dropdown submenu */}
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Shop
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="shop.html">
+                        Shop grid
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="shop-product-detail.html"
+                      >
+                        Product detail
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="cart.html">
+                        Cart
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="checkout.html">
+                        Checkout
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="empty-cart.html">
+                        Empty Cart
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="wishlist.html">
+                        Wishlist
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                {/* Dropdown submenu */}
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Help
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="help-center.html">
+                        Help Center
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="help-center-detail.html"
+                      >
+                        Help Center Single
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="faq.html">
+                        FAQs
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Authentication
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="sign-in.html">
+                        Sign In
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="sign-up.html">
+                        Sign Up
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="forgot-password.html">
+                        Forgot Password
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                {/* Dropdown submenu */}
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Form
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="request-demo.html">
+                        Request a demo
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="book-class.html">
+                        Book a Class
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="request-access.html">
+                        Free Access
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="university-admission-form.html"
+                      >
+                        Admission Form
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Specialty
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="error-404.html">
+                        Error 404
+                      </a>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="coming-soon.html">
+                        Coming Soon
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="accounntMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                Accounts
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="accounntMenu">
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    <i className="fas fa-user-tie fa-fw me-1" />
+                    Instructor
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-dashboard.html"
+                      >
+                        <i className="bi bi-grid-fill fa-fw me-1" />
+                        Dashboard
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-manage-course.html"
+                      >
+                        <i className="bi bi-basket-fill fa-fw me-1" />
+                        Courses
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-create-course.html"
+                      >
+                        <i className="bi bi-file-earmark-plus-fill fa-fw me-1" />
+                        Create Course
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="course-added.html">
+                        <i className="bi bi-file-check-fill fa-fw me-1" />
+                        Course Added
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="instructor-quiz.html">
+                        <i className="bi bi-question-diamond fa-fw me-1" />
+                        Quiz
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-earning.html"
+                      >
+                        <i className="fas fa-chart-line fa-fw me-1" />
+                        Earnings
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-studentlist.html"
+                      >
+                        <i className="fas fa-user-graduate fa-fw me-1" />
+                        Students
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="instructor-order.html">
+                        <i className="bi bi-cart-check-fill fa-fw me-1" />
+                        Orders
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-review.html"
+                      >
+                        <i className="bi bi-star-fill fa-fw me-1" />
+                        Reviews
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="instructor-payout.html"
+                      >
+                        <i className="fas fa-wallet fa-fw me-1" />
+                        Payout
+                      </a>{" "}
+                    </li>
+                  </ul>
+                </li>
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    <i className="fas fa-user-graduate fa-fw me-1" />
+                    Student
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="student-dashboard.html"
+                      >
+                        <i className="bi bi-grid-fill fa-fw me-1" />
+                        Dashboard
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="student-subscription.html"
+                      >
+                        <i className="bi bi-card-checklist fa-fw me-1" />
+                        My Subscriptions
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="student-course-list.html"
+                      >
+                        <i className="bi bi-basket-fill fa-fw me-1" />
+                        Courses
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="student-course-resume.html"
+                      >
+                        <i className="far fa-fw fa-file-alt me-1" />
+                        Course Resume
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="student-quiz.html">
+                        <i className="bi bi-question-diamond fa-fw me-1" />
+                        Quiz{" "}
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a
+                        className="dropdown-item"
+                        href="student-payment-info.html"
+                      >
+                        <i className="bi bi-credit-card-2-front-fill fa-fw me-1" />
+                        Payment Info
+                      </a>{" "}
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="student-bookmark.html">
+                        <i className="fas bi-cart-check-fill fa-fw me-1" />
+                        Wishlist
+                      </a>{" "}
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="admin-dashboard.html">
+                    <i className="fas fa-user-cog fa-fw me-1" />
+                    Admin
+                  </a>{" "}
+                </li>
+                <li>
+                  {" "}
+                  <hr className="dropdown-divider" />
+                </li>
+                <li>
+                  {" "}
+                  <a
+                    className="dropdown-item"
+                    href=""
+                  >
+                    <button className=""onClick={handleEditProfile} >
+                    Edit Profile
+                    </button>
+                  </a>{" "}
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="instructor-setting.html">
+                    <i className="fas fa-fw fa-cog me-1" />
+                    Settings
+                  </a>{" "}
+                </li>
+                <li>
+                  {" "}
+                  <a
+                    className="dropdown-item"
+                    href="instructor-delete-account.html"
+                  >
+                    <i className="fas fa-fw fa-trash-alt me-1" />
+                    Delete Profile
+                  </a>{" "}
+                </li>
+                <li>
+                  {" "}
+                  <hr className="dropdown-divider" />
+                </li>
+                <li className="dropdown-submenu dropend">
+                  <a className="dropdown-item dropdown-toggle" href="#">
+                    Dropdown levels
+                  </a>
+                  <ul
+                    className="dropdown-menu dropdown-menu-start"
+                    data-bs-popper="none"
+                  >
+                    <li className="dropdown-submenu dropend">
+                      <a className="dropdown-item dropdown-toggle" href="#">
+                        Dropdown (end)
+                      </a>
+                      <ul className="dropdown-menu" data-bs-popper="none">
+                        <li>
+                          {" "}
+                          <a className="dropdown-item" href="#">
+                            Dropdown item
+                          </a>{" "}
+                        </li>
+                        <li>
+                          {" "}
+                          <a className="dropdown-item" href="#">
+                            Dropdown item
+                          </a>{" "}
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="#">
+                        Dropdown item
+                      </a>{" "}
+                    </li>
+                    <li className="dropdown-submenu dropstart">
+                      <a className="dropdown-item dropdown-toggle" href="#">
+                        Dropdown (start)
+                      </a>
+                      <ul
+                        className="dropdown-menu dropdown-menu-end"
+                        data-bs-popper="none"
+                      >
+                        <li>
+                          {" "}
+                          <a className="dropdown-item" href="#">
+                            Dropdown item
+                          </a>{" "}
+                        </li>
+                        <li>
+                          {" "}
+                          <a className="dropdown-item" href="#">
+                            Dropdown item
+                          </a>{" "}
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      {" "}
+                      <a className="dropdown-item" href="#">
+                        Dropdown item
+                      </a>{" "}
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="demoMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+               Groups
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="demoMenu">
+           
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="GroupTutor">
+                  View groups
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="Subject-Assignment">
+                  Group Assignment
+                  </a>
+                </li>
+               
+              </ul>
+            </li>
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                id="demoMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+               tasks
+              </a>
+              <ul className="dropdown-menu" aria-labelledby="demoMenu">
+           
+                <li>
+                  {" "}
+                  <a className="dropdown-item" href="task-manager-tutor">
+                  View tasks
+                  </a>
+                </li>
+                
+               
+              </ul>
+            </li>
+            
+
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link"
+                href="#"
+                id="advanceMenu"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <i className="fas fa-ellipsis-h" />
+              </a>
+              <ul
+                className="dropdown-menu dropdown-menu-end min-w-auto"
+                data-bs-popper="none"
+              >
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="https://support.webestica.com/"
+                    target="_blank"
+                  >
+                    <i className="text-warning fa-fw bi bi-life-preserver me-2" />
+                    Support
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="docs/index.html"
+                    target="_blank"
+                  >
+                    <i className="text-danger fa-fw bi bi-card-text me-2" />
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  {" "}
+                  <hr className="dropdown-divider" />
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="rtl/index.html"
+                    target="_blank"
+                  >
+                    <i className="text-info fa-fw bi bi-toggle-off me-2" />
+                    RTL demo
+                  </a>
+                </li>
+                
+                <li>
+                  {" "}
+                  <hr className="dropdown-divider" />
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="docs/alerts.html"
+                    target="_blank"
+                  >
+                    <i className="text-orange fa-fw bi bi-puzzle-fill me-2" />
+                    Components
+                  </a>
+                </li>
+          
+     
+                <li>
+                  <a className="dropdown-item" href="docs/snippets.html">
+                    <i className="text-purple fa-fw bi bi-stickies-fill me-2" />
+                    Snippets
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          
+           <div>
+           {profilePic ? (
+  <img
+    key={imgKey}
+    src={profilePic.startsWith("http") ? profilePic : `http://localhost:5000/uploads/${profilePic}`}
+    alt="Profile"
+    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+    onError={(e) => {
+      console.warn("⚠️ Image introuvable :", profilePic);
+      e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; 
+    }}
+  />
+) : (
+  <p>🚫 Aucune image trouvée</p>
+)}
+
+                </div>
+          <div className="nav my-3 my-xl-0 px-4 flex-nowrap align-items-center">
+           <button className='btn btn-light rounded btn-md' onClick={logoutUser}>logout</button>
+          </div>
+        </div>
+     
+      </div>
+    </nav>
+  </header>
+ <main>
+    <section className="pt-0">
+      <div className="container">
+        <div className="row">
+          <div className="col-xl-3">
+            <div
+              className="offcanvas-xl offcanvas-end"
+              tabIndex={-1}
+              id="offcanvasSidebar"
+            >
+              <div className="offcanvas-header bg-light">
+                <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
+                  My profile
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  data-bs-dismiss="offcanvas"
+                  data-bs-target="#offcanvasSidebar"
+                  aria-label="Close"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {children}
+    </section>
+
+  </main>
+  <div className="back-top">
+    <i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" />
+  </div>
+ </>
+    </div>
+  )
+}
+
+export default LayoutTutor

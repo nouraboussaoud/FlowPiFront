@@ -6,9 +6,11 @@ const LoginPage = () => {
   const CLIENT_ID = "Ov23liDt1cBCD2aFlRUl";
   function loginWithGithub(){
     window.location.assign("https://github.com/login/oauth/authorize?client_id="+CLIENT_ID);
+    
   };
   return (
     <div className="login">
+      
       <div className="container sm:px-10">
         <div className="block xl:grid grid-cols-2 gap-4">
           {/* Login Info */}

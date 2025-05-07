@@ -15,6 +15,8 @@ const ReturnDeliverable = () => {
   const navigate = useNavigate();
 
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
+  // Try multiple possible token keys
+  const token = localStorage.getItem("authToken") || localStorage.getItem("token");
 
   const headers = {
     Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -25,6 +27,7 @@ const ReturnDeliverable = () => {
     const fetchRepositories = async () => {
       try {
         const res = await fetch(`https://api.github.com/user/repos?per_page=100&type=all`, { headers });
+        if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
         const data = await res.json();
         setRepositories(data);
       } catch (error) {
@@ -44,6 +47,7 @@ const ReturnDeliverable = () => {
 
     try {
       const res = await fetch(`https://api.github.com/repos/${repoName}/branches`, { headers });
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
       const data = await res.json();
       setBranches(data);
     } catch (error) {
@@ -58,6 +62,7 @@ const ReturnDeliverable = () => {
 
     try {
       const res = await fetch(`https://api.github.com/repos/${selectedRepo}/commits?sha=${branchName}`, { headers });
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
       const data = await res.json();
       const formattedCommits = data.map(commit => ({
         sha: commit.sha,
@@ -82,31 +87,71 @@ const ReturnDeliverable = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Debug localStorage contents
+    console.log("localStorage contents:", Object.fromEntries(Object.entries(localStorage)));
+    console.log("Using token:", token);
+
+    // Validate token
+    if (!token || !token.startsWith("eyJhbGci")) {
+      alert("No valid authentication token found. Please log in again.");
+      navigate("/login");
+      return;
+    }
+
+    // Decode token for debugging (client-side, no verification)
+    let payload;
+    try {
+      payload = JSON.parse(atob(token.split('.')[1]));
+      console.log("Token payload:", payload);
+      // Check if token is expired
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        console.log("Token expired at:", new Date(payload.exp * 1000));
+        alert("Authentication token has expired. Please log in again.");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+      // Check payload key (id vs userId)
+      if (!payload.userId && payload.id) {
+        console.warn("Token uses 'id' instead of 'userId'. Backend may expect 'userId'.");
+      }
+    } catch (error) {
+      console.error("Failed to decode token:", error);
+      alert("Invalid token format. Please log in again.");
+      navigate("/login");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
     formData.append("github_commit_url", gitCommitURL);
     formData.append("file", file);
-    formData.append("submission_date", new Date().toISOString());
-
 
     try {
       const res = await fetch("http://localhost:5000/api/deliverables/submit", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
+
+      const responseData = await res.json();
+      console.log("Backend response:", responseData);
 
       if (res.ok) {
         alert("Deliverable submitted successfully!");
         navigate("/deliverables-history");
       } else {
-        alert("Failed to submit deliverable.");
+        console.error("Submission failed:", responseData);
+        alert(`Failed to submit deliverable: ${responseData.message || res.statusText}`);
       }
     } catch (error) {
-      console.error("Failed to submit deliverable", error);
+      console.error("Failed to submit deliverable:", error);
+      alert("An error occurred while submitting the deliverable.");
     }
   };
 
@@ -133,68 +178,63 @@ const ReturnDeliverable = () => {
                     />
                   </div>
 
-                  {/* Repository Dropdown */}
+                  <div className="mb-3">
+                    <label htmlFor="repo" className="form-label">Repository</label>
+                    <select
+                      className="form-select"
+                      id="repo"
+                      value={selectedRepo}
+                      onChange={handleRepoChange}
+                      required
+                    >
+                      <option value="">Choose a repository...</option>
+                      {repositories.map((repo) => (
+                        <option key={repo.id} value={repo.full_name}>
+                          {repo.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedRepo && (
                     <div className="mb-3">
-                      <label htmlFor="repo" className="form-label">Repository</label>
+                      <label htmlFor="branch" className="form-label">Branch</label>
                       <select
                         className="form-select"
-                        id="repo"
-                        value={selectedRepo}
-                        onChange={handleRepoChange}
+                        id="branch"
+                        value={selectedBranch}
+                        onChange={handleBranchChange}
                         required
                       >
-                        <option value="">Choose a repository...</option>
-                        {repositories.map((repo) => (
-                          <option key={repo.id} value={repo.full_name}>
-                            {repo.name}
+                        <option value="">Choose a branch...</option>
+                        {branches.map((branch) => (
+                          <option key={branch.name} value={branch.name}>
+                            {branch.name}
                           </option>
                         ))}
                       </select>
                     </div>
+                  )}
 
-                    {/* Branch Dropdown (visible only if a repo is selected) */}
-                    {selectedRepo && (
-                      <div className="mb-3">
-                        <label htmlFor="branch" className="form-label">Branch</label>
-                        <select
-                          className="form-select"
-                          id="branch"
-                          value={selectedBranch}
-                          onChange={handleBranchChange}
-                          required
-                        >
-                          <option value="">Choose a branch...</option>
-                          {branches.map((branch) => (
-                            <option key={branch.name} value={branch.name}>
-                              {branch.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Commit Dropdown (visible only if a branch is selected) */}
-                    {selectedBranch && (
-                      <div className="mb-3">
-                        <label htmlFor="commit" className="form-label">Commit</label>
-                        <select
-                          className="form-select"
-                          id="commit"
-                          value={gitCommitURL}
-                          onChange={(e) => handleCommitSelect(e.target.value)}
-                          required
-                        >
-                          <option value="">Choose a commit...</option>
-                          {commits.map((commit) => (
-                            <option key={commit.sha} value={commit.url}>
-                              {commit.message} - {commit.date}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-
+                  {selectedBranch && (
+                    <div className="mb-3">
+                      <label htmlFor="commit" className="form-label">Commit</label>
+                      <select
+                        className="form-select"
+                        id="commit"
+                        value={gitCommitURL}
+                        onChange={(e) => handleCommitSelect(e.target.value)}
+                        required
+                      >
+                        <option value="">Choose a commit...</option>
+                        {commits.map((commit) => (
+                          <option key={commit.sha} value={commit.url}>
+                            {commit.message} - {commit.date}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <div className="mb-3">
                     <label htmlFor="description" className="form-label">Description</label>

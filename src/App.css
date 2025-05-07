@@ -62,3 +62,45 @@
   filter: blur(5px);
   pointer-events: none;
 }
+
+/* Mobile-first responsive base */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content-wrap {
+  flex: 1;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+/* Responsive typography */
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Bootstrap overrides for better mobile experience */
+.navbar-collapse {
+  padding: 10px 0;
+}
+
+.modal-dialog {
+  margin: 1rem auto;
+}
+
+@media (max-width: 767px) {
+  .container, .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}

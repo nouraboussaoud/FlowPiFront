@@ -1,486 +1,174 @@
-import React from 'react'
-import BreadCrumps from '../../components/BreadCrumps'
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import LayoutTutorss from './LayoutTutorss';
+import UsersTable from '../tutor-interfaces/UsersTable';
+import Dashboard from '../tutor-interfaces/DashboardStat';
 
-function TutorDashboard(){
+const TutorDashboard = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'users'
+
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      const queryParams = new URLSearchParams(location.search);
+      const token = queryParams.get('token') || localStorage.getItem('token');
+
+      if (!token || !token.startsWith('eyJhbGci')) {
+        setError('No valid authentication token found. Please log in.');
+        setLoading(false);
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Token payload:', payload);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (!payload.userId && !payload.id) {
+          throw new Error('Token missing userId or id');
+        }
+        if (payload.exp && payload.exp < currentTime) {
+          setError('Authentication token has expired. Please log in again.');
+          localStorage.removeItem('token');
+          setLoading(false);
+          navigate('/login');
+          return;
+        }
+        if (payload.role !== 'tutor') {
+          setError('This dashboard requires tutor access. Please log in as a tutor.');
+          setLoading(false);
+          navigate('/login');
+          return;
+        }
+
+        if (queryParams.get('token')) {
+          localStorage.setItem('token', token);
+          console.log('Token stored in localStorage:', token);
+          navigate('/tutor-dashboard', { replace: true });
+        }
+
+        const userId = payload.userId || payload.id;
+        const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.status === 401) {
+          setError('Unauthorized. Please log in again.');
+          localStorage.clear();
+          navigate('/login');
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user data: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched user data:', data);
+        setUser(data);
+        localStorage.setItem('user', JSON.stringify({
+          userId,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          profilePicture: data.profilePicture,
+        }));
+        setError(null);
+      } catch (err) {
+        console.error('Initialization error:', err);
+        setError(err.message || 'Failed to initialize dashboard. Please log in again.');
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+  }, [location, navigate]);
+
+  if (loading) {
     return (
-        <div>
-          <BreadCrumps page="Courses" title="All Courses" />
-          <section class="w3l-courses">
-            <div class="blog pb-5" id="courses">
-              <div class="container py-lg-5 py-md-4 py-2">
-                <div class="row">
-                  <div class="col-lg-4 col-md-6 item">
-                    <div class="card">
-                      <div class="card-header p-0 position-relative">
-                        <a href="#course-single" class="zoom d-block">
-                          <img
-                            class="card-img-bottom d-block"
-                            src="assets/images/c1.jpg"
-                            alt="Card cap"
-                          />
-                        </a>
-                        <div class="post-pos">
-                          <a href="#reciepe" class="receipe blue">
-                            Beginner
-                          </a>
-                        </div>
-                      </div>
-                      <div class="card-body course-details">
-                        <div class="price-review d-flex justify-content-between mb-1align-items-center">
-                          <p>$35.00</p>
-                          <ul class="rating-star">
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star-o"></span>
-                            </li>
-                          </ul>
-                        </div>
-                        <a href="#course-single" class="course-desc">
-                          Open Programming Courses for everyone : Python
-                        </a>
-                        <div class="course-meta mt-4">
-                          <div class="meta-item course-lesson">
-                            <span class="fa fa-clock-o"></span>
-                            <span class="meta-value"> 20 hrs </span>
-                          </div>
-                          <div class="meta-item course-">
-                            <span class="fa fa-user-o"></span>
-                            <span class="meta-value"> 50 </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer">
-                        <div class="author align-items-center">
-                          <img
-                            src="assets/images/a1.jpg"
-                            alt=""
-                            class="img-fluid rounded-circle"
-                          />
-                          <ul class="blog-meta">
-                            <li>
-                              <span class="meta-value mx-1">by</span>{" "}
-                              <a href="#author"> Olivia</a>
-                            </li>
-                            <li>
-                              <span class="meta-value mx-1">in</span>{" "}
-                              <a href="#author"> Programing</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-    
-                  <div class="col-lg-4 col-md-6 item mt-md-0 mt-5">
-                    <div class="card">
-                      <div class="card-header p-0 position-relative">
-                        <a href="#course-single" class="zoom d-block">
-                          <img
-                            class="card-img-bottom d-block"
-                            src="assets/images/c2.jpg"
-                            alt="Card cap"
-                          />
-                        </a>
-                        <div class="course-price-badge"> Free</div>
-                        <div class="post-pos">
-                          <a href="#reciepe" class="receipe blue">
-                            Beginner
-                          </a>
-                        </div>
-                      </div>
-                      <div class="card-body course-details">
-                        <div class="price-review d-flex justify-content-between mb-1align-items-center">
-                          <p>$0.00</p>
-                          <ul class="rating-star">
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star-o"></span>
-                            </li>
-                          </ul>
-                        </div>
-                        <a href="#course-single" class="course-desc">
-                          Learning to Write as a clean Professional Author
-                        </a>
-                        <div class="course-meta mt-4">
-                          <div class="meta-item course-lesson">
-                            <span class="fa fa-clock-o"></span>
-                            <span class="meta-value"> 20 hrs </span>
-                          </div>
-                          <div class="meta-item course-">
-                            <span class="fa fa-user-o"></span>
-                            <span class="meta-value"> 50 </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer">
-                        <div class="author align-items-center">
-                          <img
-                            src="assets/images/a2.jpg"
-                            alt=""
-                            class="img-fluid rounded-circle"
-                          />
-                          <ul class="blog-meta">
-                            <li>
-                              <span class="meta-value mx-1">by</span>{" "}
-                              <a href="#author"> Isabella</a>
-                            </li>
-                            <li>
-                              <span class="meta-value mx-1">in</span>{" "}
-                              <a href="#author"> Teaching</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-    
-                  <div class="col-lg-4 col-md-6 item mt-lg-0 mt-5">
-                    <div class="card">
-                      <div class="card-header p-0 position-relative">
-                        <a href="#course-single" class="zoom d-block">
-                          <img
-                            class="card-img-bottom d-block"
-                            src="assets/images/c3.jpg"
-                            alt="Card cap"
-                          />
-                        </a>
-                        <div class="course-price-badge-new"> New</div>
-                      </div>
-                      <div class="card-body course-details">
-                        <div class="price-review d-flex justify-content-between mb-1align-items-center">
-                          <p>$49.00</p>
-                          <ul class="rating-star">
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star-o"></span>
-                            </li>
-                          </ul>
-                        </div>
-                        <a href="#course-single" class="course-desc">
-                          Learn Master JQuery in a Short Period of Time
-                        </a>
-                        <div class="course-meta mt-4">
-                          <div class="meta-item course-lesson">
-                            <span class="fa fa-clock-o"></span>
-                            <span class="meta-value"> 20 hrs </span>
-                          </div>
-                          <div class="meta-item course-">
-                            <span class="fa fa-user-o"></span>
-                            <span class="meta-value"> 50 </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer">
-                        <div class="author align-items-center">
-                          <img
-                            src="assets/images/a3.jpg"
-                            alt=""
-                            class="img-fluid rounded-circle"
-                          />
-                          <ul class="blog-meta">
-                            <li>
-                              <span class="meta-value mx-1">by</span>{" "}
-                              <a href="#author"> Alexander</a>
-                            </li>
-                            <li>
-                              <span class="meta-value mx-1">in</span>{" "}
-                              <a href="#author"> Programing</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-lg-4 col-md-6 item mt-5 pt-lg-2">
-                    <div class="card">
-                      <div class="card-header p-0 position-relative">
-                        <a href="#course-single" class="zoom d-block">
-                          <img
-                            class="card-img-bottom d-block"
-                            src="assets/images/c4.jpg"
-                            alt="Card cap"
-                          />
-                        </a>
-                        <div class="post-pos">
-                          <a href="#reciepe" class="receipe blue">
-                            Beginner
-                          </a>
-                        </div>
-                      </div>
-                      <div class="card-body course-details">
-                        <div class="price-review d-flex justify-content-between mb-1align-items-center">
-                          <p>$35.00</p>
-                          <ul class="rating-star">
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star-o"></span>
-                            </li>
-                          </ul>
-                        </div>
-                        <a href="#course-single" class="course-desc">
-                          Open Programming Courses for everyone : Python
-                        </a>
-                        <div class="course-meta mt-4">
-                          <div class="meta-item course-lesson">
-                            <span class="fa fa-clock-o"></span>
-                            <span class="meta-value"> 20 hrs </span>
-                          </div>
-                          <div class="meta-item course-">
-                            <span class="fa fa-user-o"></span>
-                            <span class="meta-value"> 50 </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer">
-                        <div class="author align-items-center">
-                          <img
-                            src="assets/images/a4.jpg"
-                            alt=""
-                            class="img-fluid rounded-circle"
-                          />
-                          <ul class="blog-meta">
-                            <li>
-                              <span class="meta-value mx-1">by</span>{" "}
-                              <a href="#author"> William</a>
-                            </li>
-                            <li>
-                              <span class="meta-value mx-1">in</span>{" "}
-                              <a href="#author"> Programing</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-    
-                  <div class="col-lg-4 col-md-6 item mt-5 pt-lg-2">
-                    <div class="card">
-                      <div class="card-header p-0 position-relative">
-                        <a href="#course-single" class="zoom d-block">
-                          <img
-                            class="card-img-bottom d-block"
-                            src="assets/images/c5.jpg"
-                            alt="Card cap"
-                          />
-                        </a>
-                        <div class="course-price-badge"> Free</div>
-                        <div class="post-pos">
-                          <a href="#reciepe" class="receipe blue">
-                            Beginner
-                          </a>
-                        </div>
-                      </div>
-                      <div class="card-body course-details">
-                        <div class="price-review d-flex justify-content-between mb-1align-items-center">
-                          <p>$0.00</p>
-                          <ul class="rating-star">
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star-o"></span>
-                            </li>
-                          </ul>
-                        </div>
-                        <a href="#course-single" class="course-desc">
-                          Learning to Write as a clean Professional Author
-                        </a>
-                        <div class="course-meta mt-4">
-                          <div class="meta-item course-lesson">
-                            <span class="fa fa-clock-o"></span>
-                            <span class="meta-value"> 20 hrs </span>
-                          </div>
-                          <div class="meta-item course-">
-                            <span class="fa fa-user-o"></span>
-                            <span class="meta-value"> 50 </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer">
-                        <div class="author align-items-center">
-                          <img
-                            src="assets/images/a1.jpg"
-                            alt=""
-                            class="img-fluid rounded-circle"
-                          />
-                          <ul class="blog-meta">
-                            <li>
-                              <span class="meta-value mx-1">by</span>{" "}
-                              <a href="#author"> Olivia</a>
-                            </li>
-                            <li>
-                              <span class="meta-value mx-1">in</span>{" "}
-                              <a href="#author"> Programing</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-    
-                  <div class="col-lg-4 col-md-6 item mt-5 pt-lg-2">
-                    <div class="card">
-                      <div class="card-header p-0 position-relative">
-                        <a href="#course-single" class="zoom d-block">
-                          <img
-                            class="card-img-bottom d-block"
-                            src="assets/images/c6.jpg"
-                            alt="Card cap"
-                          />
-                        </a>
-                        <div class="course-price-badge-new"> New</div>
-                      </div>
-                      <div class="card-body course-details">
-                        <div class="price-review d-flex justify-content-between mb-1align-items-center">
-                          <p>$49.00</p>
-                          <ul class="rating-star">
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star"></span>
-                            </li>
-                            <li>
-                              <span class="fa fa-star-o"></span>
-                            </li>
-                          </ul>
-                        </div>
-                        <a href="#course-single" class="course-desc">
-                          Learn Master JQuery in a Short Period of Time
-                        </a>
-                        <div class="course-meta mt-4">
-                          <div class="meta-item course-lesson">
-                            <span class="fa fa-clock-o"></span>
-                            <span class="meta-value"> 20 hrs </span>
-                          </div>
-                          <div class="meta-item course-">
-                            <span class="fa fa-user-o"></span>
-                            <span class="meta-value"> 50 </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer">
-                        <div class="author align-items-center">
-                          <img
-                            src="assets/images/a2.jpg"
-                            alt=""
-                            class="img-fluid rounded-circle"
-                          />
-                          <ul class="blog-meta">
-                            <li>
-                              <span class="meta-value mx-1">by</span>{" "}
-                              <a href="#author"> Isabella</a>
-                            </li>
-                            <li>
-                              <span class="meta-value mx-1">in</span>{" "}
-                              <a href="#author"> Teaching</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* pagination */}
-                <div class="pagination-wrapper mt-5 pt-lg-3 text-center">
-                  <ul class="page-pagination">
-                    <li>
-                      <a class="next" href="#url">
-                        <span class="fa fa-angle-left"></span> Prev
-                      </a>
-                    </li>
-                    <li>
-                      <span aria-current="page" class="page-numbers current">
-                        1
-                      </span>
-                    </li>
-                    <li>
-                      <a class="page-numbers" href="#url">
-                        2
-                      </a>
-                    </li>
-                    <li>
-                      <a class="page-numbers" href="#url">
-                        3
-                      </a>
-                    </li>
-                    <li>
-                      <a class="page-numbers" href="#url">
-                        ....
-                      </a>
-                    </li>
-                    <li>
-                      <a class="next" href="#url">
-                        Next <span class="fa fa-angle-right"></span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-                {/* //pagination */}
-              </div>
-            </div>
-          </section>
+      <LayoutTutorss>
+        <div className="d-flex justify-content-center align-items-center min-vh-50">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
         </div>
-      );
+      </LayoutTutorss>
+    );
+  }
 
-}
+  if (error) {
+    return (
+      <LayoutTutorss>
+        <div className="container">
+          <div className="alert alert-danger" role="alert">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </div>
+        </div>
+      </LayoutTutorss>
+    );
+  }
+
+  return (
+    <LayoutTutorss>
+      <div className="container-fluid px-4 py-3">
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="card shadow-sm border-0">
+             
+            </div>
+          </div>
+        </div>
+
+        <div className="row mb-4">
+          <div className="col-12">
+            <ul className="nav nav-tabs">
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('dashboard')}
+                >
+                  <i className="bi bi-speedometer2 me-2"></i>
+                  Dashboard
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('users')}
+                >
+                  <i className="bi bi-people-fill me-2"></i>
+                  Students List
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-12">
+            {activeTab === 'dashboard' ? (
+              <div className="card shadow-sm border-0">
+                <div className="card-body">
+                  <Dashboard />
+                </div>
+              </div>
+            ) : (
+              <div className="card shadow-sm border-0">
+                <div className="card-body">
+                  
+                  <UsersTable />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </LayoutTutorss>
+  );
+};
+
 export default TutorDashboard;

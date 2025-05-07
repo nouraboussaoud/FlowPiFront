@@ -18,9 +18,16 @@ const UsersList = () => {
   useEffect(() => {
     const storedProfilePic = localStorage.getItem("profilePic");
 
-    if (storedProfilePic) {
-      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`);
+    console.log("📸 Image stockée dans localStorage:", storedProfilePic);
+
+  if (storedProfilePic) {
+    // Vérifier si l'image est un lien complet (Google) ou un fichier local
+    if (storedProfilePic.startsWith("http")) {
+      setProfilePic(storedProfilePic); // Lien complet (Google)
+    } else {
+      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`); // Image locale
     }
+  }
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -279,27 +286,27 @@ const UsersList = () => {
       <main>
         {/* Sidebar */}
         <nav className="sidebar navbar-dark bg-dark" style={{ width: "250px", height: "100vh", position: "fixed", left: 0, top: 0 }}>
-          <div className="sidebar-header p-3">
-            <h4 className="text-white">FlowPi</h4>
-          </div>
-          <ul className="nav flex-column p-3">
-            <li className="nav-item">
-              <a className="nav-link text-white" href="/admin-dashboard">
-                Dashboard
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-white" href="#">
-                Users
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-white" href="#">
-                Settings
-              </a>
-            </li>
-          </ul>
-        </nav>
+        <div className="sidebar-header p-3">
+          <h4 className="text-white">FlowPi</h4>
+        </div>
+        <ul className="nav flex-column p-3">
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/admin-dashboard">Dashboard</a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/usersList">Users</a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/groupList">Groups</a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="#">Settings</a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link text-white" href="/dashboard-tasks">Tasks</a>
+          </li>
+        </ul>
+      </nav>
 
         {/* Page Content */}
         <div className="page-content" style={{ marginLeft: "250px" }}>
@@ -309,11 +316,16 @@ const UsersList = () => {
               <span className="navbar-brand">Welcome, Admin</span>
               <div className="d-flex align-items-center">
                 {profilePic ? (
-                  <img
-                    src={profilePic}
-                    alt="Profile"
-                    style={{ width: "50px", height: "50px", borderRadius: "50%" }}
-                  />
+                <img
+                src={profilePic ? profilePic : "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"}
+                alt="User Profile"
+                style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+                onError={(e) => {
+                  console.warn("⚠️ Image introuvable :", profilePic);
+                  e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
+                }}
+              />
+              
                 ) : (
                   <p>No Profile Picture</p>
                 )}
@@ -396,11 +408,18 @@ const UsersList = () => {
                             <div className="card-header bg-transparent border-bottom d-flex justify-content-between">
                               <div className="d-sm-flex align-items-center">
                                 <div className="avatar avatar-md flex-shrink-0">
-                                  <img
-                                    className="avatar-img rounded-circle"
-                                    src={user.profilePic ? `http://localhost:5000/uploads/${user.profilePic}` : "assets/images/avatar/01.jpg"}
-                                    alt="avatar"
-                                  />
+                                <img
+  className="avatar-img rounded-circle"
+  src={
+    user.profilePic
+      ? user.profilePic.startsWith("http")
+        ? user.profilePic // Lien complet pour les utilisateurs Google
+        : `http://localhost:5000/uploads/${user.profilePic}` // Lien local pour les autres utilisateurs
+      : "assets/images/avatar/01.jpg" // Image par défaut si aucun profil n'est disponible
+  }
+  alt="avatar"
+/>
+
                                 </div>
                                 <div className="ms-0 ms-sm-2 mt-2 mt-sm-0">
                                   <h5 className="mb-0">
@@ -757,5 +776,8 @@ const UsersList = () => {
     </>
   );
 };
+
+
+
 
 export default UsersList;
