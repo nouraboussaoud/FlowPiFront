@@ -39,7 +39,7 @@ import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
 import ReportViewer from "./pages/evaluation/ReportViewer"
 import { Toaster } from "sonner";
 import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
-import AdminTaskDashboard from "./pages/tasks/DashboardTasks";
+import AdminTaskDashboard from "./pages/tasks/AdminTasks";
 import TaskManager from "./pages/tasks/DashboardTasks";
  
 import {Navigate} from "react-router-dom";
@@ -48,7 +48,8 @@ import ProjectTutor from "./pages/ProjectTutor";
 import TaskManagerTutor from "./pages/tasks/TaskManagerTutor";
 import Dashboard from "./pages/tutor-interfaces/DashboardStat";
  import UsersTable from "./pages/tutor-interfaces/UsersTable";
-
+import ProjectRecommendations from "./pages/ProjectRecommendations";
+import TeamFormationSuggestions from "./pages/TeamFormationSuggestions";
 
 function App() {
   return (
@@ -95,7 +96,8 @@ function App() {
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
           <Route path="/dashboard-stat" element={<Dashboard />} />
           <Route path="/users-table" element={<UsersTable />} />
-
+          <Route path="/project-recommendations" element={<ProjectRecommendations />} />
+          <Route path="/team-formation/:projectId" element={<TeamFormationSuggestions />} />
     
 <Route path="/nour" element={<NoursDashboar/>} >
 <Route path="douaa" element={<DouaaComp/>} />

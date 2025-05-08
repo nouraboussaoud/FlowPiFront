@@ -15,6 +15,7 @@ const TaskManager = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [userGroups, setUserGroups] = useState([]);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [newTask, setNewTask] = useState({
@@ -164,7 +165,7 @@ const TaskManager = () => {
     progress = Math.min(progress, 90);
 
     const hasRecentActivity =
-      ( commits || []).some((c) => new Date(c.date) > oneWeekAgo) ||
+      (commits || []).some((c) => new Date(c.date) > oneWeekAgo) ||
       (pullRequests || []).some((pr) => new Date(pr.merge_date) > oneWeekAgo);
     if (!hasRecentActivity && taskStatus !== "completed") {
       progress = Math.min(progress, 30);
@@ -196,12 +197,12 @@ const TaskManager = () => {
         setError("No token found. Please login.");
         return;
       }
-  
+
       const response = await axios.get(
         `http://localhost:5000/api/tasks/getTaskById/${taskId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       const task = response.data;
       if (task.risk && task.riskConfidence) {
         setRiskAssessment({
@@ -210,7 +211,7 @@ const TaskManager = () => {
           explanation:
             task.riskExplanation ||
             `AI analysis based on task details: "${
-              task.taskDetails || "No details(fragment) provided"
+              task.taskDetails || "No details provided"
             }". ${
               task.risk.toLowerCase() === "high risk"
                 ? "Identified potential challenges that may delay completion."
@@ -220,14 +221,13 @@ const TaskManager = () => {
         setShowRiskModal(true);
       } else {
         setError(
-          "No risk assessment available. This may be due to missing task details or an issue with the AI service. Please ensure task details are provided and try again."
+          "No risk assessment available. Please ensure task details are provided."
         );
       }
     } catch (error) {
       console.error("Error fetching task risk:", error);
       setError(
-        error.response?.data?.message ||
-          "Failed to fetch risk assessment. Please check your network connection and try again."
+        error.response?.data?.message || "Failed to fetch risk assessment."
       );
     }
   };
@@ -254,7 +254,7 @@ const TaskManager = () => {
       setUpdateTaskData({
         title: task.title || "",
         description: task.description || "",
-        project: task.project || "",
+        project: task.project?._id || task.project || "",
         taskDetails: task.taskDetails || "",
         priority: task.priority || "medium",
         status: task.status || "pending",
@@ -306,7 +306,7 @@ const TaskManager = () => {
       }
 
       axios
-        .get(`http://localhost:5000/api/projects/${id}`, {
+        .get(`http://localhost:5000/api/projects/getProjectById/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
@@ -383,7 +383,9 @@ const TaskManager = () => {
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
     const token = localStorage.getItem("token");
     if (!token) {
       setError("No token found. Please login.");
@@ -392,12 +394,31 @@ const TaskManager = () => {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/tasks/myTasks", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      // Include risk level in task data
+      // 1. Fetch user's groups
+      const groupsResponse = await axios.get(
+        "http://localhost:5000/api/groups/my-groups",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUserGroups(groupsResponse.data);
+      const userGroupIds = groupsResponse.data.map((group) => group._id);
+
+      // 2. Fetch projects associated with the user's groups
+      const projectsResponse = await axios.get(
+        "http://localhost:5000/api/projects/projects",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const filteredProjects = projectsResponse.data.filter(
+        (project) => project.group && userGroupIds.includes(project.group._id)
+      );
+      setProjects(filteredProjects);
+
+      // 3. Fetch tasks associated with the filtered projects
+      const tasksResponse = await axios.get(
+        "http://localhost:5000/api/tasks/myTasks",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       const tasksWithRisk = await Promise.all(
-        response.data.map(async (task) => {
+        tasksResponse.data.map(async (task) => {
           try {
             const taskResponse = await axios.get(
               `http://localhost:5000/api/tasks/getTaskById/${task._id}`,
@@ -410,33 +431,18 @@ const TaskManager = () => {
           }
         })
       );
-      setTasks(tasksWithRisk || []);
+      const filteredTasks = tasksWithRisk.filter(
+        (task) =>
+          task.project &&
+          filteredProjects.some((project) => project._id === task.project._id)
+      );
+      setTasks(filteredTasks);
       setCurrentPage(1);
     } catch (error) {
-      console.error("Error fetching assigned tasks:", error);
-      setError(
-        error.response?.data?.message || "Error fetching your assigned tasks"
-      );
+      console.error("Error fetching data:", error);
+      setError(error.response?.data?.message || "Error fetching data");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchProjects = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token found. Please login.");
-      return;
-    }
-
-    try {
-      const response = await axios.get("http://localhost:5000/api/projects/projects", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProjects(response.data || []);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-      setError(error.response?.data?.message || "Error fetching projects");
     }
   };
 
@@ -453,6 +459,13 @@ const TaskManager = () => {
       return;
     }
 
+    // Verify the project belongs to user's group
+    const project = projects.find((p) => p._id === newTask.project);
+    if (!project || !userGroups.some((g) => g._id === project.group?._id)) {
+      setError("You can only create tasks for projects in your groups");
+      return;
+    }
+
     try {
       setIsLoading(true);
       const response = await axios.post(
@@ -460,12 +473,14 @@ const TaskManager = () => {
         newTask,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Fetch risk for the new task
       const taskResponse = await axios.get(
         `http://localhost:5000/api/tasks/getTaskById/${response.data.task._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTasks([...tasks, { ...response.data.task, risk: taskResponse.data.risk || "unknown" }]);
+      setTasks([
+        ...tasks,
+        { ...response.data.task, risk: taskResponse.data.risk || "unknown" },
+      ]);
       setNewTask({
         title: "",
         description: "",
@@ -497,6 +512,13 @@ const TaskManager = () => {
       return;
     }
 
+    // Verify the project belongs to user's group
+    const project = projects.find((p) => p._id === updateTaskData.project);
+    if (!project || !userGroups.some((g) => g._id === project.group?._id)) {
+      setError("You can only assign tasks to projects in your groups");
+      return;
+    }
+
     try {
       setIsUpdating(true);
       const response = await axios.put(
@@ -504,7 +526,6 @@ const TaskManager = () => {
         updateTaskData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Fetch updated risk
       const taskResponse = await axios.get(
         `http://localhost:5000/api/tasks/getTaskById/${selectedTaskId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -535,6 +556,13 @@ const TaskManager = () => {
 
     try {
       setIsLoading(true);
+      const task = tasks.find((t) => t._id === taskId);
+      const project = projects.find((p) => p._id === task.project?._id);
+      if (!project || !userGroups.some((g) => g._id === project.group?._id)) {
+        setError("You can only delete tasks from projects in your groups");
+        return;
+      }
+
       await axios.delete(`http://localhost:5000/api/tasks/deleteTask/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -668,8 +696,7 @@ const TaskManager = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
-    fetchProjects();
+    fetchData();
 
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
@@ -735,7 +762,7 @@ const TaskManager = () => {
           pauseOnHover
           theme="light"
         />
-        
+
         <div className="simple-header">
           <div className="task-counts">
             <span>Total: <strong>{taskStats.total}</strong></span>
@@ -744,11 +771,11 @@ const TaskManager = () => {
             <span>•</span>
             <span>Completed: <strong>{taskStats.completed}</strong></span>
           </div>
-          
+
           <button
             className="button button-primary"
             onClick={() => setShowModal(true)}
-            disabled={isLoading}
+            disabled={isLoading || projects.length === 0}
           >
             <svg
               width="16"
@@ -1346,6 +1373,12 @@ const TaskManager = () => {
                   <p className="text-gray-700">{selectedProject.progress || 0}%</p>
                 </div>
                 <div className="form-group">
+                  <label className="label">Group</label>
+                  <p className="text-gray-700">
+                    {selectedProject.group?.name || "No group assigned"}
+                  </p>
+                </div>
+                <div className="form-group">
                   <label className="label">Created At</label>
                   <p className="text-gray-700">
                     {new Date(selectedProject.createdAt).toLocaleString()}
@@ -1366,15 +1399,15 @@ const TaskManager = () => {
 
         <div className="chat-bubble-container">
           {showChatBubble && !selectedTutor && (
-            <div 
-              className={`chat-bubble ${showContactList ? 'active' : ''}`} 
+            <div
+              className={`chat-bubble ${showContactList ? "active" : ""}`}
               onClick={toggleContactList}
             >
               <i className="fas fa-comments"></i>
               {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
             </div>
           )}
-          
+
           {showContactList && (
             <div className="contact-list-panel">
               <div className="panel-header">
@@ -1611,13 +1644,15 @@ const TaskManager = () => {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <p>No tasks assigned to you. Create a new task!</p>
-            <button
-              className="button button-primary margin-top-1"
-              onClick={() => setShowModal(true)}
-            >
-              Create Task
-            </button>
+            <p>No tasks assigned to you in your groups. Create a new task!</p>
+            {projects.length > 0 && (
+              <button
+                className="button button-primary margin-top-1"
+                onClick={() => setShowModal(true)}
+              >
+                Create Task
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1631,7 +1666,7 @@ const TaskManager = () => {
           padding-bottom: 1rem;
           border-bottom: 1px solid #e5e7eb;
         }
-        
+
         .task-counts {
           display: flex;
           align-items: center;
@@ -1639,19 +1674,19 @@ const TaskManager = () => {
           color: #6b7280;
           font-size: 14px;
         }
-        
+
         .task-counts strong {
           color: #1f2937;
           font-weight: 600;
         }
-        
+
         .chat-bubble-container {
           position: fixed;
           bottom: 30px;
           right: 30px;
           z-index: 1000;
         }
-        
+
         .chat-bubble {
           width: 60px;
           height: 60px;
@@ -1667,16 +1702,16 @@ const TaskManager = () => {
           transition: all 0.3s ease;
           position: relative;
         }
-        
+
         .chat-bubble:hover {
           transform: translateY(-5px);
           box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
-        
+
         .chat-bubble.active {
           background-color: #0056b3;
         }
-        
+
         .badge {
           position: absolute;
           top: -5px;
@@ -1691,7 +1726,7 @@ const TaskManager = () => {
           align-items: center;
           justify-content: center;
         }
-        
+
         .contact-list-panel {
           position: absolute;
           bottom: 75px;
@@ -1705,7 +1740,7 @@ const TaskManager = () => {
           display: flex;
           flex-direction: column;
         }
-        
+
         .panel-header {
           display: flex;
           justify-content: space-between;
@@ -1714,13 +1749,13 @@ const TaskManager = () => {
           background-color: #f8f9fa;
           border-bottom: 1px solid #e4e6eb;
         }
-        
+
         .panel-header h3 {
           margin: 0;
           font-size: 16px;
           font-weight: 600;
         }
-        
+
         .close-btn {
           border: none;
           background: none;
@@ -1728,11 +1763,11 @@ const TaskManager = () => {
           cursor: pointer;
           color: #6c757d;
         }
-        
+
         .close-btn:hover {
           color: #343a40;
         }
-        
+
         .panel-body {
           padding: 10px;
           overflow-y: auto;

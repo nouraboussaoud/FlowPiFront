@@ -1,171 +1,326 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.container {
-  @apply max-w-6xl mx-auto p-8 bg-gray-50 min-h-screen;
+/* EditProfile.css */
+.edit-profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.header {
-  @apply flex justify-between items-center mb-8 pb-4 border-b border-gray-200;
+.profile-header {
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
-.title {
-  @apply text-3xl font-semibold text-gray-900;
+.profile-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
 }
 
-.task-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8;
+.profile-header p {
+  color: #6c757d;
+  font-size: 1rem;
 }
 
-.task-card {
-  @apply bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500 transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg;
+.profile-content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.task-title {
-  @apply text-xl font-semibold text-gray-900 mb-2;
+/* Sidebar styles */
+.profile-sidebar {
+  background-color: #f8f9fa;
+  padding: 2rem;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.task-description {
-  @apply text-gray-600 text-sm leading-relaxed mb-4;
+.avatar-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+  width: 100%;
 }
 
-.task-meta {
-  @apply flex justify-between items-center mt-4 text-sm text-gray-600;
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
 }
 
-.group-badge {
-  @apply bg-gray-200 text-gray-700 px-3 py-1 rounded-md text-sm font-medium flex items-center gap-2;
+.profile-avatar-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #4a6cf7;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  border: 4px solid white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
 }
 
-.subject-badge {
-  @apply bg-blue-100 text-blue-800 px-3 py-1 rounded-md text-sm font-medium flex items-center gap-2 mt-2;
+.avatar-upload-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #4a6cf7;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
 }
 
-.subject-list {
-  @apply flex flex-wrap gap-2 mt-2;
-}
-
-.empty-state {
-  @apply text-center p-12 bg-white rounded-lg mt-8 shadow-sm text-gray-600;
-}
-
-.modal-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
-}
-
-.modal-content {
-  @apply bg-white p-8 rounded-lg w-full max-w-md shadow-xl;
-}
-
-.modal-header {
-  @apply flex justify-between items-center mb-6;
-}
-
-.modal-title {
-  @apply text-xl font-semibold text-gray-900;
-}
-
-.close-button {
-  @apply bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-800;
-}
-
-.form-group {
-  @apply mb-5;
-}
-
-.label {
-  @apply block mb-2 font-medium text-gray-700 text-sm;
-}
-
-.input, .textarea, .select {
-  @apply w-full p-3 border border-gray-200 rounded-md bg-gray-50 text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20;
-}
-
-.textarea {
-  @apply min-h-[100px];
-}
-
-.button-group {
-  @apply flex justify-end gap-4 mt-6;
-}
-
-.button-primary {
-  @apply bg-gray-900 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed;
-}
-
-.button-secondary {
-  @apply bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-semibold flex items-center gap-2 hover:bg-gray-300 transition-colors;
-}
-
-.button-danger {
-  @apply bg-red-500 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2 hover:bg-red-600 transition-colors;
-}
-
-.error-message {
-  @apply bg-red-100 text-red-600 p-4 rounded-md mb-4 flex items-center gap-2;
-}
-
-.success-message {
-  @apply bg-green-100 text-green-600 p-4 rounded-md mb-4 flex items-center gap-2;
-}
-
-.task-button-group {
-  @apply flex gap-2;
-}
-
-.task-button {
-  @apply p-2 rounded-md transition-colors;
-}
-
-.group-info {
-  @apply flex flex-col gap-2;
-}
-
-.profile-card {
-  @apply bg-white rounded-lg shadow-md p-6;
-}
-
-.profile-card-header {
-  @apply pb-4 border-b border-gray-200 mb-6;
-}
-
-.profile-card-title {
-  @apply text-2xl font-semibold text-gray-900;
-}
-
-.form-row {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
-}
-
-.input-error {
-  @apply text-red-600 text-sm mt-1 flex items-center gap-1;
-}
-
-.avatar-container {
-  @apply flex flex-col items-center mb-6;
-}
-
-.avatar {
-  @apply w-24 h-24 rounded-full object-cover border-2 border-gray-200 shadow-sm;
-}
-
-.avatar-placeholder {
-  @apply w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-2xl font-semibold shadow-sm;
+.avatar-upload-button:hover {
+  background-color: #3a5bd9;
 }
 
 .file-input {
-  @apply mt-3 p-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-600 cursor-pointer w-full max-w-xs text-center;
+  display: none;
 }
 
-.file-input:hover {
-  @apply border-blue-500 bg-gray-100;
+.profile-tabs {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.file-input::-webkit-file-upload-button {
-  @apply bg-gray-200 text-gray-700 px-3 py-1 rounded-md border-none cursor-pointer hover:bg-gray-300;
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.file-input::-moz-file-upload-button {
-  @apply bg-gray-200 text-gray-700 px-3 py-1 rounded-md border-none cursor-pointer hover:bg-gray-300;
+.tab-button:hover {
+  background-color: #e9ecef;
+}
+
+.tab-button.active {
+  background-color: #4a6cf7;
+  color: white;
+  font-weight: 500;
+}
+
+/* Main content styles */
+.profile-main {
+  padding: 2rem;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.tab-description {
+  color: #6c757d;
+  margin-bottom: 2rem;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.form-group input,
+.form-group select {
+  padding: 12px 16px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #4a6cf7;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+}
+
+.input-error {
+  border-color: #dc3545 !important;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.save-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+  align-self: flex-start;
+}
+
+.save-button:hover {
+  background-color: #3a5bd9;
+}
+
+.save-button:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.spinner {
+  animation: rotate 2s linear infinite;
+  width: 20px;
+  height: 20px;
+}
+
+.path {
+  stroke: white;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-sidebar {
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 2rem;
+  }
+  
+  .profile-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .tab-button {
+    flex: 1;
+    min-width: 150px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .edit-profile-container {
+    padding: 1rem;
+  }
+  
+  .profile-content {
+    box-shadow: none;
+    background-color: transparent;
+  }
+  
+  .profile-sidebar,
+  .profile-main {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+  }
+  
+  .profile-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    width: 100%;
+  }
+  
+  .save-button {
+    width: 100%;
+  }
 }

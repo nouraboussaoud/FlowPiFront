@@ -20,6 +20,9 @@ const TaskManagerTutor = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 6;
+  const [users, setUsers] = useState([]);
+  const [showTaskDetailsModal, setShowTaskDetailsModal] = useState(false);
+  const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
 
   // Pagination calculations
   const totalPages = Math.ceil(tasks.length / tasksPerPage);
@@ -273,9 +276,29 @@ const TaskManagerTutor = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No token found. Please login.");
+      return;
+    }
+
+    try {
+      // Change the endpoint from "all" to "getAll" to match the working endpoint used in other components
+      const response = await axios.get("http://localhost:5000/api/users/getAll", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setError(error.response?.data?.message || "Error fetching users");
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
     fetchProjects();
+    fetchUsers();
 
     if (error) {
       const timer = setTimeout(() => setError(null), 5000);
@@ -417,6 +440,48 @@ const TaskManagerTutor = () => {
     pending: tasks.filter((t) => t.status === "pending").length,
     inProgress: tasks.filter((t) => t.status === "in-progress").length,
     completed: tasks.filter((t) => t.status === "completed").length,
+  };
+
+  const getUserInfo = (userId) => {
+    // Handle cases where userId is undefined, null, or invalid
+    if (!userId || userId === "undefined" || userId === "null") {
+      return { 
+        name: "Unassigned", 
+        email: "No email", 
+        profilePic: null 
+      };
+    }
+    
+    // Find the user in the users array
+    const user = users.find(u => u && u._id === userId);
+    
+    // Return user info if found, otherwise return default values
+    return user ? 
+      { 
+        name: user.name || "Unknown", 
+        email: user.email || "No email",
+        profilePic: user.profilePic || null
+      } : 
+      { 
+        name: "Unassigned", 
+        email: "No email",
+        profilePic: null
+      };
+  };
+
+  // Helper function to get profile picture URL
+  const getProfilePicUrl = (profilePic) => {
+    if (!profilePic) {
+      return "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+    }
+    return profilePic.startsWith("http")
+      ? profilePic
+      : `http://localhost:5000/uploads/${profilePic}`;
+  };
+
+  const openTaskDetailsModal = (task) => {
+    setSelectedTaskDetails(task);
+    setShowTaskDetailsModal(true);
   };
 
   return (
@@ -680,6 +745,26 @@ const TaskManagerTutor = () => {
                   <h3 className="task-title">{task.title}</h3>
                   <p className="task-description">{task.description}</p>
 
+                  {/* Add user information */}
+                  <div className="task-assigned-user">
+                    <div className="user-info-container">
+                      <div className="user-avatar">
+                        <img
+                          src={getProfilePicUrl(getUserInfo(task.assignedTo).profilePic)}
+                          alt={getUserInfo(task.assignedTo).name}
+                          className="user-avatar-img"
+                          onError={(e) => {
+                            e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+                          }}
+                        />
+                      </div>
+                      <div className="user-details">
+                        <strong>{getUserInfo(task.assignedTo).name}</strong>
+                        <div className="user-email">{getUserInfo(task.assignedTo).email}</div>
+                      </div>
+                    </div>
+                  </div>
+
                   {task.taskDetails && (
                     <p className="task-details">
                       <strong>Details:</strong> {task.taskDetails}
@@ -739,13 +824,45 @@ const TaskManagerTutor = () => {
                         • {getProjectName(task.project)}
                       </span>
                     </div>
-
                     <div className="task-button-group">
+                      {/* Add View Details button */}
+                      <button
+                        className="button button-secondary"
+                        onClick={() => openTaskDetailsModal(task)}
+                        disabled={isLoading}
+                        title="View Task Details"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      </button>
+                      
                       <button
                         className="button button-info"
                         onClick={() => openRiskModal(task._id)}
                         disabled={isLoading}
                         title="View AI Risk Assessment"
+                        style={{
+                          backgroundColor: task.risk ? getRiskColor(task.risk) : "#3b82f6",
+                          borderColor: task.risk ? getRiskColor(task.risk) : "#3b82f6",
+                        }}
                       >
                         <svg
                           width="14"
@@ -853,6 +970,164 @@ const TaskManagerTutor = () => {
         )}
       </div>
 
+      {showTaskDetailsModal && selectedTaskDetails && (
+        <div className="modal-overlay" onClick={() => setShowTaskDetailsModal(false)}>
+          <div className="modal-content task-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                Task Details
+              </h2>
+              <button
+                className="close-button"
+                onClick={() => setShowTaskDetailsModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="task-details-content">
+              <div className="detail-section">
+                <h3 className="section-title">Task Information</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Title:</span>
+                    <span className="detail-value">{selectedTaskDetails.title}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Status:</span>
+                    <span 
+                      className="status-badge"
+                      style={{ backgroundColor: getStatusColor(selectedTaskDetails.status) }}
+                    >
+                      {selectedTaskDetails.status
+                        ? selectedTaskDetails.status.charAt(0).toUpperCase() + selectedTaskDetails.status.slice(1)
+                        : "Pending"}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Priority:</span>
+                    <span className={`priority-badge priority-${selectedTaskDetails.priority}`}>
+                      {selectedTaskDetails.priority
+                        ? selectedTaskDetails.priority.charAt(0).toUpperCase() + selectedTaskDetails.priority.slice(1)
+                        : "Medium"}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Project:</span>
+                    <span className="detail-value">{getProjectName(selectedTaskDetails.project)}</span>
+                  </div>
+                  {selectedTaskDetails.dueDate && (
+                    <div className="detail-item">
+                      <span className="detail-label">Due Date:</span>
+                      <span className="detail-value">
+                        {new Date(selectedTaskDetails.dueDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {typeof selectedTaskDetails.progressPercentage === "number" && (
+                    <div className="detail-item">
+                      <span className="detail-label">Progress:</span>
+                      <div className="progress-container">
+                        <div 
+                          className="progress-bar" 
+                          style={{
+                            width: `${selectedTaskDetails.progressPercentage}%`,
+                            backgroundColor: getProgressColor(selectedTaskDetails.progressPercentage)
+                          }}
+                        ></div>
+                      </div>
+                      <span className="progress-text">{selectedTaskDetails.progressPercentage}%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3 className="section-title">Description</h3>
+                <p className="description-text">{selectedTaskDetails.description}</p>
+                
+                {selectedTaskDetails.taskDetails && (
+                  <>
+                    <h3 className="section-title mt-4">Additional Details</h3>
+                    <p className="description-text">{selectedTaskDetails.taskDetails}</p>
+                  </>
+                )}
+              </div>
+
+              <div className="detail-section">
+                <h3 className="section-title">Assigned Student</h3>
+                <div className="student-info">
+                  <div className="student-avatar">
+                    <img
+                      src={getProfilePicUrl(getUserInfo(selectedTaskDetails.assignedTo).profilePic)}
+                      alt={getUserInfo(selectedTaskDetails.assignedTo).name}
+                      className="rounded-circle"
+                      width="40"
+                      height="40"
+                      style={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+                      }}
+                    />
+                  </div>
+                  <div className="student-details">
+                    <h4 className="student-name">{getUserInfo(selectedTaskDetails.assignedTo).name}</h4>
+                    <p className="student-email">{getUserInfo(selectedTaskDetails.assignedTo).email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedTaskDetails.risk && (
+                <div className="detail-section">
+                  <h3 className="section-title">Risk Assessment</h3>
+                  <div className="risk-info">
+                    <span 
+                      className="risk-badge"
+                      style={{ backgroundColor: getRiskColor(selectedTaskDetails.risk) }}
+                    >
+                      {selectedTaskDetails.risk}
+                    </span>
+                    <p className="risk-description">
+                      {getRiskDescription(selectedTaskDetails.risk)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button 
+                  className="button button-secondary"
+                  onClick={() => setShowTaskDetailsModal(false)}
+                >
+                  Close
+                </button>
+                <button 
+                  className="button button-primary"
+                  onClick={() => trackCommits(selectedTaskDetails._id)}
+                >
+                  <GitCommit size={14} className="me-2" />
+                  Track GitHub Activity
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .simple-header {
           display: flex;
@@ -950,6 +1225,194 @@ const TaskManagerTutor = () => {
           .pagination-page {
             padding: 6px 10px;
             font-size: 12px;
+          }
+        }
+
+        .task-assigned-user {
+          background-color: #f3f4f6;
+          padding: 0.75rem;
+          border-radius: 0.375rem;
+          margin-bottom: 0.75rem;
+          font-size: 0.875rem;
+        }
+        
+        .user-email {
+          color: #6b7280;
+          font-size: 0.75rem;
+          margin-top: 0.25rem;
+        }
+
+        .user-info-container {
+          display: flex;
+          align-items: center;
+        }
+
+        .user-avatar {
+          margin-right: 0.75rem;
+        }
+
+        .user-avatar-img {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #fff;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-details {
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Task Details Modal Styles */
+        .task-details-modal {
+          max-width: 700px;
+          width: 90%;
+          max-height: 85vh;
+          overflow-y: auto;
+        }
+
+        .task-details-content {
+          padding: 1.5rem;
+        }
+
+        .detail-section {
+          margin-bottom: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .detail-section:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .section-title {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 1rem;
+        }
+
+        .detail-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 1rem;
+        }
+
+        .detail-item {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .detail-label {
+          font-size: 0.75rem;
+          color: #6b7280;
+          margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+          font-size: 0.875rem;
+          color: #1f2937;
+          font-weight: 500;
+        }
+
+        .description-text {
+          color: #4b5563;
+          font-size: 0.875rem;
+          line-height: 1.5;
+        }
+
+        .student-info {
+          display: flex;
+          align-items: center;
+          background-color: #f9fafb;
+          padding: 1rem;
+          border-radius: 0.5rem;
+        }
+
+        .student-avatar {
+          margin-right: 1rem;
+        }
+
+        .student-details {
+          flex: 1;
+        }
+
+        .student-name {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0 0 0.25rem;
+        }
+
+        .student-email {
+          font-size: 0.875rem;
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .risk-info {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .risk-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: white;
+          margin-bottom: 0.5rem;
+        }
+
+        .risk-description {
+          font-size: 0.875rem;
+          color: #4b5563;
+          margin: 0;
+        }
+
+        .progress-container {
+          height: 0.5rem;
+          background-color: #e5e7eb;
+          border-radius: 9999px;
+          overflow: hidden;
+          margin: 0.25rem 0;
+          width: 100%;
+        }
+
+        .progress-bar {
+          height: 100%;
+          border-radius: 9999px;
+        }
+
+        .progress-text {
+          font-size: 0.75rem;
+          color: #6b7280;
+        }
+
+        .modal-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          margin-top: 1.5rem;
+        }
+
+        .mt-4 {
+          margin-top: 1rem;
+        }
+
+        .me-2 {
+          margin-right: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+          .detail-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

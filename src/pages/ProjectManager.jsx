@@ -258,12 +258,9 @@ const ProjectManager = () => {
   };
 
   const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
     const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token found. Please login.");
-      setIsLoading(false);
-      return;
-    }
 
     try {
       // 1. Fetch user's groups
@@ -274,7 +271,7 @@ const ProjectManager = () => {
       setUserGroups(groupsResponse.data);
       const userGroupIds = groupsResponse.data.map(group => group._id);
 
-      // 2. Fetch all projects and filter by user's groups
+      // 2. Fetch only projects associated with the user's groups
       const projectsRes = await axios.get(
         "http://localhost:5000/api/projects/projects",
         { headers: { Authorization: `Bearer ${token}` } }

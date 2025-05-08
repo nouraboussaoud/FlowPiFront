@@ -438,6 +438,19 @@ function StudentDashboard() {
 
       {/* CSS for the dashboard */}
       <style jsx>{`
+        .dashboard-container {
+          width: 100%;
+          min-height: calc(100vh - 80px); /* Subtract header height */
+          padding: 20px;
+          background-color: #f9fafb;
+        }
+
+        .content-wrapper {
+          max-width: 1280px;
+          margin: 0 auto;
+          width: 100%;
+        }
+
         .dashboard-overview {
           margin-bottom: 1rem;
         }

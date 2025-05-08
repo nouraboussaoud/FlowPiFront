@@ -241,7 +241,7 @@ const Dashboard = () => {
           </h1>
           <p className="motivational-message">{getMotivationalMessage()}</p>
         </div>
-        
+
       </div>
 
       {error && (
