@@ -248,6 +248,19 @@ const LayoutStudent = ({ children }) => {
     setShowMobileMenu(!showMobileMenu);
   };
 
+  // Add this useEffect to properly handle Bootstrap's navbar
+  useEffect(() => {
+    // This ensures Bootstrap's collapse functionality works correctly
+    const navbarCollapse = document.querySelector('.navbar-collapse');
+    if (navbarCollapse) {
+      if (showMobileMenu) {
+        navbarCollapse.classList.add('show');
+      } else {
+        navbarCollapse.classList.remove('show');
+      }
+    }
+  }, [showMobileMenu]);
+
   // Toggle dark mode
   const toggleDarkMode = () => {
     if (darkMode) {
@@ -289,20 +302,17 @@ const LayoutStudent = ({ children }) => {
             
             {/* Responsive navbar toggler */}
             <button
-              className="navbar-toggler"
+              className={`navbar-toggler ${showMobileMenu ? 'collapsed' : ''}`}
               type="button"
               onClick={toggleMobileMenu}
+              aria-expanded={showMobileMenu}
               aria-label="Toggle navigation"
             >
-              <span className="navbar-toggler-animation">
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
+              <span className="navbar-toggler-icon"></span>
             </button>
             
             {/* Navbar collapse */}
-            <div className={`navbar-collapse ${showMobileMenu ? 'show' : ''}`} id="navbarCollapse">
+            <div className={`collapse navbar-collapse ${showMobileMenu ? 'show' : ''}`} id="navbarCollapse">
               <ul className="navbar-nav navbar-nav-scroll mx-auto">
                 {/* Account dropdown */}
                 <li className="nav-item dropdown accounts-dropdown-container position-relative">

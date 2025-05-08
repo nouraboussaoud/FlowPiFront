@@ -39,7 +39,7 @@ import TutorsDeliverables from "./pages/evaluation/TutorsDeliverables";
 import ReportViewer from "./pages/evaluation/ReportViewer"
 import { Toaster } from "sonner";
 import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
-import AdminTaskDashboard from "./pages/tasks/DashboardTasks";
+import AdminTaskDashboard from "./pages/tasks/AdminTasks";
 import TaskManager from "./pages/tasks/DashboardTasks";
  
 import {Navigate} from "react-router-dom";

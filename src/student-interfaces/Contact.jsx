@@ -59,6 +59,7 @@ function ContactList({ tutors, onSelectTutor }) {
 
     // Initial fetch
     fetchUnreadCounts();
+    
 
     // Cleanup
     return () => {

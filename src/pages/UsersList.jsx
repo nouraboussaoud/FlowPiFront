@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Header from "../components/Header";
+import DashboardLayout from './DashboardLayout';
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
-  const [profilePic, setProfilePic] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
@@ -14,20 +13,13 @@ const UsersList = () => {
     role: ""
   });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 6;
+
+  // Default profile picture
+  const DEFAULT_PROFILE_PIC = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
 
   useEffect(() => {
-    const storedProfilePic = localStorage.getItem("profilePic");
-
-    console.log("📸 Image stockée dans localStorage:", storedProfilePic);
-
-  if (storedProfilePic) {
-    // Vérifier si l'image est un lien complet (Google) ou un fichier local
-    if (storedProfilePic.startsWith("http")) {
-      setProfilePic(storedProfilePic); // Lien complet (Google)
-    } else {
-      setProfilePic(`http://localhost:5000/uploads/${storedProfilePic}`); // Image locale
-    }
-  }
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -58,6 +50,18 @@ const UsersList = () => {
     return matchesSearch && matchesRole;
   });
 
+  // Pagination logic
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
   const handleBanUnban = async (userId, isCurrentlyBanned) => {
     try {
       const token = localStorage.getItem("token");
@@ -85,7 +89,6 @@ const UsersList = () => {
     }
   };
 
-  // New function to handle toggling user status
   const handleToggleStatus = async (userId, isCurrentlyActive) => {
     try {
       const token = localStorage.getItem("token");
@@ -111,7 +114,6 @@ const UsersList = () => {
     }
   };
 
-  // Function to delete a user
   const handleDeleteUser = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       try {
@@ -127,7 +129,6 @@ const UsersList = () => {
           throw new Error("Failed to delete user");
         }
 
-        // Remove user from state
         setUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
       } catch (error) {
         console.error("Error deleting user:", error);
@@ -135,7 +136,6 @@ const UsersList = () => {
     }
   };
 
-  // Function to fetch user details
   const handleViewDetails = async (userId) => {
     try {
       const token = localStorage.getItem("token");
@@ -158,7 +158,6 @@ const UsersList = () => {
     }
   };
 
-  // Function to open update modal with user data
   const handleOpenUpdateModal = (user) => {
     setUpdateFormData({
       name: user.name,
@@ -169,7 +168,6 @@ const UsersList = () => {
     setShowUpdateModal(true);
   };
 
-  // Function to update user information
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
@@ -187,14 +185,12 @@ const UsersList = () => {
         throw new Error("Failed to update user");
       }
 
-      // Update user in state
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
           user._id === selectedUser._id ? { ...user, ...updateFormData } : user
         )
       );
 
-      // Close modal
       setShowUpdateModal(false);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -202,475 +198,308 @@ const UsersList = () => {
   };
 
   return (
-    <>
-      <title>Eduport- LMS, Education and Course Theme</title>
-      <meta charSet="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-      <meta name="author" content="Webestica.com" />
-      <meta name="description" content="Eduport- LMS, Education and Course Theme" />
-      <link rel="shortcut icon" href="assets/images/favicon.ico" />
-      <link rel="preconnect" href="https://fonts.googleapis.com/" />
-      <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin="" />
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/font-awesome/css/all.min.css" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap-icons/bootstrap-icons.css" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/aos/aos.css" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/overlay-scrollbar/css/overlayscrollbars.min.css" />
-      <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
-      <style>
-        {`
-          .ban-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-          }
-          .unban-btn {
-            background-color: green;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-          }
-          .action-btn {
-            margin-right: 5px;
-            margin-bottom: 5px;
-          }
-          .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-          }
-          .modal.show {
-            display: block;
-          }
-          .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 5px;
-          }
-          .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-          }
-          .close:hover {
-            color: black;
-          }
-            /* Add to your style section (around line 104) */
-.btn-danger-soft {
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-.btn-danger-soft:hover {
-  background-color: rgba(220, 53, 69, 0.2);
-}
-        `}
-      </style>
-      <main>
-        {/* Sidebar */}
-        <nav className="sidebar navbar-dark bg-dark" style={{ width: "250px", height: "100vh", position: "fixed", left: 0, top: 0 }}>
-        <div className="sidebar-header p-3">
-          <h4 className="text-white">FlowPi</h4>
-        </div>
-        <ul className="nav flex-column p-3">
-          <li className="nav-item">
-            <a className="nav-link text-white" href="/admin-dashboard">Dashboard</a>
-          </li>
-          <li className="nav-item">
-            <a className="nav-link text-white" href="/usersList">Users</a>
-          </li>
-          <li className="nav-item">
-            <a className="nav-link text-white" href="/groupList">Groups</a>
-          </li>
-          <li className="nav-item">
-            <a className="nav-link text-white" href="#">Settings</a>
-          </li>
-          <li className="nav-item">
-            <a className="nav-link text-white" href="/dashboard-tasks">Tasks</a>
-          </li>
-        </ul>
-      </nav>
-
-        {/* Page Content */}
-        <div className="page-content" style={{ marginLeft: "250px" }}>
-          {/* Top Bar */}
-          <nav className="navbar top-bar navbar-light border-bottom py-0 py-xl-3">
-            <div className="container-fluid">
-              <span className="navbar-brand">Welcome, Admin</span>
-              <div className="d-flex align-items-center">
-                {profilePic ? (
-                <img
-                src={profilePic ? profilePic : "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"}
-                alt="User Profile"
-                style={{ width: "50px", height: "50px", borderRadius: "50%" }}
-                onError={(e) => {
-                  console.warn("⚠️ Image introuvable :", profilePic);
-                  e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"; // Image par défaut
-                }}
-              />
-              
-                ) : (
-                  <p>No Profile Picture</p>
-                )}
-              </div>
-            </div>
-          </nav>
-
-          {/* Main Content */}
-          <div className="page-content-wrapper border">
-            <div className="row">
-              <div className="col-12">
-                <h1 className="h3 mb-2 mb-sm-0">Students</h1>
-              </div>
-            </div>
-            <div className="card bg-transparent">
-              <div className="card-header bg-transparent border-bottom px-0">
-                <div className="row g-3 align-items-center justify-content-between">
-                  <div className="col-md-8 d-flex align-items-center gap-3">
-                    <form className="rounded position-relative flex-grow-1">
-                      <input
-                        className="form-control bg-transparent"
-                        type="search"
-                        placeholder="Search"
-                        aria-label="Search"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                      <button
-                        className="bg-transparent p-2 position-absolute top-50 end-0 translate-middle-y border-0 text-primary-hover text-reset"
-                        type="submit"
+    <DashboardLayout title="Users List">
+      <div className="page-content-wrapper">
+        <div className="users-section">
+          <h2 className="section-title">Users</h2>
+          <div className="card">
+            <div className="card-header border-bottom">
+              <div className="row g-3 align-items-center justify-content-between">
+                <div className="col-md-8 d-flex align-items-center gap-3">
+                  <form className="rounded position-relative flex-grow-1">
+                    <input
+                      className="form-control"
+                      type="search"
+                      placeholder="Search"
+                      aria-label="Search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <button
+                      className="bg-transparent p-2 position-absolute top-50 end-0 translate-middle-y border-0 text-primary-hover text-reset"
+                      type="submit"
+                    >
+                      <i className="fas fa-search fs-6" />
+                    </button>
+                  </form>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="tutor">Tutor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div className="col-md-3">
+                  <ul
+                    className="list-inline mb-0 nav nav-pills border-0 justify-content-end"
+                    id="pills-tab"
+                    role="tablist"
+                  >
+                    <li className="nav-item">
+                      <a
+                        href="#nav-preview-tab-1"
+                        className="nav-link mb-0 me-2 active"
+                        data-bs-toggle="tab"
                       >
-                        <i className="fas fa-search fs-6 " />
-                      </button>
-                    </form>
-                    <select
-                      value={roleFilter}
-                      onChange={(e) => setRoleFilter(e.target.value)}
-                      className="p-2 border border-gray-300 rounded"
-                    >
-                      <option value="all">All Roles</option>
-                      <option value="student">Student</option>
-                      <option value="tutor">Tutor</option>
-                    </select>
-                  </div>
-                  <div className="col-md-3">
-                    <ul
-                      className="list-inline mb-0 nav nav-pills nav-pill-dark-soft border-0 justify-content-end"
-                      id="pills-tab"
-                      role="tablist"
-                    >
-                      <li className="nav-item">
-                        <a
-                          href="#nav-preview-tab-1"
-                          className="nav-link mb-0 me-2 active"
-                          data-bs-toggle="tab"
-                        >
-                          <i className="fas fa-fw fa-th-large" />
-                        </a>
-                      </li>
-                      <li className="nav-item">
-                        <a
-                          href="#nav-html-tab-1"
-                          className="nav-link mb-0"
-                          data-bs-toggle="tab"
-                        >
-                          <i className="fas fa-fw fa-list-ul" />
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+                        <i className="fas fa-fw fa-th-large" />
+                      </a>
+                    </li>
+                    <li className="nav-item">
+                      <a
+                        href="#nav-html-tab-1"
+                        className="nav-link mb-0"
+                        data-bs-toggle="tab"
+                      >
+                        <i className="fas fa-fw fa-list-ul" />
+                      </a>
+                    </li>
+                  </ul>
                 </div>
               </div>
-              <div className="card-body px-0">
-                <div className="tab-content">
-                  <div className="tab-pane fade show active" id="nav-preview-tab-1">
-                    <div className="row g-4">
-                      {filteredUsers.map((user) => (
-                        <div className="col-md-6 col-xxl-4" key={user._id}>
-                          <div className="card bg-transparent border h-100">
-                            <div className="card-header bg-transparent border-bottom d-flex justify-content-between">
-                              <div className="d-sm-flex align-items-center">
-                                <div className="avatar avatar-md flex-shrink-0">
+            </div>
+            <div className="card-body">
+              <div className="tab-content">
+                <div className="tab-pane fade show active" id="nav-preview-tab-1">
+                  <div className="row g-4">
+                    {currentUsers.map((user) => (
+                      <div className="col-md-6 col-xxl-4" key={user._id}>
+                        <div className="card h-100">
+                          <div className="card-header d-flex justify-content-between">
+                            <div className="d-sm-flex align-items-center">
+                              <div className="avatar avatar-md flex-shrink-0">
                                 <img
-  className="avatar-img rounded-circle"
-  src={
-    user.profilePic
-      ? user.profilePic.startsWith("http")
-        ? user.profilePic // Lien complet pour les utilisateurs Google
-        : `http://localhost:5000/uploads/${user.profilePic}` // Lien local pour les autres utilisateurs
-      : "assets/images/avatar/01.jpg" // Image par défaut si aucun profil n'est disponible
-  }
-  alt="avatar"
-/>
-
-                                </div>
-                                <div className="ms-0 ms-sm-2 mt-2 mt-sm-0">
-                                  <h5 className="mb-0">
-                                    <a href="#">{user.name}</a>
-                                  </h5>
-                                  <span className="text-body small">
-                                    {user.role}
-                                  </span>
-                                </div>
+                                  className="avatar-img rounded-circle"
+                                  src={
+                                    user.profilePic
+                                      ? user.profilePic.startsWith("http")
+                                        ? user.profilePic
+                                        : `http://localhost:5000/uploads/${user.profilePic}`
+                                      : DEFAULT_PROFILE_PIC
+                                  }
+                                  alt="avatar"
+                                  onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+                                />
                               </div>
-                              <div className="dropdown text-end">
-                                <a
-                                  href="#"
-                                  className="btn btn-sm btn-light btn-round small mb-0"
-                                  role="button"
-                                  id="dropdownShare2"
-                                  data-bs-toggle="dropdown"
-                                  aria-expanded="false"
-                                >
-                                  <i className="bi bi-three-dots fa-fw" />
-                                </a>
-                                <ul
-                                  className="dropdown-menu dropdown-w-sm dropdown-menu-end min-w-auto shadow rounded"
-                                  aria-labelledby="dropdownShare2"
-                                >
-                                  <li>
-                                    <a className="dropdown-item" href="#" onClick={() => handleOpenUpdateModal(user)}>
-                                      <i className="bi bi-pencil-square fa-fw me-2" />
-                                      Edit
-                                    </a>
-                                  </li>
-                                  <li>
-                                    <a className="dropdown-item" href="#" onClick={() => handleDeleteUser(user._id)}>
-                                      <i className="bi bi-trash fa-fw me-2" />
-                                      Delete
-                                    </a>
-                                  </li>
-                                  <li>
-                                    <a className="dropdown-item" href="#" onClick={() => handleToggleStatus(user._id, user.isActive)}>
-                                      <i className="bi bi-toggle-on fa-fw me-2" />
-                                      {user.isActive ? "Deactivate" : "Activate"}
-                                    </a>
-                                  </li>
-                                </ul>
+                              <div className="ms-0 ms-sm-2 mt-2 mt-sm-0">
+                                <h5 className="mb-0">{user.name}</h5>
+                                <span className="text-body small">{user.role}</span>
                               </div>
                             </div>
-                            <div className="card-body">
-                              <div className="d-flex justify-content-between align-items-center mb-3">
-                                <div className="d-flex align-items-center">
-                                  <div className="icon-md bg-success bg-opacity-10 text-success rounded-circle flex-shrink-0">
-                                    <i className="bi bi-envelope fa-fw" />
-                                  </div>
-                                  <h6 className="mb-0 ms-2 fw-light">Email</h6>
-                                </div>
-                                <span className="mb-0 fw-bold">{user.email}</span>
-                              </div>
-                              <div className="d-flex justify-content-between align-items-center mb-3">
-                                <div className="d-flex align-items-center">
-                                  <div className="icon-md bg-purple bg-opacity-10 text-purple rounded-circle flex-shrink-0">
-                                    <i className="fas fa-user fa-fw" />
-                                  </div>
-                                  <h6 className="mb-0 ms-2 fw-light">Role</h6>
-                                </div>
-                                <span className="mb-0 fw-bold">{user.role}</span>
-                              </div>
-                              <div className="d-flex justify-content-between align-items-center mb-3">
-                                <div className="d-flex align-items-center">
-                                  <div className="icon-md bg-info bg-opacity-10 text-info rounded-circle flex-shrink-0">
-                                    <i className="fas fa-toggle-on fa-fw" />
-                                  </div>
-                                  <h6 className="mb-0 ms-2 fw-light">Status</h6>
-                                </div>
-                                <span className="mb-0 fw-bold">{user.isActive ? "Active" : "Inactive"}</span>
-                              </div>
-                            </div>
-                            {/* Inside the card-footer section of the card view (around line 377) */}
-                            <div className="card-footer bg-transparent border-top">
-                              <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                  <button
-                                    className="btn btn-sm btn-primary-soft action-btn"
-                                    onClick={() => handleViewDetails(user._id)}
-                                  >
-                                    <i className="bi bi-eye me-1"></i>Details
-                                  </button>
-                                  <button
-                                    className="btn btn-sm btn-danger-soft action-btn"
-                                    onClick={() => handleDeleteUser(user._id)}
-                                  >
-                                    <i className="bi bi-trash me-1"></i>Delete
-                                  </button>
-                                </div>
-                                <div className="text-end text-primary-hover">
-                                  <button
-                                    className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="top"
-                                    title={user.isBanned ? "Unban" : "Ban"}
-                                    aria-label={user.isBanned ? "Unban" : "Ban"}
-                                    onClick={() => handleBanUnban(user._id, user.isBanned)}
-                                  >
-                                    {user.isBanned ? "Unban" : "Ban"}
-                                  </button>
-                                </div>
-                              </div>
+                            <div className="dropdown text-end">
+                              <a
+                                href="#"
+                                className="btn btn-sm btn-light btn-round small mb-0"
+                                role="button"
+                                id={`dropdown-${user._id}`}
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                              >
+                                <i className="bi bi-three-dots fa-fw" />
+                              </a>
+                              <ul
+                                className="dropdown-menu dropdown-menu-end"
+                                aria-labelledby={`dropdown-${user._id}`}
+                              >
+                                <li>
+                                  <a className="dropdown-item" href="#" onClick={() => handleOpenUpdateModal(user)}>
+                                    <i className="bi bi-pencil-square fa-fw me-2" />Edit
+                                  </a>
+                                </li>
+                                <li>
+                                  <a className="dropdown-item" href="#" onClick={() => handleDeleteUser(user._id)}>
+                                    <i className="bi bi-trash fa-fw me-2" />Delete
+                                  </a>
+                                </li>
+                                <li>
+                                  <a className="dropdown-item" href="#" onClick={() => handleToggleStatus(user._id, user.isActive)}>
+                                    <i className="bi bi-toggle-on fa-fw me-2" />
+                                    {user.isActive ? "Deactivate" : "Activate"}
+                                  </a>
+                                </li>
+                              </ul>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="nav-html-tab-1">
-                    <div className="table-responsive border-0">
-                      <table className="table table-dark-gray align-middle p-4 mb-0 table-hover">
-                        <thead>
-                          <tr>
-                            <th scope="col" className="border-0 rounded-start">
-                              Name
-                            </th>
-                            <th scope="col" className="border-0">
-                              Email
-                            </th>
-                            <th scope="col" className="border-0">
-                              Role
-                            </th>
-                            <th scope="col" className="border-0">
-                              Status
-                            </th>
-                            <th scope="col" className="border-0 rounded-end">
-                              Action
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredUsers.map((user) => (
-                            <tr key={user._id}>
-                              <td>
-                                <div className="d-flex align-items-center position-relative">
-                                  <div className="avatar avatar-md">
-                                    <img
-                                      src={user.profilePic ? `http://localhost:5000/uploads/${user.profilePic}` : "assets/images/avatar/01.jpg"}
-                                      className="rounded-circle"
-                                      alt=""
-                                    />
-                                  </div>
-                                  <div className="mb-0 ms-3">
-                                    <h6 className="mb-0">
-                                      <a href="#" className="stretched-link">
-                                        {user.name}
-                                      </a>
-                                    </h6>
-                                  </div>
+                          <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <div className="d-flex align-items-center">
+                                <div className="icon-md bg-success bg-opacity-10 text-success rounded-circle flex-shrink-0">
+                                  <i className="bi bi-envelope fa-fw" />
                                 </div>
-                              </td>
-                              <td>{user.email}</td>
-                              <td>{user.role}</td>
-                              <td>{user.isActive ? "Active" : "Inactive"}</td>
-                              <td>
+                                <h6 className="mb-0 ms-2 fw-light">Email</h6>
+                              </div>
+                              <span className="mb-0 fw-bold">{user.email}</span>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <div className="d-flex align-items-center">
+                                <div className="icon-md bg-purple bg-opacity-10 text-purple rounded-circle flex-shrink-0">
+                                  <i className="fas fa-user fa-fw" />
+                                </div>
+                                <h6 className="mb-0 ms-2 fw-light">Role</h6>
+                              </div>
+                              <span className="mb-0 fw-bold">{user.role}</span>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <div className="d-flex align-items-center">
+                                <div className="icon-md bg-info bg-opacity-10 text-info rounded-circle flex-shrink-0">
+                                  <i className="fas fa-toggle-on fa-fw" />
+                                </div>
+                                <h6 className="mb-0 ms-2 fw-light">Status</h6>
+                              </div>
+                              <span className="mb-0 fw-bold">{user.isActive ? "Active" : "Inactive"}</span>
+                            </div>
+                          </div>
+                          <div className="card-footer border-top">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
                                 <button
-                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
-                                  data-bs-toggle="tooltip"
-                                  data-bs-placement="top"
-                                  title="View Details"
+                                  className="btn btn-sm btn-primary-soft action-btn"
                                   onClick={() => handleViewDetails(user._id)}
                                 >
-                                  <i className="bi bi-eye" />
+                                  <i className="bi bi-eye me-1"></i>Details
                                 </button>
                                 <button
-                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
-                                  data-bs-toggle="tooltip"
-                                  data-bs-placement="top"
-                                  title="Edit"
-                                  onClick={() => handleOpenUpdateModal(user)}
-                                >
-                                  <i className="bi bi-pencil" />
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
-                                  data-bs-toggle="tooltip"
-                                  data-bs-placement="top"
-                                  title="Delete"
+                                  className="btn btn-sm btn-danger-soft action-btn"
                                   onClick={() => handleDeleteUser(user._id)}
                                 >
-                                  <i className="bi bi-trash" />
+                                  <i className="bi bi-trash me-1"></i>Delete
                                 </button>
+                              </div>
+                              <div className="text-end">
                                 <button
-                                  className="btn btn-sm btn-light btn-round me-1 mb-1 mb-md-0"
-                                  data-bs-toggle="tooltip"
-                                  data-bs-placement="top"
-                                  title={user.isActive ? "Deactivate" : "Activate"}
-                                  onClick={() => handleToggleStatus(user._id, user.isActive)}
-                                >
-                                  <i className={`bi bi-toggle-${user.isActive ? "on" : "off"}`} />
-                                </button>
-                                <button
-                                  className={`btn ${user.isBanned ? 'ban-btn' : 'unban-btn'}`}
-                                  data-bs-toggle="tooltip"
-                                  data-bs-placement="top"
-                                  title={user.isBanned ? "Unban" : "Ban"}
-                                  aria-label={user.isBanned ? "Unban" : "Ban"}
+                                  className={`btn btn-sm ${user.isBanned ? 'btn-success' : 'btn-danger'}`}
                                   onClick={() => handleBanUnban(user._id, user.isBanned)}
                                 >
                                   {user.isBanned ? "Unban" : "Ban"}
                                 </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="tab-pane fade" id="nav-html-tab-1">
+                  <div className="table-responsive">
+                    <table className="table align-middle mb-0 table-hover">
+                      <thead>
+                        <tr>
+                          <th scope="col">Name</th>
+                          <th scope="col">Email</th>
+                          <th scope="col">Role</th>
+                          <th scope="col">Status</th>
+                          <th scope="col">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentUsers.map((user) => (
+                          <tr key={user._id}>
+                            <td>
+                              <div className="d-flex align-items-center position-relative">
+                                <div className="avatar avatar-md">
+                                  <img
+                                    src={
+                                      user.profilePic
+                                        ? user.profilePic.startsWith("http")
+                                          ? user.profilePic
+                                          : `http://localhost:5000/uploads/${user.profilePic}`
+                                        : DEFAULT_PROFILE_PIC
+                                    }
+                                    className="rounded-circle"
+                                    alt=""
+                                    onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+                                  />
+                                </div>
+                                <div className="mb-0 ms-3">
+                                  <h6 className="mb-0">{user.name}</h6>
+                                </div>
+                              </div>
+                            </td>
+                            <td>{user.email}</td>
+                            <td>{user.role}</td>
+                            <td>{user.isActive ? "Active" : "Inactive"}</td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-light btn-round me-1"
+                                onClick={() => handleViewDetails(user._id)}
+                              >
+                                <i className="bi bi-eye" />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-light btn-round me-1"
+                                onClick={() => handleOpenUpdateModal(user)}
+                              >
+                                <i className="bi bi-pencil" />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-light btn-round me-1"
+                                onClick={() => handleDeleteUser(user._id)}
+                              >
+                                <i className="bi bi-trash" />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-light btn-round me-1"
+                                onClick={() => handleToggleStatus(user._id, user.isActive)}
+                              >
+                                <i className={`bi bi-toggle-${user.isActive ? "on" : "off"}`} />
+                              </button>
+                              <button
+                                className={`btn btn-sm ${user.isBanned ? 'btn-success' : 'btn-danger'}`}
+                                onClick={() => handleBanUnban(user._id, user.isBanned)}
+                              >
+                                {user.isBanned ? "Unban" : "Ban"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-              <div className="card-footer bg-transparent pt-0 px-0">
-                <div className="d-sm-flex justify-content-sm-between align-items-sm-center">
-                  <p className="mb-0 text-center text-sm-start">
-                    Showing 1 to 8 of {filteredUsers.length} entries
-                  </p>
-                  <nav
-                    className="d-flex justify-content-center mb-0"
-                    aria-label="navigation"
-                  >
-                    <ul className="pagination pagination-sm pagination-primary-soft mb-0 pb-0 px-0">
-                      <li className="page-item mb-0">
-                        <a className="page-link" href="#" tabIndex={-1}>
-                          <i className="fas fa-angle-left" />
+            </div>
+            <div className="card-footer pt-0">
+              <div className="d-sm-flex justify-content-sm-between align-items-sm-center">
+                <p className="mb-0">
+                  Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
+                </p>
+                <nav aria-label="navigation">
+                  <ul className="pagination pagination-sm pagination-primary-soft mb-0">
+                    <li className="page-item">
+                      <a
+                        className="page-link"
+                        href="#"
+                        onClick={() => paginate(currentPage - 1)}
+                      >
+                        <i className="fas fa-angle-left" />
+                      </a>
+                    </li>
+                    {Array.from({ length: totalPages }, (_, index) => (
+                      <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                        <a
+                          className="page-link"
+                          href="#"
+                          onClick={() => paginate(index + 1)}
+                        >
+                          {index + 1}
                         </a>
                       </li>
-                      <li className="page-item mb-0">
-                        <a className="page-link" href="#">
-                          1
-                        </a>
-                      </li>
-                      <li className="page-item mb-0 active">
-                        <a className="page-link" href="#">
-                          2
-                        </a>
-                      </li>
-                      <li className="page-item mb-0">
-                        <a className="page-link" href="#">
-                          3
-                        </a>
-                      </li>
-                      <li className="page-item mb-0">
-                        <a className="page-link" href="#">
-                          <i className="fas fa-angle-right" />
-                        </a>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
+                    ))}
+                    <li className="page-item">
+                      <a
+                        className="page-link"
+                        href="#"
+                        onClick={() => paginate(currentPage + 1)}
+                      >
+                        <i className="fas fa-angle-right" />
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
               </div>
             </div>
           </div>
@@ -679,16 +508,23 @@ const UsersList = () => {
         {/* User Details Modal */}
         <div className={`modal ${showDetailsModal ? 'show' : ''}`}>
           <div className="modal-content">
-            <span className="close" onClick={() => setShowDetailsModal(false)}>&times;</span>
+            <span className="close" onClick={() => setShowDetailsModal(false)}>×</span>
             <h2>User Details</h2>
             {selectedUser && (
               <div>
                 <div className="d-flex align-items-center mb-3">
                   <img
-                    src={selectedUser.profilePic ? `http://localhost:5000/uploads/${selectedUser.profilePic}` : "assets/images/avatar/01.jpg"}
+                    src={
+                      selectedUser.profilePic
+                        ? selectedUser.profilePic.startsWith("http")
+                          ? selectedUser.profilePic
+                          : `http://localhost:5000/uploads/${selectedUser.profilePic}`
+                        : DEFAULT_PROFILE_PIC
+                    }
                     className="rounded-circle me-3"
                     alt="User Profile"
                     style={{ width: "60px", height: "60px" }}
+                    onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
                   />
                   <div>
                     <h3 className="mb-0">{selectedUser.name}</h3>
@@ -724,7 +560,7 @@ const UsersList = () => {
         {/* Update User Modal */}
         <div className={`modal ${showUpdateModal ? 'show' : ''}`}>
           <div className="modal-content">
-            <span className="close" onClick={() => setShowUpdateModal(false)}>&times;</span>
+            <span className="close" onClick={() => setShowUpdateModal(false)}>×</span>
             <h2>Update User</h2>
             {selectedUser && (
               <form onSubmit={handleUpdateUser}>
@@ -772,12 +608,236 @@ const UsersList = () => {
             )}
           </div>
         </div>
-      </main>
-    </>
+      </div>
+
+      <style jsx>{`
+        .page-content-wrapper {
+          padding: 2rem;
+          background-color: var(--bg-color);
+          color: var(--text-color);
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: var(--text-color);
+          margin-bottom: 1.5rem;
+          position: relative;
+        }
+
+        .section-title::after {
+          content: '';
+          position: absolute;
+          bottom: -5px;
+          left: 0;
+          width: 50px;
+          height: 3px;
+          background-color: var(--primary-color);
+          border-radius: 2px;
+        }
+
+        .card {
+          background-color: var(--content-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        .card-header {
+          background-color: var(--content-bg);
+          border-bottom: 1px solid var(--border-color);
+          padding: 1rem 1.5rem;
+        }
+
+        .card-body {
+          padding: 1.5rem;
+        }
+
+        .card-footer {
+          background-color: var(--content-bg);
+          border-top: 1px solid var(--border-color);
+          padding: 1rem 1.5rem;
+        }
+
+        .form-control, .form-select {
+          background-color: var(--content-bg);
+          color: var(--text-color);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+        }
+
+        .form-control:focus, .form-select:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+
+        .btn-primary {
+          background-color: var(--primary-color);
+          border-color: var(--primary-color);
+          color: white;
+        }
+
+        .btn-primary:hover {
+          background-color: var(--primary-dark);
+          border-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+          background-color: var(--text-light);
+          border-color: var(--text-light);
+          color: var(--content-bg);
+        }
+
+        .btn-primary-soft {
+          background-color: rgba(59, 130, 246, 0.1);
+          color: var(--primary-color);
+          border: none;
+        }
+
+        .btn-primary-soft:hover {
+          background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-danger {
+          background-color: var(--danger);
+          border-color: var(--danger);
+          color: white;
+        }
+
+        .btn-danger:hover {
+          background-color: #dc2626;
+          border-color: #dc2626;
+        }
+
+        .btn-danger-soft {
+          background-color: rgba(239, 68, 68, 0.1);
+          color: var(--danger);
+          border: none;
+        }
+
+        .btn-danger-soft:hover {
+          background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-success {
+          background-color: #10b981;
+          border-color: #10b981;
+          color: white;
+        }
+
+        .btn-success:hover {
+          background-color: #059669;
+          border-color: #059669;
+        }
+
+        .table {
+          background-color: var(--content-bg);
+          color: var(--text-color);
+        }
+
+        .table th, .table td {
+          border: 1px solid var(--border-color);
+        }
+
+        .table-hover tbody tr:hover {
+          background-color: var(--bg-color);
+        }
+
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 1000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal.show {
+          display: block;
+        }
+
+        .modal-content {
+          background-color: var(--content-bg);
+          color: var(--text-color);
+          margin: 15% auto;
+          padding: 20px;
+          border: 1px solid var(--border-color);
+          width: 80%;
+          max-width: 600px;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        .close {
+          color: var(--text-light);
+          float: right;
+          font-size: 28px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+
+        .close:hover {
+          color: var(--text-color);
+        }
+
+        .avatar-img {
+          width: 40px;
+          height: 40px;
+          object-fit: cover;
+        }
+
+        .icon-md {
+          width: 32px;
+          height: 32px;
+          line-height: 32px;
+          text-align: center;
+          font-size: 16px;
+        }
+
+        .action-btn {
+          margin-right: 5px;
+          margin-bottom: 5px;
+        }
+
+        .dropdown-menu {
+          background-color: var(--content-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        .dropdown-item {
+          color: var(--text-color);
+        }
+
+        .dropdown-item:hover {
+          background-color: var(--bg-color);
+          color: var(--primary-color);
+        }
+
+        .pagination-primary-soft .page-link {
+          color: var(--primary-color);
+          background-color: var(--content-bg);
+          border: 1px solid var(--border-color);
+        }
+
+        .pagination-primary-soft .page-item.active .page-link {
+          background-color: var(--primary-color);
+          color: white;
+          border-color: var(--primary-color);
+        }
+
+        @media (max-width: 767.98px) {
+          .page-content-wrapper {
+            padding: 1rem;
+          }
+        }
+      `}</style>
+    </DashboardLayout>
   );
 };
-
-
-
 
 export default UsersList;
