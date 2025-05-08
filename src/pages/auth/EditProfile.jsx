@@ -58,7 +58,16 @@ const EditProfile = () => {
         setName(data.name || "");
         setEmail(data.email || "");
         setRole(data.role || "");
-        setProfilePicture(data.profilePicture || "");
+        
+        // Set profile picture with proper URL formatting
+        if (data.profilePic) {
+          const profilePicUrl = data.profilePic.startsWith('http') 
+            ? data.profilePic 
+            : `http://localhost:5000/uploads/${data.profilePic}`;
+          setProfilePicture(profilePicUrl);
+        } else {
+          setProfilePicture("");
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
         toast.error("Failed to load profile data. Please try again.", {
@@ -124,7 +133,9 @@ const EditProfile = () => {
     const file = e.target.files[0];
     if (file) {
       setProfilePictureFile(file);
-      setProfilePicture(URL.createObjectURL(file)); // Preview
+      // Create a local URL for preview
+      const localPreviewUrl = URL.createObjectURL(file);
+      setProfilePicture(localPreviewUrl); // Preview
       setErrors((prev) => ({ ...prev, profilePicture: null }));
     }
   };
@@ -150,6 +161,13 @@ const EditProfile = () => {
         formData.append("profilePicture", profilePictureFile);
       }
 
+      console.log("Updating user profile with data:", {
+        name,
+        email,
+        role,
+        hasProfilePictureFile: !!profilePictureFile
+      });
+
       const response = await fetch(`http://localhost:5000/api/users/update/${userId}`, {
         method: "PUT",
         headers: {
@@ -164,16 +182,37 @@ const EditProfile = () => {
       }
 
       const result = await response.json();
-      toast.success("Profile updated successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      console.log("Update response:", result);
+      
+      // Update user in localStorage
       const updatedUser = JSON.parse(localStorage.getItem("user") || "{}");
       updatedUser.name = name;
       updatedUser.email = email;
       updatedUser.role = role;
-      updatedUser.profilePicture = result.user.profilePicture || profilePicture;
+      
+      // Update profile picture in localStorage
+      if (result.user && result.user.profilePic) {
+        updatedUser.profilePic = result.user.profilePic;
+        localStorage.setItem("profilePic", result.user.profilePic);
+        
+        // Create a custom event to notify other components about the profile update
+        const profileUpdateEvent = new CustomEvent('profileUpdated', {
+          detail: {
+            profilePic: result.user.profilePic
+          }
+        });
+        window.dispatchEvent(profileUpdateEvent);
+        
+        console.log("Profile picture updated:", result.user.profilePic);
+      }
+      
       localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      toast.success("Profile updated successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      
       setProfilePictureFile(null); // Clear file input
     } catch (error) {
       console.error("Error updating user:", error);
@@ -281,6 +320,10 @@ const EditProfile = () => {
                   src={profilePicture}
                   alt="Profile"
                   className="avatar"
+                  onError={(e) => {
+                    console.warn("⚠️ Image not found:", profilePicture);
+                    e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+                  }}
                 />
               ) : (
                 <div className="avatar-placeholder">

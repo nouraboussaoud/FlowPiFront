@@ -128,6 +128,9 @@ function ContactList({ tutors, onSelectTutor }) {
     tutor.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Check if any tutor has unread messages (for scrollbar control)
+  const hasUnreadMessages = Object.values(unreadCounts).some(count => count > 0);
+
   return (
     <div className="contact-list-container">
       <h4 className="contact-list-title">Your Contacts</h4>
@@ -142,7 +145,7 @@ function ContactList({ tutors, onSelectTutor }) {
         />
       </div>
 
-      <ul className="list-group contact-list">
+      <ul className={`list-group contact-list ${hasUnreadMessages ? 'no-scroll' : ''}`}>
         {filteredTutors.map((tutor) => (
           <li
             key={tutor._id}

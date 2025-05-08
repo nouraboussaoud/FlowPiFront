@@ -60,10 +60,26 @@ const LayoutStudent = ({ children }) => {
     const handleStorageChange = () => {
       fetchUserData();
     };
+    
+    // Listen for custom profile update event
+    const handleProfileUpdate = (event) => {
+      console.log("Profile update detected:", event.detail);
+      const newProfilePic = event.detail.profilePic;
+      if (newProfilePic) {
+        setProfilePic(
+          newProfilePic.startsWith("http")
+            ? newProfilePic
+            : `http://localhost:5000/uploads/${newProfilePic}`
+        );
+      }
+    };
 
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
   }, []);
 
@@ -144,7 +160,7 @@ const LayoutStudent = ({ children }) => {
 
   // Add these navigation handlers
   const handleNavigateToHome = () => {
-    navigate("/");
+    navigate("/student-dashboard");
     setShowMobileMenu(false);
   };
 
@@ -490,8 +506,14 @@ const LayoutStudent = ({ children }) => {
       </header>
       
       {/* Add padding to the main content to prevent it from being hidden under the fixed navbar */}
-      <main style={{ paddingTop: '80px' }}>
-        <section>
+      <main style={{ 
+        paddingTop: '80px',
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <section style={{ flex: 1, width: '100%' }}>
           {children}
         </section>
       </main>
