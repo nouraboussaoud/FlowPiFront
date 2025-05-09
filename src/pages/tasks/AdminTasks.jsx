@@ -3,6 +3,7 @@ import axios from "axios";
 import DashboardLayout from "../DashboardLayout";
 import "./AdminTasks.css";
 import { Folder, GitBranch, Clock, BarChart2, Users, AlertCircle, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 const AdminTaskDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -724,30 +725,40 @@ const AdminTaskDashboard = () => {
             </div>
             {sortedTasks.length > tasksPerPage && (
               <div className="pagination">
-                <button
-                  className="btn btn-secondary"
+                <motion.button
+                  className="pagination-button"
                   onClick={goToPreviousPage}
                   disabled={currentPage === 1}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Previous
-                </button>
-                {getPageNumbers().map((page, index) => (
-                  <button
-                    key={index}
-                    className={`btn ${page === currentPage ? "btn-primary" : "btn-secondary"} ${page === "..." ? "ellipsis" : ""}`}
-                    onClick={() => typeof page === "number" && goToPage(page)}
-                    disabled={page === "..."}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  className="btn btn-secondary"
+                </motion.button>
+                <div className="pagination-pages">
+                  {getPageNumbers().map((page, index) => (
+                    <motion.button
+                      key={index}
+                      className={`pagination-page ${
+                        page === currentPage ? "active" : ""
+                      } ${page === "..." ? "ellipsis" : ""}`}
+                      onClick={() => typeof page === "number" && goToPage(page)}
+                      disabled={page === "..."}
+                      whileHover={{ scale: page !== "..." ? 1.05 : 1 }}
+                      whileTap={{ scale: page !== "..." ? 0.95 : 1 }}
+                    >
+                      {page}
+                    </motion.button>
+                  ))}
+                </div>
+                <motion.button
+                  className="pagination-button"
                   onClick={goToNextPage}
                   disabled={currentPage === totalPages}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Next
-                </button>
+                </motion.button>
               </div>
             )}
           </>

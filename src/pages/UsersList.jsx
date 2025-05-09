@@ -1,8 +1,42 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from './DashboardLayout';
+import { motion } from 'framer-motion';
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
+  
+  // Button styles that will be used throughout the component
+  const buttonStyles = {
+    button: {
+      padding: "0.625rem 1rem",
+      borderRadius: "6px",
+      fontSize: "0.875rem",
+      fontWeight: "500",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      border: "none",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "0.5rem",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    },
+    primary: {
+      backgroundColor: "#3b82f6",
+      color: "white",
+    },
+    danger: {
+      backgroundColor: "#ef4444",
+      color: "white",
+    },
+    success: {
+      backgroundColor: "#10b981",
+      color: "white",
+    },
+    info: {
+      backgroundColor: "#6b7280",
+      color: "white",
+    }
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
@@ -267,12 +301,11 @@ const UsersList = () => {
                   <div className="row g-4">
                     {currentUsers.map((user) => (
                       <div className="col-md-6 col-xxl-4" key={user._id}>
-                        <div className="card h-100">
-                          <div className="card-header d-flex justify-content-between">
-                            <div className="d-sm-flex align-items-center">
-                              <div className="avatar avatar-md flex-shrink-0">
+                        <div className="user-card">
+                          <div className="user-card-header">
+                            <div className="user-profile">
+                              <div className="user-avatar-wrapper">
                                 <img
-                                  className="avatar-img rounded-circle"
                                   src={
                                     user.profilePic
                                       ? user.profilePic.startsWith("http")
@@ -280,103 +313,99 @@ const UsersList = () => {
                                         : `http://localhost:5000/uploads/${user.profilePic}`
                                       : DEFAULT_PROFILE_PIC
                                   }
-                                  alt="avatar"
+                                  alt={user.name}
                                   onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+                                  className="user-avatar-img"
                                 />
+                                <span className={`status-dot ${user.isActive ? "active" : "inactive"}`}></span>
                               </div>
-                              <div className="ms-0 ms-sm-2 mt-2 mt-sm-0">
-                                <h5 className="mb-0">{user.name}</h5>
-                                <span className="text-body small">{user.role}</span>
+                              <div className="user-identity">
+                                <h5 className="user-name" style={{ color: "#1e40af" }}>{user.name}</h5>
+                                <span className="user-badge">{user.role}</span>
                               </div>
                             </div>
-                            <div className="dropdown text-end">
-                              <a
-                                href="#"
-                                className="btn btn-sm btn-light btn-round small mb-0"
-                                role="button"
+                            <div className="card-actions">
+                              <button
+                                className="card-action-btn"
                                 id={`dropdown-${user._id}`}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                               >
-                                <i className="bi bi-three-dots fa-fw" />
-                              </a>
-                              <ul
-                                className="dropdown-menu dropdown-menu-end"
-                                aria-labelledby={`dropdown-${user._id}`}
-                              >
+                                <i className="bi bi-three-dots-vertical"></i>
+                              </button>
+                              <ul className="dropdown-menu dropdown-menu-end" aria-labelledby={`dropdown-${user._id}`}>
                                 <li>
                                   <a className="dropdown-item" href="#" onClick={() => handleOpenUpdateModal(user)}>
-                                    <i className="bi bi-pencil-square fa-fw me-2" />Edit
+                                    <i className="bi bi-pencil-square fa-fw me-2"></i>Edit
                                   </a>
                                 </li>
                                 <li>
                                   <a className="dropdown-item" href="#" onClick={() => handleDeleteUser(user._id)}>
-                                    <i className="bi bi-trash fa-fw me-2" />Delete
+                                    <i className="bi bi-trash fa-fw me-2"></i>Delete
                                   </a>
                                 </li>
                                 <li>
                                   <a className="dropdown-item" href="#" onClick={() => handleToggleStatus(user._id, user.isActive)}>
-                                    <i className="bi bi-toggle-on fa-fw me-2" />
+                                    <i className="bi bi-toggle-on fa-fw me-2"></i>
                                     {user.isActive ? "Deactivate" : "Activate"}
                                   </a>
                                 </li>
                               </ul>
                             </div>
                           </div>
-                          <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <div className="d-flex align-items-center">
-                                <div className="icon-md bg-success bg-opacity-10 text-success rounded-circle flex-shrink-0">
-                                  <i className="bi bi-envelope fa-fw" />
-                                </div>
-                                <h6 className="mb-0 ms-2 fw-light">Email</h6>
+                          <div className="user-card-body">
+                            <div className="user-detail-item">
+                              <div className="detail-icon">
+                                <i className="bi bi-envelope"></i>
                               </div>
-                              <span className="mb-0 fw-bold">{user.email}</span>
+                              <div className="detail-content">
+                                <span className="detail-label">Email</span>
+                                <span className="detail-value">{user.email}</span>
+                              </div>
                             </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <div className="d-flex align-items-center">
-                                <div className="icon-md bg-purple bg-opacity-10 text-purple rounded-circle flex-shrink-0">
-                                  <i className="fas fa-user fa-fw" />
-                                </div>
-                                <h6 className="mb-0 ms-2 fw-light">Role</h6>
+                            <div className="user-detail-item">
+                              <div className="detail-icon">
+                                <i className="bi bi-person-badge"></i>
                               </div>
-                              <span className="mb-0 fw-bold">{user.role}</span>
+                              <div className="detail-content">
+                                <span className="detail-label">Role</span>
+                                <span className="detail-value">{user.role}</span>
+                              </div>
                             </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <div className="d-flex align-items-center">
-                                <div className="icon-md bg-info bg-opacity-10 text-info rounded-circle flex-shrink-0">
-                                  <i className="fas fa-toggle-on fa-fw" />
-                                </div>
-                                <h6 className="mb-0 ms-2 fw-light">Status</h6>
+                            <div className="user-detail-item">
+                              <div className="detail-icon">
+                                <i className="bi bi-shield-check"></i>
                               </div>
-                              <span className="mb-0 fw-bold">{user.isActive ? "Active" : "Inactive"}</span>
+                              <div className="detail-content">
+                                <span className="detail-label">Status</span>
+                                <span className={`detail-value ${user.isActive ? "text-success" : "text-danger"}`}>
+                                  {user.isActive ? "Active" : "Inactive"}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="card-footer border-top">
-                            <div className="d-flex justify-content-between align-items-center">
-                              <div>
-                                <button
-                                  className="btn btn-sm btn-primary-soft action-btn"
-                                  onClick={() => handleViewDetails(user._id)}
-                                >
-                                  <i className="bi bi-eye me-1"></i>Details
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-danger-soft action-btn"
-                                  onClick={() => handleDeleteUser(user._id)}
-                                >
-                                  <i className="bi bi-trash me-1"></i>Delete
-                                </button>
-                              </div>
-                              <div className="text-end">
-                                <button
-                                  className={`btn btn-sm ${user.isBanned ? 'btn-success' : 'btn-danger'}`}
-                                  onClick={() => handleBanUnban(user._id, user.isBanned)}
-                                >
-                                  {user.isBanned ? "Unban" : "Ban"}
-                                </button>
-                              </div>
-                            </div>
+                          <div className="user-card-footer">
+                            <button
+                              className="btn-action view"
+                              onClick={() => handleViewDetails(user._id)}
+                            >
+                              <i className="bi bi-eye"></i>
+                              <span>Details</span>
+                            </button>
+                            <button
+                              className="btn-action edit"
+                              onClick={() => handleOpenUpdateModal(user)}
+                            >
+                              <i className="bi bi-pencil"></i>
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              className={`btn-action ${user.isBanned ? "unban" : "ban"}`}
+                              onClick={() => handleBanUnban(user._id, user.isBanned)}
+                            >
+                              <i className={`bi bi-${user.isBanned ? "unlock" : "lock"}`}></i>
+                              <span>{user.isBanned ? "Unban" : "Ban"}</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -467,39 +496,39 @@ const UsersList = () => {
                 <p className="mb-0">
                   Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
                 </p>
-                <nav aria-label="navigation">
-                  <ul className="pagination pagination-sm pagination-primary-soft mb-0">
-                    <li className="page-item">
-                      <a
-                        className="page-link"
-                        href="#"
-                        onClick={() => paginate(currentPage - 1)}
-                      >
-                        <i className="fas fa-angle-left" />
-                      </a>
-                    </li>
+                <div className="pagination">
+                  <motion.button
+                    className="pagination-button"
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Previous
+                  </motion.button>
+                  <div className="pagination-pages">
                     {Array.from({ length: totalPages }, (_, index) => (
-                      <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                        <a
-                          className="page-link"
-                          href="#"
-                          onClick={() => paginate(index + 1)}
-                        >
-                          {index + 1}
-                        </a>
-                      </li>
-                    ))}
-                    <li className="page-item">
-                      <a
-                        className="page-link"
-                        href="#"
-                        onClick={() => paginate(currentPage + 1)}
+                      <motion.button
+                        key={index + 1}
+                        className={`pagination-page ${currentPage === index + 1 ? 'active' : ''}`}
+                        onClick={() => paginate(index + 1)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        <i className="fas fa-angle-right" />
-                      </a>
-                    </li>
-                  </ul>
-                </nav>
+                        {index + 1}
+                      </motion.button>
+                    ))}
+                  </div>
+                  <motion.button
+                    className="pagination-button"
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Next
+                  </motion.button>
+                </div>
               </div>
             </div>
           </div>
@@ -828,6 +857,290 @@ const UsersList = () => {
           background-color: var(--primary-color);
           color: white;
           border-color: var(--primary-color);
+        }
+
+        .user-card {
+          background-color: #f8fafc; /* Very light blue-gray */
+          border-radius: 16px;
+          box-shadow: 0 10px 20px rgba(59, 130, 246, 0.08);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          overflow: hidden;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .user-card-header {
+          padding: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.05) 100%);
+        }
+
+        .user-card-body {
+          padding: 16px;
+          flex-grow: 1;
+          background-color: #ffffff;
+        }
+
+        .user-card-footer {
+          padding: 16px;
+          display: flex;
+          gap: 8px;
+          border-top: 1px solid rgba(59, 130, 246, 0.1);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(59, 130, 246, 0.08) 100%);
+        }
+
+        /* For dark mode compatibility */
+        [data-bs-theme="dark"] .user-card {
+          background-color: #1e293b; /* Dark blue-gray */
+          border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        [data-bs-theme="dark"] .user-card-header {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%);
+        }
+
+        [data-bs-theme="dark"] .user-card-body {
+          background-color: #0f172a; /* Darker blue-gray */
+        }
+
+        [data-bs-theme="dark"] .user-card-footer {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.15) 100%);
+        }
+
+        .user-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 30px rgba(59, 130, 246, 0.15);
+        }
+
+        .user-profile {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .user-avatar-wrapper {
+          position: relative;
+          width: 60px;
+          height: 60px;
+        }
+
+        .user-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .status-dot {
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 2px solid white;
+        }
+
+        .status-dot.active {
+          background-color: #10b981;
+        }
+
+        .status-dot.inactive {
+          background-color: #ef4444;
+        }
+
+        .user-identity {
+          display: flex;
+          flex-direction: column;
+          background-color: rgba(59, 130, 246, 0.1);
+          padding: 8px 12px;
+          border-radius: 8px;
+          min-width: 150px;
+        }
+
+        .user-name {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1e40af; /* Same color as the role badge */
+          line-height: 1.2;
+        }
+
+        /* For dark mode compatibility */
+        [data-bs-theme="dark"] .user-name {
+          color: #93c5fd; /* Same light blue as the role badge in dark mode */
+        }
+
+        .user-badge {
+          display: inline-block;
+          margin-top: 5px;
+          padding: 3px 8px;
+          background-color: rgba(59, 130, 246, 0.2);
+          color: #1e40af;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        /* For dark mode compatibility */
+        [data-bs-theme="dark"] .user-identity {
+          background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        [data-bs-theme="dark"] .user-badge {
+          background-color: rgba(59, 130, 246, 0.3);
+          color: #93c5fd;
+        }
+
+        .card-actions {
+          align-self: flex-start;
+        }
+
+        .card-action-btn {
+          background: transparent;
+          border: none;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--primary-color);
+          transition: all 0.2s ease;
+        }
+
+        .card-action-btn:hover {
+          background-color: rgba(59, 130, 246, 0.1);
+          transform: rotate(90deg);
+        }
+
+        .user-card-body {
+          padding: 16px;
+          flex-grow: 1;
+        }
+
+        .user-detail-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 12px;
+          padding-bottom: 12px;
+          border-bottom: 1px dashed var(--border-color);
+        }
+
+        .user-detail-item:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+        }
+
+        .detail-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background-color: var(--bg-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 12px;
+          color: var(--primary-color);
+        }
+
+        .detail-content {
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .detail-label {
+          font-size: 0.75rem;
+          color: var(--primary-color);
+          opacity: 0.7;
+          margin-bottom: 3px;
+        }
+
+        .detail-value {
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: var(--text-color);
+          word-break: break-word;
+        }
+
+        .user-card-footer {
+          padding: 16px;
+          display: flex;
+          gap: 8px;
+          border-top: 1px solid var(--border-color);
+        }
+
+        .btn-action {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px;
+          border-radius: 8px;
+          border: none;
+          font-size: 0.85rem;
+          font-weight: 500;
+          transition: all 0.2s ease;
+        }
+
+        .btn-action.view {
+          background-color: rgba(59, 130, 246, 0.1);
+          color: var(--primary-color);
+        }
+
+        .btn-action.view:hover {
+          background-color: var(--primary-color);
+          color: white;
+        }
+
+        .btn-action.edit {
+          background-color: rgba(245, 158, 11, 0.1);
+          color: #f59e0b;
+        }
+
+        .btn-action.edit:hover {
+          background-color: #f59e0b;
+          color: white;
+        }
+
+        .btn-action.ban {
+          background-color: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+        }
+
+        .btn-action.ban:hover {
+          background-color: #ef4444;
+          color: white;
+        }
+
+        .btn-action.unban {
+          background-color: rgba(16, 185, 129, 0.1);
+          color: #10b981;
+        }
+
+        .btn-action.unban:hover {
+          background-color: #10b981;
+          color: white;
+        }
+
+        .text-success {
+          color: #10b981 !important;
+        }
+
+        .text-danger {
+          color: #ef4444 !important;
         }
 
         @media (max-width: 767.98px) {
