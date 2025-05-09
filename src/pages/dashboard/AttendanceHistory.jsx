@@ -218,9 +218,7 @@ const AttendanceHistory = () => {
   </div>
 </div>
         {/* Results Count */}
-        <div className="alert alert-info mb-4">
-          Showing {filteredRecords.length} records (filtered from {records.length} total)
-        </div>
+      
 
         {loading ? (
           <div className="text-center my-5">
@@ -317,7 +315,7 @@ const AttendanceHistory = () => {
               <ul className="pagination justify-content-center">
                 <li className={`page-item ${currentPage === 0 ? 'disabled' : ''}`}>
                   <button 
-                    className="page-link px-4" 
+                  className="page-link px-4 bg-secondary text-white border-secondary"
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))}
                   >
                     Previous
@@ -330,7 +328,7 @@ const AttendanceHistory = () => {
                     className={`page-item ${currentPage === i ? 'active' : ''}`}
                   >
                     <button 
-                      className="page-link px-4" 
+                     className={`page-link px-4 ${currentPage === i ? 'bg-dark text-white' : 'bg-light text-dark border-light'}`}
                       onClick={() => setCurrentPage(i)}
                     >
                       {i + 1}
@@ -340,7 +338,7 @@ const AttendanceHistory = () => {
                 
                 <li className={`page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}`}>
                   <button 
-                    className="page-link px-5" 
+                   className="page-link px-5 bg-secondary text-white border-secondary" 
                     onClick={() => setCurrentPage(prev => prev + 1)}
                   >
                     Next
