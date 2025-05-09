@@ -1160,49 +1160,56 @@ const TaskManagerTutor = () => {
         }
 
         .pagination-button {
-          padding: 8px 16px;
-          background-color: #007bff;
+          padding: 10px 18px;
+          background-color: #4a6cf7;
           color: white;
           border: none;
-          border-radius: 5px;
+          border-radius: 8px;
           cursor: pointer;
           font-size: 14px;
-          transition: background-color 0.2s;
+          font-weight: 500;
+          transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(74, 108, 247, 0.2);
         }
 
         .pagination-button:hover:not(:disabled) {
-          background-color: #0056b3;
+          background-color: #3a5bd9;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(74, 108, 247, 0.3);
         }
 
         .pagination-button:disabled {
-          background-color: #6c757d;
+          background-color: #a5b4fc;
           cursor: not-allowed;
         }
 
         .pagination-pages {
           display: flex;
-          gap: 5px;
+          gap: 6px;
         }
 
         .pagination-page {
-          padding: 8px 12px;
-          background-color: #f8f9fa;
-          color: #343a40;
-          border: 1px solid #e4e6eb;
-          border-radius: 5px;
+          padding: 8px 14px;
+          background-color: #f8fafc;
+          color: #4a5568;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
           cursor: pointer;
           font-size: 14px;
+          font-weight: 500;
           transition: all 0.2s;
         }
 
         .pagination-page:hover:not(.ellipsis):not(.active) {
-          background-color: #e4e6eb;
+          background-color: #edf2f7;
+          transform: translateY(-2px);
         }
 
         .pagination-page.active {
-          background-color: #007bff;
+          background-color: #4a6cf7;
           color: white;
-          border-color: #007bff;
+          border-color: #4a6cf7;
+          box-shadow: 0 2px 4px rgba(74, 108, 247, 0.2);
         }
 
         .pagination-page.ellipsis {

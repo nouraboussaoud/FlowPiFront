@@ -75,6 +75,14 @@ const UsersTable = () => {
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
+  // Add this helper function to properly format profile picture URLs
+  const getProfilePicUrl = (profilePic) => {
+    if (!profilePic) return PLACEHOLDER_IMAGE;
+    return profilePic.startsWith("http")
+      ? profilePic
+      : `http://localhost:5000/uploads/${profilePic}`;
+  };
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -237,6 +245,7 @@ const UsersTable = () => {
     }
   }, [chatUser]);
 
+  // Fix for search function to maintain pagination when possible
   useEffect(() => {
     const debouncedSearch = debounce(() => {
       const lowerQuery = searchQuery.toLowerCase();
@@ -246,12 +255,18 @@ const UsersTable = () => {
           (student.email && student.email.toLowerCase().includes(lowerQuery))
       );
       setFilteredStudents(filtered);
-      setCurrentPage(1);
+      
+      // Only reset to page 1 if the current page would be invalid with the new filtered results
+      const newTotalPages = Math.ceil(filtered.length / itemsPerPage);
+      if (currentPage > newTotalPages) {
+        setCurrentPage(Math.max(1, newTotalPages));
+      }
+      // Otherwise keep the same page
     }, 300);
 
     debouncedSearch();
     return () => debouncedSearch.cancel();
-  }, [searchQuery, students]);
+  }, [searchQuery, students, itemsPerPage, currentPage]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -322,16 +337,43 @@ const UsersTable = () => {
       await axios.delete(`http://localhost:5000/api/users/delete/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setStudents(students.filter((student) => student._id !== userId));
-      setFilteredStudents(filteredStudents.filter((student) => student._id !== userId));
+      
+      // Get current page data before update
+      const currentPageData = filteredStudents.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      );
+      
+      // Update students and filtered students
+      const updatedStudents = students.filter((student) => student._id !== userId);
+      const updatedFilteredStudents = filteredStudents.filter((student) => student._id !== userId);
+      
+      setStudents(updatedStudents);
+      setFilteredStudents(updatedFilteredStudents);
+      
       setUnreadMessages((prev) => {
         const newCounts = { ...prev };
         delete newCounts[userId];
         return newCounts;
       });
-      if (paginatedStudents.length === 1 && currentPage > 1) {
+      
+      // Only change page if necessary
+      if (currentPageData.length === 1 && currentPage > 1) {
+        // If we deleted the last item on this page, go back one page
         setCurrentPage(currentPage - 1);
+      } else {
+        // Calculate if we need to adjust the current page based on remaining items
+        const totalPages = Math.ceil(updatedFilteredStudents.length / itemsPerPage);
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        }
+        // Otherwise keep the same page
       }
+      
+      toast.success("Student deleted successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
       if (error.response?.status === 401) {
         setError("Session expired. Please log in again.");
@@ -339,12 +381,17 @@ const UsersTable = () => {
         navigate("/login");
       } else {
         setError(error.response?.data?.message || "Error deleting student");
+        toast.error(error.response?.data?.message || "Error deleting student", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     } finally {
       setActionLoading((prev) => ({ ...prev, [`delete-${userId}`]: false }));
     }
   }, 300);
 
+  // Fix for toggle status function
   const debouncedToggleStatus = debounce(async (userId, isActive) => {
     setActionLoading((prev) => ({ ...prev, [`toggle-${userId}`]: true }));
     try {
@@ -355,6 +402,8 @@ const UsersTable = () => {
         { isActive: !isActive },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
+      // Update the user in both arrays without changing pagination
       setStudents(
         students.map((student) =>
           student._id === userId
@@ -362,6 +411,7 @@ const UsersTable = () => {
             : student
         )
       );
+      
       setFilteredStudents(
         filteredStudents.map((student) =>
           student._id === userId
@@ -369,6 +419,11 @@ const UsersTable = () => {
             : student
         )
       );
+      
+      toast.success(`Student ${response.data.user.isActive ? 'activated' : 'deactivated'} successfully`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
       if (error.response?.status === 401) {
         setError("Session expired. Please log in again.");
@@ -376,12 +431,17 @@ const UsersTable = () => {
         navigate("/login");
       } else {
         setError(error.response?.data?.message || "Error toggling status");
+        toast.error(error.response?.data?.message || "Error toggling status", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     } finally {
       setActionLoading((prev) => ({ ...prev, [`toggle-${userId}`]: false }));
     }
   }, 300);
 
+  // Fix for ban/unban function
   const debouncedBanUnban = debounce(async (userId, isBanned) => {
     setActionLoading((prev) => ({ ...prev, [`ban-${userId}`]: true }));
     try {
@@ -392,16 +452,24 @@ const UsersTable = () => {
         { action: isBanned ? "unban" : "ban" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
+      // Update the user in both arrays without changing pagination
       setStudents(
         students.map((student) =>
           student._id === userId ? { ...student, isBanned: !isBanned } : student
         )
       );
+      
       setFilteredStudents(
         filteredStudents.map((student) =>
           student._id === userId ? { ...student, isBanned: !isBanned } : student
         )
       );
+      
+      toast.success(`Student ${isBanned ? 'unbanned' : 'banned'} successfully`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
       if (error.response?.status === 401) {
         setError("Session expired. Please log in again.");
@@ -409,6 +477,10 @@ const UsersTable = () => {
         navigate("/login");
       } else {
         setError(error.response?.data?.message || "Error banning/unbanning student");
+        toast.error(error.response?.data?.message || "Error banning/unbanning student", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     } finally {
       setActionLoading((prev) => ({ ...prev, [`ban-${userId}`]: false }));
@@ -425,34 +497,77 @@ const UsersTable = () => {
   const handleUpdateUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Updating user with token:", token); // Debug log
+      if (!token) {
+        setError("No token found. Please login.");
+        return;
+      }
+      
+      // Log the data we're sending to help debug
+      console.log("Updating user:", {
+        id: updateModalUser._id,
+        name: updateModalUser.name,
+        email: updateModalUser.email,
+        role: updateModalUser.role
+      });
+      
+      // Make the API request
       const response = await axios.put(
         `http://localhost:5000/api/users/update/${updateModalUser._id}`,
         {
           name: updateModalUser.name,
           email: updateModalUser.email,
-          role: updateModalUser.role,
+          role: updateModalUser.role
         },
+        { 
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      // Log the full response for debugging
+      console.log("Update response:", response);
+      
+      // Simple approach: refetch all students to ensure data consistency
+      const studentsResponse = await axios.get(
+        "http://localhost:5000/api/users/getAll",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setStudents(
-        students.map((u) =>
-          u._id === updateModalUser._id ? response.data.user : u
-        )
+      
+      const studentUsers = studentsResponse.data.filter(
+        (user) => user.role === "student"
       );
-      setFilteredStudents(
-        filteredStudents.map((u) =>
-          u._id === updateModalUser._id ? response.data.user : u
-        )
-      );
+      
+      setStudents(studentUsers);
+      setFilteredStudents(studentUsers);
+      
+      // Close the modal
       setUpdateModalUser(null);
+      
+      // Show success message
+      toast.success("Student updated successfully", {
+        position: "top-right",
+        autoClose: 3000
+      });
     } catch (error) {
+      // Detailed error logging
+      console.error("Update error:", error);
+      console.error("Error response:", error.response);
+      
       if (error.response?.status === 401) {
-        setError("Session expired. Please log in again.");
+        setError("Session expired. Please login again.");
         localStorage.removeItem("token");
         navigate("/login");
       } else {
-        setError(error.response?.data?.message || "Error updating student");
+        // Extract the most specific error message possible
+        const errorMessage = 
+          error.response?.data?.message || 
+          error.message || 
+          "Error updating student";
+        
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 3000
+        });
       }
     }
   };
@@ -512,11 +627,7 @@ const UsersTable = () => {
       <td data-label="Name">
         <div className="d-flex align-items-center">
           <img
-            src={
-              student.profilePic
-                ? `http://localhost:5000/uploads/${student.profilePic}`
-                : PLACEHOLDER_IMAGE
-            }
+            src={getProfilePicUrl(student.profilePic)}
             className="rounded-circle me-2"
             alt={`${student.name}'s avatar`}
             width="40"
@@ -648,31 +759,28 @@ const UsersTable = () => {
   return (
     <LayoutTutorss>
     <div className="container my-4">
-      <motion.h2
-        className="mb-4 text-3xl font-bold text-dark"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        Students
-      </motion.h2>
-      <div className="mb-4">
-        <div className="input-group">
-          <span className="input-group-text bg-white">
-            <i className="bi bi-search"></i>
-          </span>
+      <div className="dashboard-header">
+        <motion.h2
+          className="page-title"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Student Directory
+        </motion.h2>
+        
+        <div className="search-box">
+          <i className="bi bi-search"></i>
           <input
             type="text"
-            className="form-control"
-            placeholder="Search by name or email..."
+            placeholder="Search students..."
             value={searchQuery}
             onChange={handleSearchChange}
             aria-label="Search students"
           />
           {searchQuery && (
             <button
-              className="btn btn-outline-secondary"
-              type="button"
+              className="clear-button"
               onClick={clearSearch}
               aria-label="Clear search"
             >
@@ -950,43 +1058,122 @@ const UsersTable = () => {
           padding: 0 15px;
         }
 
-        .input-group {
-          max-width: 400px;
-          border-radius: 8px;
-          overflow: hidden;
+        .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #eaeaea;
+        }
+
+        .page-title {
+          font-size: 2rem;
+          font-weight: 600;
+          color: #333;
+          margin: 0;
+        }
+
+        .search-box {
+          display: flex;
+          align-items: center;
+          background-color: #f8f9fa;
+          border-radius: 50px;
+          padding: 0 20px;
+          width: 350px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+          transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          background-color: white;
+        }
+
+        .search-box i.bi-search {
+          color: #6c757d;
+          font-size: 1.2rem;
+          margin-right: 10px;
+        }
+
+        .search-box input {
+          flex: 1;
+          border: none;
+          background: transparent;
+          padding: 12px 0;
+          font-size: 1rem;
+          color: #495057;
+          outline: none;
+        }
+
+        .search-box input::placeholder {
+          color: #adb5bd;
+        }
+
+        .clear-button {
+          background: none;
+          border: none;
+          color: #6c757d;
+          cursor: pointer;
+          font-size: 1.2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          margin-left: 10px;
+          transition: color 0.2s;
+        }
+
+        .clear-button:hover {
+          color: #343a40;
+        }
+
+        @media (max-width: 768px) {
+          .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          
+          .page-title {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          .search-box {
+            width: 100%;
+          }
         }
 
         .table {
-          background-color: #fff;
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           width: 100%;
-          table-layout: fixed;
-        }
-
-        .table th,
-        .table td {
-          padding: 14px;
-          vertical-align: middle;
-          min-height: 60px;
+          border-collapse: separate;
+          border-spacing: 0;
+          margin-bottom: 1.5rem;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          background-color: #ffffff;
         }
 
         .table th {
+          background-color: #4a6cf7;
+          color: white;
           font-weight: 600;
-          color: #1f2937;
-          background: #f9fafb;
-          position: sticky;
-          top: 0;
-          z-index: 1;
+          text-align: left;
+          padding: 14px 18px;
+          font-size: 14px;
         }
 
         .table td {
-          color: #374151;
+          padding: 14px 18px;
+          border-top: 1px solid #edf2f7;
+          vertical-align: middle;
+          color: #2d3748;
         }
 
         .table tr:hover {
-          background-color: #f1f5f9;
+          background-color: #f8fafc;
         }
 
         .email-column {
@@ -1016,23 +1203,117 @@ const UsersTable = () => {
 
         .btn-group {
           display: flex;
-          gap: 6px;
+          gap: 8px;
           flex-wrap: wrap;
         }
 
         .btn-group .btn {
-          padding: 6px 10px;
-          border-radius: 6px;
+          border-radius: 8px;
           font-size: 0.85rem;
           transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          padding: 0;
+          border: none;
+        }
+
+        .btn-outline-primary {
+          background-color: #eef2ff;
+          color: #4f46e5;
+          border: none;
+        }
+
+        .btn-outline-primary:hover {
+          background-color: #4f46e5;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-outline-warning {
+          background-color: #fff7ed;
+          color: #f59e0b;
+          border: none;
+        }
+
+        .btn-outline-warning:hover {
+          background-color: #f59e0b;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-outline-danger {
+          background-color: #fee2e2;
+          color: #ef4444;
+          border: none;
+        }
+
+        .btn-outline-danger:hover {
+          background-color: #ef4444;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-outline-info {
+          background-color: #dbeafe;
+          color: #3b82f6;
+          border: none;
+        }
+
+        .btn-outline-info:hover {
+          background-color: #3b82f6;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-outline-secondary {
+          background-color: #f3f4f6;
+          color: #6b7280;
+          border: none;
+        }
+
+        .btn-outline-secondary:hover {
+          background-color: #6b7280;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+        }
+
+        .btn-outline-success {
+          background-color: #d1fae5;
+          color: #10b981;
+          border: none;
+        }
+
+        .btn-outline-success:hover {
+          background-color: #10b981;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
         }
 
         .badge {
           font-size: 0.8rem;
-          padding: 0.4em 0.8em;
-          border-radius: 12px;
-          min-width: 70px;
+          padding: 0.5em 1em;
+          border-radius: 20px;
+          min-width: 80px;
           text-align: center;
+          font-weight: 500;
+          letter-spacing: 0.3px;
+        }
+
+        .bg-success {
+          background-color: #10b981 !important;
+        }
+
+        .bg-danger {
+          background-color: #ef4444 !important;
         }
 
         .loading-overlay {
@@ -1076,62 +1357,61 @@ const UsersTable = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          margin-top: 20px;
+          margin-top: 24px;
           gap: 10px;
         }
 
         .pagination-button {
-          padding: 8px 16px;
-          background-color: #007bff;
+          padding: 10px 18px;
+          background-color: #4a6cf7;
           color: white;
           border: none;
-          border-radius: 5px;
+          border-radius: 8px;
           cursor: pointer;
           font-size: 14px;
-          transition: background-color 0.2s;
+          font-weight: 500;
+          transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(74, 108, 247, 0.2);
         }
 
         .pagination-button:hover:not(:disabled) {
-          background-color: #0056b3;
+          background-color: #3a5bd9;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(74, 108, 247, 0.3);
         }
 
         .pagination-button:disabled {
-          background-color: #6c757d;
+          background-color: #a5b4fc;
           cursor: not-allowed;
         }
 
         .pagination-pages {
           display: flex;
-          gap: 5px;
+          gap: 6px;
         }
 
         .pagination-page {
-          padding: 8px 12px;
-          background-color: #f8f9fa;
-          color: #343a40;
-          border: 1px solid #e4e6eb;
-          border-radius: 5px;
+          padding: 8px 14px;
+          background-color: #f8fafc;
+          color: #4a5568;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
           cursor: pointer;
           font-size: 14px;
+          font-weight: 500;
           transition: all 0.2s;
         }
 
         .pagination-page:hover:not(.ellipsis):not(.active) {
-          background-color: #e4e6eb;
+          background-color: #edf2f7;
+          transform: translateY(-2px);
         }
 
         .pagination-page.active {
-          background-color: #007bff;
+          background-color: #4a6cf7;
           color: white;
-          border-color: #007bff;
-        }
-
-        .pagination-page.ellipsis {
-          background-color: transparent;
-          border: none;
-          cursor: default;
-          display: flex;
-          align-items: center;
+          border-color: #4a6cf7;
+          box-shadow: 0 2px 4px rgba(74, 108, 247, 0.2);
         }
 
         .form-control {
@@ -1355,6 +1635,64 @@ const UsersTable = () => {
         .btn-secondary:hover {
           background-color: #4b5563;
           border-color: #4b5563;
+        }
+
+        .btn-danger {
+          background-color: var(--danger, #ef4444);
+          color: white;
+        }
+
+        .btn-danger:hover {
+          background-color: #dc2626;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-info {
+          background-color: var(--info, #3b82f6);
+          color: white;
+        }
+
+        .btn-info:hover {
+          background-color: #2563eb;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-sm {
+          padding: 6px 12px;
+          font-size: 12px;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 8px;
+          justify-content: flex-end;
+        }
+
+        .search-container {
+          margin-bottom: 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .search-input {
+          flex: 1;
+          max-width: 300px;
+          padding: 10px 12px;
+          border: 1px solid var(--border-color, #e5e7eb);
+          border-radius: 6px;
+          font-size: 14px;
+          background-color: var(--content-bg, #ffffff);
+          color: var(--text-color, #1f2937);
+          transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+          outline: none;
+          border-color: var(--primary-color, #3b82f6);
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         @media (min-width: 768px) {
