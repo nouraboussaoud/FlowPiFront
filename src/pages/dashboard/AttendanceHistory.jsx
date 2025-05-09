@@ -328,7 +328,7 @@ const AttendanceHistory = () => {
                     className={`page-item ${currentPage === i ? 'active' : ''}`}
                   >
                     <button 
-                     className={`page-link px-4 ${currentPage === i ? 'bg-dark text-white' : 'bg-light text-dark border-light'}`}
+                     className={`page-link px-4 ${currentPage === i ? 'bg-light text-dark' : 'bg-light text-dark border-light'}`}
                       onClick={() => setCurrentPage(i)}
                     >
                       {i + 1}
