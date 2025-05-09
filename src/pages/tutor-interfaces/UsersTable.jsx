@@ -80,7 +80,7 @@ const UsersTable = () => {
     if (!profilePic) return PLACEHOLDER_IMAGE;
     return profilePic.startsWith("http")
       ? profilePic
-      : `http://localhost:5000/uploads/${profilePic}`;
+      : `http://localhost:5000/uploads/profiles/${profilePic}`;
   };
 
   useEffect(() => {
@@ -1077,11 +1077,11 @@ const UsersTable = () => {
         .search-box {
           display: flex;
           align-items: center;
-          background-color: #f8f9fa;
+          background-color: #ffffff;
           border-radius: 50px;
           padding: 0 20px;
           width: 350px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
           transition: all 0.3s ease;
         }
 
