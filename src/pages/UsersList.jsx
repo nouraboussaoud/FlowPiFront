@@ -310,7 +310,7 @@ const UsersList = () => {
                                     user.profilePic
                                       ? user.profilePic.startsWith("http")
                                         ? user.profilePic
-                                        : `http://localhost:5000/uploads/${user.profilePic}`
+                                        : `http://localhost:5000/uploads/profiles/${user.profilePic}`
                                       : DEFAULT_PROFILE_PIC
                                   }
                                   alt={user.name}
@@ -435,7 +435,7 @@ const UsersList = () => {
                                       user.profilePic
                                         ? user.profilePic.startsWith("http")
                                           ? user.profilePic
-                                          : `http://localhost:5000/uploads/${user.profilePic}`
+                                          : `http://localhost:5000/uploads/profiles/${user.profilePic}`
                                         : DEFAULT_PROFILE_PIC
                                     }
                                     className="rounded-circle"
@@ -547,7 +547,7 @@ const UsersList = () => {
                       selectedUser.profilePic
                         ? selectedUser.profilePic.startsWith("http")
                           ? selectedUser.profilePic
-                          : `http://localhost:5000/uploads/${selectedUser.profilePic}`
+                          : `http://localhost:5000/uploads/profiles/${selectedUser.profilePic}`
                         : DEFAULT_PROFILE_PIC
                     }
                     className="rounded-circle me-3"

@@ -94,7 +94,7 @@ const AdminTaskDashboard = () => {
     if (!profilePic) return "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
     return profilePic.startsWith("http")
       ? profilePic
-      : `http://localhost:5000/uploads/${profilePic}`;
+      : `http://localhost:5000/uploads/profiles/${profilePic}`;
   };
 
   const getStatusColor = (status) => {

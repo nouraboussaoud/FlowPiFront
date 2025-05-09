@@ -16,6 +16,7 @@ const LayoutTutorss = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeDropdown, setActiveDropdown] = useState(null);
+  
 
   // User state
   const [user, setUser] = useState(null);
@@ -23,7 +24,8 @@ const LayoutTutorss = ({ children }) => {
   const [imgKey, setImgKey] = useState(Date.now());
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState("");
-
+  const pro = localStorage.getItem("profilePic");
+  const photo = `http://localhost:5000/uploads/profiles/${pro}`
   // UI state
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
@@ -78,13 +80,14 @@ const LayoutTutorss = ({ children }) => {
         if (userData.profilePic && userData.profilePic.trim() !== "") {
           newProfilePic = userData.profilePic.startsWith("http")
             ? userData.profilePic
-            : `http://localhost:5000/uploads/${userData.profilePic}`;
+            : `http://localhost:5000/uploads/profiles/${userData.profilePic}`;
         } else {
           const storedProfilePic = localStorage.getItem("profilePic");
+          console.log("test", storedProfilePic );
           if (storedProfilePic) {
             newProfilePic = storedProfilePic.startsWith("http")
               ? storedProfilePic
-              : `http://localhost:5000/uploads/${storedProfilePic}`;
+              : `http://localhost:5000/uploads/profiles/${storedProfilePic}`;
           }
         }
         setProfilePic(newProfilePic);
@@ -574,7 +577,7 @@ const LayoutTutorss = ({ children }) => {
                   >
                     <img
                       key={imgKey}
-                      src={profilePic}
+                      src={photo}
                       alt="Profile"
                       className="profile-image"
                       style={{ width: "40px", height: "40px", borderRadius: "50%" }}
