@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import LayoutStudent from './dashboard/LayoutStudent';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Contact from "../student-interfaces/Contact";
+import Chatbox from "./tutor-interfaces/chatbox/ChatBox";
 
 const ProjectManager = () => {
   const [projects, setProjects] = useState([]);
@@ -16,6 +20,11 @@ const ProjectManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
+  const [tutors, setTutors] = useState([]);
+  const [selectedTutor, setSelectedTutor] = useState(null);
+  const [showContactList, setShowContactList] = useState(false);
+  const [showChatBubble, setShowChatBubble] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const styles = {
     container: {
@@ -79,10 +88,10 @@ const ProjectManager = () => {
       transition: "all 0.2s",
       borderLeft: "4px solid #3b82f6",
       marginBottom: "1rem",
-      '&:hover': {
-        transform: "translateY(-2px)",
-        boxShadow: "0 10px 15px rgba(0, 0, 0, 0.1)"
-      }
+    },
+    taskCardHover: {
+      transform: "translateY(-2px)",
+      boxShadow: "0 10px 15px rgba(0, 0, 0, 0.1)"
     },
     taskTitle: {
       color: "#1f2937",
@@ -148,7 +157,6 @@ const ProjectManager = () => {
       justifyContent: "center",
       zIndex: 1000,
     },
-    
     modalContent: {
       background: "white",
       padding: "2rem",
@@ -254,7 +262,86 @@ const ProjectManager = () => {
       flexWrap: "wrap",
       gap: "0.5rem",
       marginTop: "0.5rem"
-    }
+    },
+    chatBubbleContainer: {
+      position: "fixed",
+      bottom: "30px",
+      right: "30px",
+      zIndex: "1000",
+    },
+    chatBubble: {
+      width: "60px",
+      height: "60px",
+      backgroundColor: "#007bff",
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "white",
+      fontSize: "24px",
+      cursor: "pointer",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+      transition: "all 0.3s ease",
+      position: "relative",
+    },
+    chatBubbleHover: {
+      transform: "translateY(-5px)",
+      boxShadow: "0 6px 12px rgba(0, 0, 0, 0.3)",
+    },
+    chatBubbleActive: {
+      backgroundColor: "#0056b3",
+    },
+    badge: {
+      position: "absolute",
+      top: "-5px",
+      right: "-5px",
+      backgroundColor: "#ff4136",
+      color: "white",
+      borderRadius: "50%",
+      width: "22px",
+      height: "22px",
+      fontSize: "12px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    contactListPanel: {
+      position: "absolute",
+      bottom: "75px",
+      right: "0",
+      width: "300px",
+      maxHeight: "400px",
+      backgroundColor: "white",
+      borderRadius: "10px",
+      boxShadow: "0 5px 15px rgba(0, 0, 0, 0.2)",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+    },
+    panelHeader: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "12px 16px",
+      borderBottom: "1px solid #e4e6eb",
+    },
+    panelHeaderTitle: {
+      margin: "0",
+      fontSize: "16px",
+      fontWeight: "600",
+    },
+    closeBtn: {
+      background: "none",
+      border: "none",
+      fontSize: "20px",
+      cursor: "pointer",
+      color: "#65676b",
+    },
+    panelBody: {
+      padding: "12px",
+      overflowY: "auto",
+      flex: "1",
+    },
   };
 
   const fetchData = async () => {
@@ -263,7 +350,7 @@ const ProjectManager = () => {
     const token = localStorage.getItem("token");
 
     try {
-      // 1. Fetch user's groups
+      // Fetch user's groups
       const groupsResponse = await axios.get(
         "http://localhost:5000/api/groups/my-groups",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -271,7 +358,7 @@ const ProjectManager = () => {
       setUserGroups(groupsResponse.data);
       const userGroupIds = groupsResponse.data.map(group => group._id);
 
-      // 2. Fetch only projects associated with the user's groups
+      // Fetch projects associated with the user's groups
       const projectsRes = await axios.get(
         "http://localhost:5000/api/projects/projects",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -282,7 +369,7 @@ const ProjectManager = () => {
       );
       setProjects(filteredProjects);
 
-      // 3. Fetch available groups for creation
+      // Fetch available groups for creation
       const groupsRes = await axios.get(
         "http://localhost:5000/api/groups/dropdown",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -305,16 +392,62 @@ const ProjectManager = () => {
 
       setGroups(groupsWithUsage);
 
+      // Fetch tutors
+      const tutorsRes = await axios.get(
+        "http://localhost:5000/api/users/getAll",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const tutors = tutorsRes.data.filter(user => user.role === "tutor");
+      setTutors(tutors);
+
     } catch (error) {
       setError("Error fetching data: " + error.message);
       console.error(error);
+      toast.error("Error fetching data", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const fetchUnreadMessagesCount = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await axios.get(
+        "http://localhost:5000/api/messages/unread",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUnreadMessages(response.data?.count || 0);
+    } catch (error) {
+      console.error("Error fetching unread messages:", error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchUnreadMessagesCount();
+
+    // Set up message polling interval
+    const messageInterval = setInterval(fetchUnreadMessagesCount, 30000);
+
+    return () => {
+      clearInterval(messageInterval);
+    };
+  }, []);
+
+  // Handle escape key to close contact list or chatbox
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setShowContactList(false);
+        setSelectedTutor(null);
+        setShowChatBubble(true);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
   const handleInputChange = (e) => {
@@ -330,6 +463,10 @@ const ProjectManager = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("No token found. Please login.");
+      toast.error("No token found. Please login.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -352,8 +489,17 @@ const ProjectManager = () => {
       await fetchData();
       setShowModal(false);
       setError(null);
+      toast.success("Project created successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
-      setError(error.message || "Error creating project");
+      const errorMessage = error.message || "Error creating project";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -365,6 +511,10 @@ const ProjectManager = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("No token found. Please login.");
+      toast.error("No token found. Please login.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -387,8 +537,17 @@ const ProjectManager = () => {
       await fetchData();
       setShowModal(false);
       setError(null);
+      toast.success("Project updated successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
-      setError(error.response?.data?.message || "Error updating project");
+      const errorMessage = error.response?.data?.message || "Error updating project";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -399,6 +558,10 @@ const ProjectManager = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("No token found. Please login.");
+      toast.error("No token found. Please login.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -419,8 +582,17 @@ const ProjectManager = () => {
       );
       
       setProjects(projects.filter(p => p._id !== projectId));
+      toast.success("Project deleted successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
-      setError(error.message || "Error deleting project");
+      const errorMessage = error.message || "Error deleting project";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -448,10 +620,62 @@ const ProjectManager = () => {
     setEditMode(false);
   };
 
+  const toggleContactList = () => {
+    setShowContactList(true);
+    setShowChatBubble(false);
+  };
+
+  const closeContactList = () => {
+    setShowContactList(false);
+    setShowChatBubble(!selectedTutor);
+  };
+
+  const handleSelectTutor = (tutor) => {
+    setSelectedTutor(tutor);
+    setShowContactList(false);
+    setShowChatBubble(false);
+    setUnreadMessages(prev => Math.max(0, prev - 1));
+  };
+
+  const handleCloseChatbox = () => {
+    setSelectedTutor(null);
+    setShowChatBubble(true);
+  };
+
   return (
     <LayoutStudent>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div style={styles.container}>
-     
+        <div style={styles.header}>
+          <h1 style={styles.title}>Project Manager</h1>
+          {groups.length > 0 && (
+            <button 
+              style={{
+                ...styles.button,
+                ...styles.buttonPrimary,
+                ':hover': styles.buttonPrimaryHover
+              }}
+              onClick={() => {
+                resetForm();
+                setShowModal(true);
+              }}
+            >
+              Create Project
+            </button>
+          )}
+        </div>
+        
         {error && (
           <div style={styles.errorMessage}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#ef4444">
@@ -472,7 +696,7 @@ const ProjectManager = () => {
                   style={styles.closeButton}
                   onClick={() => setShowModal(false)}
                 >
-                  &times;
+                  ×
                 </button>
               </div>
               <form onSubmit={editMode ? updateProject : createProject}>
@@ -561,7 +785,7 @@ const ProjectManager = () => {
 
         {isLoading ? (
           <div style={styles.emptyState}>
-            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#9ca3af" style={{ margin: '0 auto 1rem' }}>
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#9 talep3af" style={{ margin: '0 auto 1rem' }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p>Loading projects...</p>
@@ -659,6 +883,37 @@ const ProjectManager = () => {
               </button>
             )}
           </div>
+        )}
+
+        <div style={styles.chatBubbleContainer}>
+          {showChatBubble && !selectedTutor && (
+            <div
+              style={{
+                ...styles.chatBubble,
+                ...(showContactList ? styles.chatBubbleActive : {}),
+              }}
+              onClick={toggleContactList}
+            >
+              <i className="fas fa-comments"></i>
+              {unreadMessages > 0 && <span style={styles.badge}>{unreadMessages}</span>}
+            </div>
+          )}
+
+          {showContactList && (
+            <div style={styles.contactListPanel}>
+              <div style={styles.panelHeader}>
+                <h3 style={styles.panelHeaderTitle}>Contacts</h3>
+                <button style={styles.closeBtn} onClick={closeContactList}>×</button>
+              </div>
+              <div style={styles.panelBody}>
+                <Contact tutors={tutors} onSelectTutor={handleSelectTutor} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {selectedTutor && (
+          <Chatbox user={selectedTutor} onClose={handleCloseChatbox} />
         )}
       </div>
     </LayoutStudent>

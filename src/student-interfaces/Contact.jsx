@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { get, put } from "../apiHelper";
 import io from "socket.io-client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch, faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import "./contact.css";
 
 function ContactList({ tutors, onSelectTutor }) {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const socketRef = useRef(null);
-  const audioRef = useRef(new Audio("/notifications.mp3"));
+  const audioRef = useRef(null);
+  const audioInitialized = useRef(false);
+  const processedMessages = useRef(new Set()); // Track processed message IDs
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -21,23 +25,23 @@ function ContactList({ tutors, onSelectTutor }) {
       transports: ["websocket", "polling"],
     });
 
-    // Log socket connection
     socketRef.current.on("connect", () => {
       console.log("📡 ContactList socket connected:", socketRef.current.id);
       socketRef.current.emit("join_room", userId);
     });
 
-    // Log any socket errors
     socketRef.current.on("connect_error", (err) => {
       console.error("❌ ContactList socket connection error:", err.message);
     });
 
-    // Listen for new messages
     socketRef.current.on("new_message", (message) => {
       console.log("📨 New message received in ContactList:", message);
 
-      if (message.receiver._id === userId) {
-        // Play notification sound
+      if (
+        message.receiver._id === userId &&
+        !processedMessages.current.has(message._id)
+      ) {
+        processedMessages.current.add(message._id);
         playNotificationSound();
         
         setUnreadCounts((prev) => ({
@@ -47,7 +51,6 @@ function ContactList({ tutors, onSelectTutor }) {
       }
     });
 
-    // Listen for read events
     socketRef.current.on("message_read", ({ messageId }) => {
       console.log("✅ Message read:", messageId);
     });
@@ -57,28 +60,58 @@ function ContactList({ tutors, onSelectTutor }) {
       fetchUnreadCounts();
     });
 
-    // Initial fetch
     fetchUnreadCounts();
-    
 
-    // Cleanup
     return () => {
       socketRef.current.disconnect();
     };
   }, []);
 
-  // Function to play notification sound
+  const initializeAudio = () => {
+    if (!audioInitialized.current) {
+      try {
+        audioRef.current = new Audio("/notifications.mp3");
+        audioRef.current.preload = "auto";
+        audioRef.current.oncanplaythrough = () => {
+          console.log("🎵 Notification sound loaded successfully");
+        };
+        audioRef.current.onerror = () => {
+          console.error("❌ Failed to load notification sound at /notifications.mp3");
+        };
+        audioInitialized.current = true;
+      } catch (error) {
+        console.error("❌ Error initializing audio:", error);
+      }
+    }
+  };
+
   const playNotificationSound = () => {
-    try {
-      // Reset the audio to the beginning
-      audioRef.current.currentTime = 0;
-      
-      // Play the notification sound
-      audioRef.current.play().catch(error => {
-        console.warn("Could not play notification sound:", error);
-      });
-    } catch (error) {
-      console.error("Error playing notification sound:", error);
+    if (!audioRef.current) {
+      console.warn("🎵 Audio not initialized, initializing now...");
+      initializeAudio();
+    }
+
+    if (audioRef.current) {
+      try {
+        if (!audioRef.current.paused) {
+          audioRef.current.pause();
+        }
+        audioRef.current.currentTime = 0;
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            if (error.name === "NotAllowedError") {
+              console.warn("🎵 Autoplay blocked. Sound will play after user interaction.");
+            } else {
+              console.error("❌ Error playing notification sound:", error);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error in playNotificationSound:", error);
+      }
+    } else {
+      console.warn("🎵 Audio file not available");
     }
   };
 
@@ -93,6 +126,7 @@ function ContactList({ tutors, onSelectTutor }) {
   };
 
   const handleSelectTutor = (tutor) => {
+    initializeAudio(); // Initialize audio on user interaction
     onSelectTutor(tutor);
 
     setUnreadCounts((prev) => ({
@@ -107,7 +141,6 @@ function ContactList({ tutors, onSelectTutor }) {
     }
   };
 
-  // Format profile picture URL
   const getProfilePicUrl = (profilePic) => {
     if (!profilePic) {
       return "https://via.placeholder.com/40";
@@ -117,7 +150,6 @@ function ContactList({ tutors, onSelectTutor }) {
       : `http://localhost:5000/uploads/${profilePic}`;
   };
 
-  // Log tutors for debugging
   useEffect(() => {
     console.log("📋 Tutors received:", tutors);
     tutors.forEach((tutor) => {
@@ -129,51 +161,64 @@ function ContactList({ tutors, onSelectTutor }) {
     tutor.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Check if any tutor has unread messages (for scrollbar control)
   const hasUnreadMessages = Object.values(unreadCounts).some(count => count > 0);
 
   return (
-    <div className="contact-list-container">
-      <h4 className="contact-list-title">Your Contacts</h4>
-
-      <div className="input-group mb-3">
-        <input
-          type="text"
-          className="form-control contact-search"
-          placeholder="Search tutors..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+    <div className="contact-sidebar">
+      <div className="contact-header">
+        <h4 className="contact-title">Your Contacts</h4>
+        
+        <div className="search-container">
+          <FontAwesomeIcon icon={faSearch} className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search contacts..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
-      <ul className={`list-group contact-list ${hasUnreadMessages ? 'no-scroll' : ''}`}>
-        {filteredTutors.map((tutor) => (
-          <li
-            key={tutor._id}
-            className="list-group-item contact-item d-flex justify-content-between align-items-center"
-            onClick={() => handleSelectTutor(tutor)}
-          >
-            <div className="d-flex align-items-center">
-              <img
-                src={getProfilePicUrl(tutor.profilePic)}
-                alt={tutor.name}
-                className="contact-avatar rounded-circle me-2"
-                onError={(e) => {
-                  console.warn(`Failed to load image for ${tutor.name}: ${tutor.profilePic}`);
-                  e.target.src = "https://via.placeholder.com/40";
-                }}
-              />
-              <span className="contact-name">{tutor.name}</span>
-            </div>
-
-            {unreadCounts[tutor._id] > 0 && (
-              <span className="contact-badge badge rounded-pill">
-                {unreadCounts[tutor._id]}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
+      <div className={`contact-scroll-area ${hasUnreadMessages ? 'has-unread' : ''}`}>
+        {filteredTutors.length > 0 ? (
+          <ul className="contact-list">
+            {filteredTutors.map((tutor) => (
+              <li
+                key={tutor._id}
+                className={`contact-item ${unreadCounts[tutor._id] > 0 ? 'has-unread' : ''}`}
+                onClick={() => handleSelectTutor(tutor)}
+              >
+                <div className="contact-avatar-container">
+                  <img
+                    src={getProfilePicUrl(tutor.profilePic)}
+                    alt={tutor.name}
+                    className="contact-avatar"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/40";
+                    }}
+                  />
+                  {unreadCounts[tutor._id] > 0 && (
+                    <span className="unread-indicator">{unreadCounts[tutor._id]}</span>
+                  )}
+                </div>
+                <div className="contact-info">
+                  <span className="contact-name">{tutor.name}</span>
+                  {unreadCounts[tutor._id] > 0 && (
+                    <span className="unread-text">New messages</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="empty-contacts">
+            <FontAwesomeIcon icon={faUserCircle} size="3x" />
+            <p>No contacts found</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

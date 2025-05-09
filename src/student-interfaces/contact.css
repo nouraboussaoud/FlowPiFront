@@ -1,137 +1,158 @@
-.contact-list-container {
-  background-color: #ffffff;
-  padding: 18px; /* Increased from 15px */
-  border-radius: 10px; /* Increased from 8px */
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow */
-  max-width: 360px; /* Increased from 300px */
-  margin: 0 auto;
+/* Contact sidebar styling */
+.contact-sidebar {
+  background-color: var(--content-bg, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px var(--shadow-color, rgba(0, 0, 0, 0.05));
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color, #e5e7eb);
 }
 
-.contact-list-title {
-  font-size: 1.4rem; /* Increased from 1.25rem */
+.contact-header {
+  margin-bottom: 1.5rem;
+}
+
+.contact-title {
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 12px; /* Reduced from 15px to tighten spacing */
+  color: var(--text-color, #1f2937);
+  margin-bottom: 1rem;
 }
 
-.contact-search {
-  border-radius: 24px !important; /* Increased from 20px */
-  border: 1px solid #ced4da;
-  padding: 10px 18px; /* Increased from 8px 15px */
-  font-size: 1rem; /* Increased from 0.9rem */
-  transition: border-color 0.2s, box-shadow 0.2s;
+/* Search styling */
+.search-container {
+  position: relative;
+  margin-bottom: 1rem;
 }
 
-.contact-search:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3); /* Slightly larger shadow */
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light, #6b7280);
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background-color: var(--bg-color, #f9fafb);
+}
+
+.search-input:focus {
   outline: none;
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Contact list styling */
+.contact-scroll-area {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .contact-list {
   list-style: none;
   padding: 0;
-  max-height: 360px; /* Increased from 300px to fit more content */
-  overflow-y: auto;
-}
-
-.contact-list.no-scroll {
-  overflow-y: hidden; /* Hide scrollbar when badges are present */
+  margin: 0;
 }
 
 .contact-item {
-  padding: 12px 18px; /* Increased from 10px 15px */
-  border: none;
-  border-bottom: 1px solid #f1f1f1;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 56px; /* Increased from 50px to accommodate larger elements */
+  margin-bottom: 0.5rem;
 }
 
 .contact-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--bg-color, #f9fafb);
+}
+
+.contact-item.has-unread {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.contact-avatar-container {
+  position: relative;
+  margin-right: 1rem;
 }
 
 .contact-avatar {
-  width: 48px; /* Increased from 40px */
+  width: 48px;
   height: 48px;
+  border-radius: 50%;
   object-fit: cover;
+  border: 2px solid var(--border-color, #e5e7eb);
+}
+
+.unread-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--primary-color, #3b82f6);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.contact-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .contact-name {
-  font-size: 1.05rem; /* Increased from 0.95rem */
-  color: #333;
   font-weight: 500;
-  flex-grow: 1;
+  color: var(--text-color, #1f2937);
 }
 
-.contact-badge {
-  background-color: #dc3545;
-  color: #fff;
-  font-size: 0.9rem; /* Increased from 0.8rem */
-  font-weight: 600;
-  padding: 5px 10px; /* Increased from 4px 8px */
-  min-width: 26px; /* Increased from 22px */
-  height: 26px; /* Increased from 22px */
-  line-height: 16px; /* Adjusted from 14px for vertical centering */
+.unread-text {
+  font-size: 0.75rem;
+  color: var(--primary-color, #3b82f6);
+  margin-top: 0.25rem;
+}
+
+/* Empty state */
+.empty-contacts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-light, #6b7280);
   text-align: center;
-  border-radius: 13px; /* Increased from 11px */
-  margin-left: 12px; /* Increased from 10px */
-  flex-shrink: 0;
+  padding: 2rem;
 }
 
-/* Scrollbar styling for contact list */
-.contact-list::-webkit-scrollbar {
-  width: 8px; /* Increased from 6px for better visibility when present */
+.empty-contacts svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
 }
 
-.contact-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
+/* Dark mode compatibility */
+[data-theme="dark"] .contact-sidebar {
+  background-color: var(--content-bg, #1f2937);
 }
 
-.contact-list::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px; /* Increased from 3px */
+[data-theme="dark"] .search-input {
+  background-color: var(--bg-color, #111827);
 }
 
-.contact-list::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .contact-list-container {
-    max-width: 100%;
-    padding: 12px; /* Adjusted from 10px */
-  }
-
-  .contact-list-title {
-    font-size: 1.25rem; /* Adjusted from 1.1rem */
-  }
-
-  .contact-item {
-    padding: 10px 14px; /* Adjusted from 8px 12px */
-    min-height: 50px; /* Adjusted from 45px */
-  }
-
-  .contact-avatar {
-    width: 42px; /* Adjusted from 35px */
-    height: 42px;
-  }
-
-  .contact-name {
-    font-size: 0.95rem; /* Adjusted from 0.9rem */
-  }
-
-  .contact-badge {
-    font-size: 0.8rem; /* Adjusted from 0.75rem */
-    padding: 4px 8px; /* Adjusted from 3px 7px */
-    min-width: 22px; /* Adjusted from 20px */
-    height: 22px; /* Adjusted from 20px */
-    line-height: 14px; /* Adjusted for centering */
-    margin-left: 10px; /* Adjusted from 8px */
-  }
+[data-theme="dark"] .contact-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }

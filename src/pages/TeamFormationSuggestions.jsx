@@ -15,6 +15,7 @@ const TeamFormationSuggestions = () => {
     maxTeamSize: 4
   });
 
+  
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
