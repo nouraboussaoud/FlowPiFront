@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaCheck } from 'react-icons/fa'; // Icône de croix et de coche
-import { toast, ToastContainer } from 'react-toastify'; // Pour afficher des toasts
-import 'react-toastify/dist/ReactToastify.css'; // Importer le style de Toastify
+import { FaTimes, FaCheck } from 'react-icons/fa';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import LayoutStudent from './dashboard/LayoutStudent';
+import Contact from "../student-interfaces/Contact";
+import Chatbox from "./tutor-interfaces/chatbox/ChatBox";
+import { get } from "../apiHelper";
 
 const GroupList = () => {
-  const [userGroups, setUserGroups] = useState([]); // Groupes disponibles pour l'utilisateur connecté
-  const [currentUser, setCurrentUser] = useState(null); // Utilisateur connecté
-  const [error, setError] = useState(''); // Pour gérer les erreurs
-  const [loading, setLoading] = useState(true); // Pour gérer le chargement
-  const [acceptedGroups, setAcceptedGroups] = useState([]); // Suivi des groupes acceptés par l'utilisateur
+  const [userGroups, setUserGroups] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [acceptedGroups, setAcceptedGroups] = useState([]);
+  const [tutors, setTutors] = useState([]);
+  const [selectedTutor, setSelectedTutor] = useState(null);
+  const [showContactList, setShowContactList] = useState(false);
+  const [showChatBubble, setShowChatBubble] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
-  // Fonction pour récupérer les groupes de l'utilisateur connecté
+  // Fetch user groups
   const fetchUserGroups = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -21,103 +29,183 @@ const GroupList = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/groups/my-groups', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const data = await get('/groups/my-groups', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) throw new Error('Failed to fetch user groups');
-
-      const data = await response.json(); // Récupérer les groupes de l'utilisateur
-      setUserGroups(data); // Sauvegarder les groupes dans l'état
+      setUserGroups(data || []);
     } catch (error) {
       setError(error.message);
       console.error('Error fetching user groups:', error);
+      toast.error('Error fetching groups', {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } finally {
-      setLoading(false); // Fin du chargement
+      setLoading(false);
     }
   };
 
-  const handleAcceptInvitation = async (groupId) => {
+  // Fetch unread messages count
+  const fetchUnreadMessagesCount = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/groups/${groupId}/accept-invitation`, {
+      const data = await get("/messages/unread");
+      setUnreadMessages(data?.count || 0);
+    } catch (error) {
+      console.error("Error fetching unread messages:", error);
+    }
+  };
+
+  // Handle accepting an invitation
+  const handleAcceptInvitation = async (groupId) => {
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`http://localhost:5000/api/groups/${groupId}/accept-invitation`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-  
-      if (!response.ok) throw new Error('Failed to accept invitation');
-      
-      // Supprime immédiatement le groupe de la liste
       setUserGroups(prev => prev.filter(g => g._id !== groupId));
-      toast.success('Invitation accepted!');
+      setAcceptedGroups(prev => [...prev, groupId]);
+      localStorage.setItem('acceptedGroups', JSON.stringify([...acceptedGroups, groupId]));
+      toast.success('Invitation accepted!', {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
-  // Fonction pour gérer le rejet de l'invitation
+  // Handle rejecting an invitation
   const handleRejectInvitation = async (groupId) => {
     if (window.confirm('Are you sure you want to reject this invitation?')) {
       const token = localStorage.getItem('token');
-
       try {
-        const response = await fetch(`http://localhost:5000/api/groups/${groupId}/reject-invitation`, {
+        await fetch(`http://localhost:5000/api/groups/${groupId}/reject-invitation`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-
-        if (!response.ok) throw new Error('Failed to reject invitation.');
-
-        // Mettre à jour l'état local en filtrant le groupe rejeté
-        setUserGroups((prevGroups) => prevGroups.filter((group) => group._id !== groupId));
-
-        toast.success('Invitation rejected successfully');
-
+        setUserGroups(prev => prev.filter(g => g._id !== groupId));
+        toast.success('Invitation rejected successfully', {
+          position: "top-right",
+          autoClose: 3000,
+        });
       } catch (error) {
-        setError(error.message);
-        console.error('Error rejecting invitation:', error);
-        toast.error('Error rejecting invitation');
+        toast.error('Error rejecting invitation', {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     }
   };
 
+  // Toggle contact list
+  const toggleContactList = () => {
+    setShowContactList(true);
+    setShowChatBubble(false);
+  };
+
+  // Close contact list
+  const closeContactList = () => {
+    setShowContactList(false);
+    setShowChatBubble(!selectedTutor);
+  };
+
+  // Select tutor
+  const handleSelectTutor = (tutor) => {
+    setSelectedTutor(tutor);
+    setShowContactList(false);
+    setShowChatBubble(false);
+    setUnreadMessages(prev => Math.max(0, prev - 1));
+  };
+
+  // Close chatbox
+  const handleCloseChatbox = () => {
+    setSelectedTutor(null);
+    setShowChatBubble(true);
+  };
+
+  // useEffect for initial setup
   useEffect(() => {
-    // Récupérer l'utilisateur connecté
     const token = localStorage.getItem('token');
     if (token) {
       const fetchCurrentUser = async () => {
-        const response = await fetch('http://localhost:5000/api/users/current', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        const userData = await response.json();
-        setCurrentUser(userData);
+        try {
+          const userData = await get('/users/current', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setCurrentUser(userData);
+        } catch (error) {
+          console.error('Error fetching current user:', error);
+        }
       };
       fetchCurrentUser();
     }
 
-    // Charger les groupes acceptés depuis le localStorage
     const storedAcceptedGroups = JSON.parse(localStorage.getItem('acceptedGroups')) || [];
     setAcceptedGroups(storedAcceptedGroups);
 
+    // Fetch tutors
+    get("/users/getAll")
+      .then((data) => {
+        const tutors = data.filter((user) => user.role === "tutor");
+        setTutors(tutors);
+      })
+      .catch((error) => {
+        console.error("Error fetching tutors:", error);
+        toast.error("Error fetching tutors", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      });
+
     fetchUserGroups();
+    fetchUnreadMessagesCount();
+
+    // Set up message polling interval
+    const messageInterval = setInterval(fetchUnreadMessagesCount, 30000);
+
+    return () => {
+      clearInterval(messageInterval);
+    };
+  }, []);
+
+  // Handle escape key to close contact list or chatbox
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setShowContactList(false);
+        setSelectedTutor(null);
+        setShowChatBubble(true);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
   return (
     <LayoutStudent>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div className="container mt-5">
         <div>
           <p style={styles.title}>Invitation List for Groups</p>
-
-          {/* Ajoutez ici le reste de votre contenu */}
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
 
@@ -129,7 +217,7 @@ const GroupList = () => {
             <p>Loading your groups...</p>
           </div>
         ) : userGroups.length === 0 ? (
-          <div className="alert alert-info text-center">  You haven't received any invitations yet</div>
+          <div className="alert alert-info text-center">You haven't received any invitations yet</div>
         ) : (
           <div className="row">
             {userGroups.map((group) => (
@@ -144,7 +232,10 @@ const GroupList = () => {
                       <h6 className="text-muted">Members:</h6>
                       <ul className="list-group list-group-flush">
                         {group.members.map((member) => (
-                          <li key={member._id} className={`list-group-item ${member._id === currentUser?._id ? 'bg-light' : ''}`}>
+                          <li
+                            key={member._id}
+                            className={`list-group-item ${member._id === currentUser?._id ? 'bg-light' : ''}`}
+                          >
                             <div className="d-flex align-items-center">
                               {member.profilePic && (
                                 <img
@@ -166,7 +257,6 @@ const GroupList = () => {
                     </div>
 
                     <div className="d-flex justify-content-between">
-                      {/* Les boutons "Accept Invitation" et "Reject Invitation" */}
                       {!acceptedGroups.includes(group._id) && (
                         <>
                           <button
@@ -185,7 +275,6 @@ const GroupList = () => {
                           </button>
                         </>
                       )}
-                      {/* Si l'invitation est acceptée, les boutons disparaissent */}
                       {acceptedGroups.includes(group._id) && (
                         <p className="text-success">You have accepted the invitation.</p>
                       )}
@@ -196,33 +285,126 @@ const GroupList = () => {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Affichage du toast */}
-      <ToastContainer />
-      </LayoutStudent>
+        <div style={styles.chatBubbleContainer}>
+          {showChatBubble && !selectedTutor && (
+            <div
+              style={styles.chatBubble}
+              className={`chat-bubble ${showContactList ? 'active' : ''}`}
+              onClick={toggleContactList}
+            >
+              <i className="fas fa-comments"></i>
+              {unreadMessages > 0 && <span style={styles.badge}>{unreadMessages}</span>}
+            </div>
+          )}
+
+          {showContactList && (
+            <div style={styles.contactListPanel}>
+              <div style={styles.panelHeader}>
+                <h3>Contacts</h3>
+                <button style={styles.closeBtn} onClick={closeContactList}>×</button>
+              </div>
+              <div style={styles.panelBody}>
+                <Contact tutors={tutors} onSelectTutor={handleSelectTutor} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {selectedTutor && (
+          <Chatbox user={selectedTutor} onClose={handleCloseChatbox} />
+        )}
+      </div>
+    </LayoutStudent>
   );
 };
 
 const styles = {
   title: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#000",
-    textAlign: "center",
-    padding: "10px 0",
-    borderBottom: "2px solid #000",
-    marginBottom: "20px",
+    fontSize: '24px',
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    padding: '10px 0',
+    borderBottom: '2px solid #000',
+    marginBottom: '20px',
   },
   acceptButton: {
-    borderRadius: "20px", // Bordures arrondies
-    padding: "8px 20px", // Espacement interne
-    transition: "background-color 0.3s ease, transform 0.3s ease", // Animation lors du survol
+    borderRadius: '20px',
+    padding: '8px 20px',
+    transition: 'background-color 0.3s ease, transform 0.3s ease',
   },
   rejectButton: {
-    borderRadius: "20px", // Bordures arrondies
-    padding: "8px 20px", // Espacement interne
-    transition: "background-color 0.3s ease, transform 0.3s ease", // Animation lors du survol
+    borderRadius: '20px',
+    padding: '8px 20px',
+    transition: 'background-color 0.3s ease, transform 0.3s ease',
+  },
+  chatBubbleContainer: {
+    position: 'fixed',
+    bottom: '30px',
+    right: '30px',
+    zIndex: '1000',
+  },
+  chatBubble: {
+    width: '60px',
+    height: '60px',
+    backgroundColor: '#007bff',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    fontSize: '24px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+    transition: 'all 0.3s ease',
+    position: 'relative',
+  },
+  badge: {
+    position: '！我',
+    top: '-5px',
+    right: '-5px',
+    backgroundColor: '#ff4136',
+    color: 'white',
+    borderRadius: '50%',
+    width: '22px',
+    height: '22px',
+    fontSize: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactListPanel: {
+    position: 'absolute',
+    bottom: '75px',
+    right: '0',
+    width: '300px',
+    maxHeight: '400px',
+    backgroundColor: 'white',
+    borderRadius: '10px',
+    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  panelHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 16px',
+    borderBottom: '1px solid #e4e6eb',
+  },
+  panelBody: {
+    padding: '12px',
+    overflowY: 'auto',
+    flex: '1',
+  },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '20px',
+    cursor: 'pointer',
+    color: '#65676b',
   },
 };
 

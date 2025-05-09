@@ -12,7 +12,9 @@ const Chatbox = ({ user, onClose }) => {
   const [loading, setLoading] = useState(true);
   const socketRef = useRef(null);
   const messageEndRef = useRef(null);
-  const audioRef = useRef(new Audio("/notifications.mp3"));
+  const audioRef = useRef(null);
+  const audioInitialized = useRef(false);
+  const processedMessages = useRef(new Set());
   const userId = localStorage.getItem('userId');
   
   useEffect(() => {
@@ -44,12 +46,18 @@ const Chatbox = ({ user, onClose }) => {
     
     socketRef.current.on("new_message", (message) => {
       if (
-        message.sender._id === user._id || 
-        message.receiver._id === user._id
+        (message.sender._id === user._id || message.receiver._id === userId) &&
+        !processedMessages.current.has(message._id)
       ) {
-        setMessages((prev) => [...prev, message]);
+        processedMessages.current.add(message._id);
+        setMessages((prev) => {
+          if (!prev.find(msg => msg._id === message._id)) {
+            return [...prev, message];
+          }
+          return prev;
+        });
         
-        // Play notification sound if the message is from the other user
+        // Play sound only for messages received from the other user
         if (message.sender._id === user._id) {
           playNotificationSound();
         }
@@ -66,22 +74,54 @@ const Chatbox = ({ user, onClose }) => {
     };
   }, [user._id]);
 
-  // Function to play notification sound
+  const initializeAudio = () => {
+    if (!audioInitialized.current) {
+      try {
+        audioRef.current = new Audio("/notifications.mp3");
+        audioRef.current.preload = "auto";
+        audioRef.current.oncanplaythrough = () => {
+          console.log("🎵 Notification sound loaded successfully");
+        };
+        audioRef.current.onerror = () => {
+          console.error("❌ Failed to load notification sound at /notifications.mp3");
+        };
+        audioInitialized.current = true;
+      } catch (error) {
+        console.error("❌ Error initializing audio:", error);
+      }
+    }
+  };
+
   const playNotificationSound = () => {
-    try {
-      // Reset the audio to the beginning
-      audioRef.current.currentTime = 0;
-      
-      // Play the notification sound
-      audioRef.current.play().catch(error => {
-        console.warn("Could not play notification sound:", error);
-      });
-    } catch (error) {
-      console.error("Error playing notification sound:", error);
+    if (!audioRef.current) {
+      console.warn("🎵 Audio not initialized, initializing now...");
+      initializeAudio();
+    }
+
+    if (audioRef.current) {
+      try {
+        if (!audioRef.current.paused) {
+          audioRef.current.pause();
+        }
+        audioRef.current.currentTime = 0;
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            if (error.name === "NotAllowedError") {
+              console.warn("🎵 Autoplay blocked. Sound will play after user interaction.");
+            } else {
+              console.error("❌ Error playing notification sound:", error);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error in playNotificationSound:", error);
+      }
+    } else {
+      console.warn("🎵 Audio file not available");
     }
   };
   
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -89,17 +129,16 @@ const Chatbox = ({ user, onClose }) => {
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
     
-    // Clear any previous errors
     setError(null);
     
     try {
-      // Check if user is banned or inactive
       if (user.isBanned || !user.isActive) {
         const status = user.isBanned ? "banned" : "inactive";
         setError(`This user's account is currently ${status}. Messages cannot be sent.`);
         return;
       }
       
+      initializeAudio(); // Initialize audio on user interaction
       const message = { receiverId: user._id, content: newMessage };
       const response = await post("/messages/send", message);
       const sentMessage = response.data;
@@ -115,7 +154,6 @@ const Chatbox = ({ user, onClose }) => {
     } catch (error) {
       console.error("Error sending message:", error);
       
-      // Check for specific error messages from the API
       if (error.message?.includes("banned")) {
         setError("Cannot send message to banned user.");
       } else if (error.message?.includes("inactive")) {
@@ -151,7 +189,6 @@ const Chatbox = ({ user, onClose }) => {
     }
   };
   
-  // Determine if user is banned or inactive
   const isUserRestricted = user.isBanned || !user.isActive;
   const restrictionReason = user.isBanned ? "banned" : "inactive";
   
