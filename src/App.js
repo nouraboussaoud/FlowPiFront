@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Courses from "./pages/Courses";
 import Home from "./pages/Home";
+import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Footer from "./components/Footer";
@@ -41,22 +42,27 @@ import { Toaster } from "sonner";
 import MessagesList from "./pages/tutor-interfaces/messageslist/MessagesList";
 import AdminTaskDashboard from "./pages/tasks/AdminTasks";
 import TaskManager from "./pages/tasks/DashboardTasks";
- 
-import {Navigate} from "react-router-dom";
+
+import { Navigate } from "react-router-dom";
 import ProjectManager from "./pages/ProjectManager";
 import ProjectTutor from "./pages/ProjectTutor";
 import TaskManagerTutor from "./pages/tasks/TaskManagerTutor";
 import Dashboard from "./pages/tutor-interfaces/DashboardStat";
- import UsersTable from "./pages/tutor-interfaces/UsersTable";
+import UsersTable from "./pages/tutor-interfaces/UsersTable";
 import ProjectRecommendations from "./pages/ProjectRecommendations";
 import TeamFormationSuggestions from "./pages/TeamFormationSuggestions";
+import EditProfileTutor from "./pages/auth/EditProfileTutor";
+import EditProfileAdmin from "./pages/auth/EditProfileAdmin";
+import EditProfileStudent from "./pages/auth/EditProfileStudent";
 
 function App() {
   return (
     <div>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LoginPage/>} />
+          {/* Set LandingPage as the default route */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
@@ -73,7 +79,7 @@ function App() {
           <Route path="/Subject-Form" element={<SubjectForm />} />
           <Route path="/Subject-List" element={<SubjectList />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          
+
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />
           <Route path="/SubjectAdmin" element={<SubjectAdmin />} />
@@ -91,21 +97,23 @@ function App() {
           <Route path="/return-deliverable" element={<ReturnDeliverable />} />
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
-          <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
-          <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
+          <Route path="/dashboard-tasks" element={< AdminTaskDashboard />} />
+          <Route path="/report-viewer/:id" element={<ReportViewer />} />
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
           <Route path="/dashboard-stat" element={<Dashboard />} />
           <Route path="/users-table" element={<UsersTable />} />
           <Route path="/project-recommendations" element={<ProjectRecommendations />} />
           <Route path="/team-formation/:projectId" element={<TeamFormationSuggestions />} />
-    
-<Route path="/nour" element={<NoursDashboar/>} >
-<Route path="douaa" element={<DouaaComp/>} />
-</Route>
+
+          <Route path="/edit-profile-tutor" element={<EditProfileTutor />} />
+          <Route path="/edit-profile-admin" element={<EditProfileAdmin />} />
+          <Route path="/edit-profile-student" element={<EditProfileStudent />} />
+          <Route path="/nour" element={<NoursDashboar />} >
+            <Route path="douaa" element={<DouaaComp />} />
+          </Route>
         </Routes>
       </BrowserRouter>
       <Toaster position="top-center" />
-
     </div>
   );
 }
