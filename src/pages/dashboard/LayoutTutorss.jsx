@@ -337,7 +337,7 @@ const LayoutTutorss = ({ children }) => {
   };
 
   const handleEditProfile = () => {
-    navigate("/edit-profile");
+    navigate("/edit-profile-tutor");
     setActiveDropdown(null);
   };
 

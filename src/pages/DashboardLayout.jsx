@@ -57,7 +57,7 @@ const LayoutAdmin = ({ children, title }) => {
       setProfilePic(
         storedProfilePic.startsWith("http")
           ? storedProfilePic
-          : `http://localhost:5000/uploads/${storedProfilePic}`
+          : `http://localhost:5000/uploads/profiles/${storedProfilePic}`
       );
     } else {
       setProfilePic(DEFAULT_PROFILE_PIC);
@@ -165,7 +165,7 @@ const LayoutAdmin = ({ children, title }) => {
                 </div>
               </div>
               <div className="dropdown-content">
-                <div className="dropdown-item" onClick={() => handleNavigateTo("/edit-profile")}>My Profile</div>
+                <div className="dropdown-item" onClick={() => handleNavigateTo("/edit-profile-admin")}>My Profile</div>
                 <div className="dropdown-item" onClick={() => handleNavigateTo("/user-settings")}>Account Settings</div>
                 <div className="dropdown-divider"></div>
                 <button className="logout-btn" onClick={logoutUser}>
