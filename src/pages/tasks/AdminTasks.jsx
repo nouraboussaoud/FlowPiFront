@@ -264,9 +264,10 @@ const AdminTaskDashboard = () => {
     }
     try {
       setIsLoading(true);
+      // Add admin flag to the request to bypass assignment check
       const response = await axios.put(
         `http://localhost:5000/api/tasks/updateTask/${taskId}`,
-        updates,
+        { ...updates, isAdminUpdate: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTasks(tasks.map((t) => (t._id === taskId ? response.data.task : t)));
@@ -502,15 +503,18 @@ const AdminTaskDashboard = () => {
     <DashboardLayout title="Task Manager">
       <div className="container">
         <div className="section-title">Task Manager</div>
-        <div className="task-header">
-          <div className="task-stats">
+        <div className="simple-header">
+          <div className="task-counts">
             <span>Total: <strong>{taskStats.total}</strong></span>
+            <span>•</span>
             <span>Pending: <strong>{taskStats.pending}</strong></span>
+            <span>•</span>
             <span>In Progress: <strong>{taskStats.inProgress}</strong></span>
+            <span>•</span>
             <span>Completed: <strong>{taskStats.completed}</strong></span>
           </div>
           <button
-            className="btn btn-primary"
+            className="button button-primary"
             onClick={() => setShowCreateModal(true)}
             disabled={isLoading}
           >
@@ -609,116 +613,66 @@ const AdminTaskDashboard = () => {
                     </div>
                   </div>
                   <div className="task-meta">
-                    <span className="badge" style={{ backgroundColor: getStatusColor(task.status) }}>
-                      {task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : "Pending"}
-                    </span>
-                    <span className={`badge priority-${task.priority}`}>
-                      {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : "Medium"}
-                    </span>
-                    <span><Folder size={14} /> {getProjectName(task.project)}</span>
+                    <div>
+                      <span className={`priority-badge priority-${task.priority}`}>
+                        {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : "Medium"}
+                      </span>
+                      <span className="margin-left-half">• {getProjectName(task.project)}</span>
+                    </div>
+                    <div className="task-button-group">
+                      <button
+                        className="button button-secondary"
+                        onClick={() => {
+                          setSelectedTaskDetails(task);
+                          setShowEditModal(true);
+                        }}
+                        title="Edit Task"
+                      >
+                        <CheckCircle size={14} />
+                      </button>
+                      <button
+                        className="button button-info"
+                        onClick={() => openRiskModal(task._id)}
+                        style={{ backgroundColor: task.risk ? getRiskColor(task.risk) : "#3b82f6" }}
+                        title="View Risk Assessment"
+                      >
+                        <AlertCircle size={14} />
+                      </button>
+                      <button
+                        className="button button-success"
+                        onClick={() => trackCommits(task._id)}
+                        title="Track GitHub Activity"
+                      >
+                        <GitBranch size={14} />
+                      </button>
+                      <button
+                        className="button button-danger"
+                        onClick={() => deleteTask(task._id)}
+                        title="Delete Task"
+                      >
+                        <XCircle size={14} />
+                      </button>
+                    </div>
                   </div>
-                  {typeof task.progressPercentage === "number" && task.progressPercentage > 0 ? (
-                    <div className="task-progress">
-                      <div className="progress-label">
-                        <BarChart2 size={14} />
-                        <span>Progress: {task.progressPercentage}%</span>
-                        {isTaskStalled(task) && <AlertCircle size={14} color="#ef4444" title="No recent activity" />}
-                      </div>
-                      <div className="progress-bar">
-                        <div
-                          style={{
-                            width: `${task.progressPercentage}%`,
-                            backgroundColor: getProgressColor(task.progressPercentage),
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="task-progress">
-                      <div className="progress-label">
-                        <BarChart2 size={14} />
-                        <span>Progress: Awaiting activity</span>
-                        <AlertCircle size={14} color="#ef4444" title="No activity detected" />
-                      </div>
-                    </div>
-                  )}
-                  <div className="task-actions">
+                  <div className="status-buttons">
                     <button
-                      className="btn btn-info btn-sm"
-                      onClick={() => {
-                        setSelectedTaskDetails(task);
-                        setShowTaskDetailsModal(true);
-                      }}
-                      title="View Details"
+                      className={`status-button ${task.status === "pending" ? "active" : ""}`}
+                      onClick={() => setTaskStatus(task._id, "pending")}
                     >
-                      <Calendar size={14} />
+                      Pending
                     </button>
                     <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        setSelectedTaskDetails(task);
-                        setShowEditModal(true);
-                      }}
-                      title="Edit Task"
+                      className={`status-button ${task.status === "in-progress" ? "active" : ""}`}
+                      onClick={() => setTaskStatus(task._id, "in-progress")}
                     >
-                      <CheckCircle size={14} />
-                    </button>
-                    <select
-                      value={task.assignedTo || ""}
-                      onChange={(e) => assignTask(task._id, e.target.value)}
-                      className="form-control assign-select"
-                      title="Assign User"
-                    >
-                      <option value="">Unassigned</option>
-                      {users.map((user) => (
-                        <option key={user._id} value={user._id}>{user.name}</option>
-                      ))}
-                    </select>
-                    <button
-                      className="btn btn-warning btn-sm"
-                      onClick={() => openRiskModal(task._id)}
-                      style={{ backgroundColor: task.risk ? getRiskColor(task.risk) : "#3b82f6" }}
-                      title="View Risk Assessment"
-                    >
-                      <AlertCircle size={14} />
+                      In Progress
                     </button>
                     <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => trackCommits(task._id)}
-                      title="Track GitHub Activity"
+                      className={`status-button ${task.status === "completed" ? "active" : ""}`}
+                      onClick={() => setTaskStatus(task._id, "completed")}
                     >
-                      <GitBranch size={14} />
+                      Completed
                     </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => deleteTask(task._id)}
-                      title="Delete Task"
-                    >
-                      <XCircle size={14} />
-                    </button>
-                    <div className="status-buttons">
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setTaskStatus(task._id, "pending")}
-                        disabled={task.status === "pending"}
-                      >
-                        Pending
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setTaskStatus(task._id, "in-progress")}
-                        disabled={task.status === "in-progress"}
-                      >
-                        In Progress
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setTaskStatus(task._id, "completed")}
-                        disabled={task.status === "completed"}
-                      >
-                        Completed
-                      </button>
-                    </div>
                   </div>
                 </div>
               ))}
@@ -1008,12 +962,12 @@ const AdminTaskDashboard = () => {
                   />
                 </div>
                 <div className="modal-actions">
-                  <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                  <button type="submit" className="btn btn-outline-primary" disabled={isLoading}>
                     Save
                   </button>
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-outline-secondary"
                     onClick={() => setShowEditModal(false)}
                   >
                     Cancel

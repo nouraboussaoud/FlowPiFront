@@ -20,6 +20,7 @@ const EditProfile = () => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [isLoadingProfilePicture, setIsLoadingProfilePicture] = useState(false);
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
   const userRole = localStorage.getItem("userRole") || "";
@@ -296,6 +297,91 @@ const EditProfile = () => {
     }
   };
 
+  // Add a separate function to handle profile picture updates
+  const handleUpdateProfilePicture = async () => {
+    if (!profilePictureFile) {
+      toast.info("Please select a photo first", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    // Validate the profile picture
+    const validTypes = ["image/jpeg", "image/png"];
+    if (!validTypes.includes(profilePictureFile.type)) {
+      setErrors(prev => ({ ...prev, profilePicture: "Only JPEG or PNG images are allowed." }));
+      return;
+    } else if (profilePictureFile.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, profilePicture: "Image must be less than 5MB." }));
+      return;
+    }
+
+    setIsLoadingProfilePicture(true);
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("profilePic", profilePictureFile);
+
+      console.log("Updating profile picture");
+
+      const response = await fetch(`http://localhost:5000/api/users/update-profile-picture/${userId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Failed to update profile picture");
+      }
+
+      const result = await response.json();
+      console.log("Profile picture update response:", result);
+      
+      // Update profile picture in localStorage
+      if (result.user && result.user.profilePic) {
+        const updatedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        updatedUser.profilePic = result.user.profilePic;
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        localStorage.setItem("profilePic", result.user.profilePic);
+        
+        // Create a custom event to notify other components about the profile update
+        const profileUpdateEvent = new CustomEvent('profileUpdated', {
+          detail: {
+            profilePic: result.user.profilePic
+          }
+        });
+        window.dispatchEvent(profileUpdateEvent);
+        
+        // Update the profile picture in the current component
+        const profilePicUrl = result.user.profilePic.startsWith('http') 
+          ? result.user.profilePic 
+          : `http://localhost:5000/uploads/profiles/${result.user.profilePic}`;
+        setProfilePicture(profilePicUrl);
+        
+        console.log("Profile picture updated:", result.user.profilePic);
+      }
+      
+      toast.success("Profile picture updated successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      
+      setProfilePictureFile(null); // Clear file input
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      toast.error(error.message || "Server error, please try again later.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsLoadingProfilePicture(false);
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -326,9 +412,29 @@ const EditProfile = () => {
                 </div>
               )}
               
-              <label htmlFor="profilePicture" className="change-photo-button">
-                Change Photo
-              </label>
+              <div className="profile-picture-actions">
+                <label htmlFor="profilePicture" className="change-photo-button">
+                  Select Photo
+                </label>
+                
+                {profilePictureFile && (
+                  <button 
+                    type="button"
+                    className="update-photo-button"
+                    onClick={handleUpdateProfilePicture}
+                    disabled={isLoadingProfilePicture}
+                  >
+                    {isLoadingProfilePicture ? (
+                      <>
+                        <span className="spinner"></span>
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Photo"
+                    )}
+                  </button>
+                )}
+              </div>
               
               <input
                 type="file"
@@ -337,6 +443,10 @@ const EditProfile = () => {
                 onChange={handleProfilePictureChange}
                 className="file-input"
               />
+              
+              {errors.profilePicture && (
+                <div className="error-message profile-pic-error">{errors.profilePicture}</div>
+              )}
             </div>
             
             <div className="profile-info">
