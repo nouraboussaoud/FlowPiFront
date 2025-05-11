@@ -149,7 +149,7 @@ const LandingPage = () => {
                 <p>"FlowPi has completely transformed how I manage my courses. The intuitive interface and powerful features make teaching a joy."</p>
                 <div className="testimonial-author">
                   <div className="author-info">
-                    <h4>Sarah Johnson</h4>
+                    <h4>Manar Aboussaoud</h4>
                     <p>Professor, Computer Science</p>
                   </div>
                 </div>
@@ -160,7 +160,7 @@ const LandingPage = () => {
                 <p>"As a student, I love how FlowPi helps me stay organized. The progress tracking and team collaboration features are game-changers."</p>
                 <div className="testimonial-author">
                   <div className="author-info">
-                    <h4>Michael Chen</h4>
+                    <h4>Nour Aboussaoud</h4>
                     <p>Student, Engineering</p>
                   </div>
                 </div>
@@ -171,7 +171,7 @@ const LandingPage = () => {
                 <p>"Managing our institution's educational resources has never been easier. FlowPi provides all the tools we need in one platform."</p>
                 <div className="testimonial-author">
                   <div className="author-info">
-                    <h4>David Rodriguez</h4>
+                    <h4>Najia Kraiem</h4>
                     <p>Administrator, University of Technology</p>
                   </div>
                 </div>

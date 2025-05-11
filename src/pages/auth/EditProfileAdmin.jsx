@@ -6,7 +6,7 @@ import "./ProfileCommon.css";
 
 const EditProfileAdmin = () => {
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Edit Profile">
       <Container className="profile-container">
         <Row>
           <Col md={12}>

@@ -1,8 +1,11 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faLock, faGoogle, faGithub } from '@fortawesome/free-solid-svg-icons';
 import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
-import Layout from "./Layout";
+import './LoginPage.css';
 
 const useAnimatedBackground = (images, duration = 5000) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -62,7 +65,10 @@ const LoginPage = () => {
         localStorage.setItem("name", data.user.name);
         localStorage.setItem("profilePic", data.user.profilePic);
       
-        toast.success("Welcome " + data.user.name); 
+        toast.success("Welcome " + data.user.name, {
+          position: "top-center",
+          duration: 4000
+        }); 
         const role = data.user.role;
         if (role === "admin") {
           navigate("/admin-dashboard");
@@ -76,133 +82,154 @@ const LoginPage = () => {
       } else {
         // Handle specific error responses based on the message from the server
         if (data.message === "Invalid email or password") {
-          toast.error("Invalid email or password");
+          toast.error("Invalid email or password", {
+            position: "top-center",
+            duration: 4000
+          });
         } else if (data.message === "Please verify your email to activate your account") {
-          toast.error("Please verify your email to activate your account");
+          toast.error("Please verify your email to activate your account", {
+            position: "top-center",
+            duration: 4000
+          });
         } else if (data.message === "Your account is banned") {
-          toast.error("Your account is banned");
+          toast.error("Your account is banned", {
+            position: "top-center",
+            duration: 4000
+          });
         } else {
-          toast.error("An unexpected error occurred");
+          toast.error("An unexpected error occurred", {
+            position: "top-center",
+            duration: 4000
+          });
         }
         localStorage.clear();
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      toast.error("An error occurred, please try again later");
+      toast.error("An error occurred, please try again later", {
+        position: "top-center",
+        duration: 4000
+      });
       localStorage.clear();
     }
   };
 
   return (
-    <div>
-      <title>FlowPi</title>
-      <meta charSet="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-      <meta name="author" content="Webestica.com" />
-      <meta name="description" content="Eduport- LMS, Education and Course Theme" />
-      <link rel="shortcut icon" href="assets/images/favicon.ico" />
-      <link rel="preconnect" href="https://fonts.googleapis.com/" />
-      <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin />
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/font-awesome/css/all.min.css" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap-icons/bootstrap-icons.css" />
-      <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
-
-      <main>
-        <section className="p-0 d-flex align-items-center position-relative overflow-hidden">
-          <div className="container-fluid">
-            <div className="row">
-              {/* Left Column - Background Images */}
-              <div className="col-12 col-lg-6 p-0 position-relative vh-100">
-                <div 
-                  className="position-absolute w-100 h-100"
-                  style={{
-                    backgroundImage: `url(${currentBg})`,
-                    backgroundSize: '700px',
-                    backgroundPosition: 'top center',
-                    backgroundRepeat: 'no-repeat',
-                    transition: 'background-image 1s ease-in-out',
-                    zIndex: 0
-                  }}
-                />
-                </div>
-              <div className="col-12 col-lg-6 m-auto">
-                <div className="row my-5">
-                  <div className="col-sm-10 col-xl-8 m-auto">
-                    <span className="mb-0 fs-1">👋</span>
-                    <h1 className="fs-2">Login into FlowPi!</h1>
-                    <p className="lead mb-4">Nice to see you! Please log in with your account.</p>
-                    <form onSubmit={handleLogin}>
-                      <div className="mb-4">
-                        <label htmlFor="exampleInputEmail1" className="form-label">Email address *</label>
-                        <div className="input-group input-group-lg">
-                          <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3"><i className="bi bi-envelope-fill" /></span>
-                          <input type="email" className="form-control border-0 bg-light rounded-end ps-1" placeholder="E-mail" id="exampleInputEmail1" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <label htmlFor="inputPassword5" className="form-label">Password *</label>
-                        <div className="input-group input-group-lg">
-                          <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3"><i className="fas fa-lock" /></span>
-                          <input type="password" className="form-control border-0 bg-light rounded-end ps-1" placeholder="password" id="inputPassword5" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        </div>
-                        <div id="passwordHelpBlock" className="form-text">
-                          Your password must be 8 characters at least
-                        </div>
-                      </div>
-                      <div className="mb-4 d-flex justify-content-between">
-                        <div className="form-check">
-                          <input type="checkbox" className="form-check-input" id="exampleCheck1" />
-                          <label className="form-check-label" htmlFor="exampleCheck1">Remember me</label>
-                        </div>
-                        <div className="text-primary-hover">
-                          <button
-                            type="button"
-                            className="btn btn-link text-secondary p-0"
-                            onClick={() => navigate("/forgot-password")}
-                          >
-                            <u>Forgot password?</u>
-                          </button>
-                        </div>
-                      </div>
-                      <div className="align-items-center mt-0">
-                        <div className="d-grid">
-                          <button className="btn btn-primary mb-0" type="submit" >Login</button>
-                        </div>
-                      </div>
-                      <div className="align-items-center mt-0">
-                        <span>Don't have an account? </span>
-                        <br></br>
-                        <div className="d-grid">
-                          <button
-                            type="button"
-                            className="btn btn-secondary mb-0"
-                            onClick={() => navigate("/register")}
-                          >
-                            Sign up here
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                    <div className="row">
-                      <div className="position-relative my-4">
-                        <hr />
-                        <p className="small position-absolute top-50 start-50 translate-middle bg-body px-5">Or</p>
-                      </div>
-                      <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-google mb-2 mb-xxl-0" onClick={googleAuth}><i className="fab fa-fw fa-google text-white me-2"></i>Login with Google</button>
-                      </div>
-                      <div className="col-xxl-6 d-grid">
-                        <button className="btn bg-facebook mb-0" onClick={handleGitHubLogin}><i className="fab fa-fw fa-github me-2"></i>Login with GitHub</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    <div className="login-page">
+      <Container fluid>
+        <Row className="vh-100">
+          {/* Left side - animated background */}
+          <Col lg={6} className="d-none d-lg-block p-0 position-relative">
+            <div 
+              className="bg-image"
+              style={{
+                backgroundImage: `url(${currentBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                height: '100%',
+                transition: 'background-image 1s ease-in-out'
+              }}
+            >
+              <div className="overlay"></div>
+              <div className="brand-wrapper">
+                <h1 className="brand-name">FlowPi</h1>
+                <p className="brand-tagline">Transform Your Learning Experience</p>
               </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </Col>
+          
+          {/* Right side - login form */}
+          <Col lg={6} className="d-flex align-items-center justify-content-center">
+            <Card className="login-card shadow-lg border-0">
+              <Card.Body className="p-4 p-lg-5">
+                <div className="text-center mb-4">
+                  <h2 className="welcome-text fw-bold">Welcome Back</h2>
+                  <p className="text-muted">Sign in to continue to FlowPi</p>
+                </div>
+                
+                <Form onSubmit={handleLogin}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Email address</Form.Label>
+                    <div className="input-group">
+                      <span className="input-group-text"><FontAwesomeIcon icon={faEnvelope} /></span>
+                      <Form.Control 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                  </Form.Group>
+                  
+                  <Form.Group className="mb-3">
+                    <div className="d-flex justify-content-between">
+                      <Form.Label>Password</Form.Label>
+                      <Button 
+                        variant="link" 
+                        className="p-0 forgot-password" 
+                        onClick={() => navigate("/forgot-password")}
+                      >
+                        Forgot password?
+                      </Button>
+                    </div>
+                    <div className="input-group">
+                      <span className="input-group-text"><FontAwesomeIcon icon={faLock} /></span>
+                      <Form.Control 
+                        type="password" 
+                        placeholder="Enter your password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                  </Form.Group>
+                  
+                  <Form.Group className="mb-4">
+                    <Form.Check 
+                      type="checkbox" 
+                      label="Remember me" 
+                      id="rememberMe" 
+                    />
+                  </Form.Group>
+                  
+                  <Button variant="primary" type="submit" className="w-100 mb-3 py-2 fw-medium">
+                    Sign In
+                  </Button>
+                  
+                  <div className="text-center my-3">
+                    <span className="divider">or continue with</span>
+                  </div>
+                  
+                  <Row className="social-buttons mb-4 g-2">
+                    <Col>
+                      <Button variant="outline-danger" className="w-100 d-flex align-items-center justify-content-center" onClick={googleAuth}>
+                        <i className="fab fa-google me-2"></i>Google
+                      </Button>
+                    </Col>
+                    <Col>
+                      <Button variant="outline-dark" className="w-100 d-flex align-items-center justify-content-center" onClick={handleGitHubLogin}>
+                        <i className="fab fa-github me-2"></i>GitHub
+                      </Button>
+                    </Col>
+                  </Row>
+                  
+                  <div className="text-center">
+                    <p>Don't have an account? <Button 
+                      variant="link" 
+                      className="p-0 signup-link" 
+                      onClick={() => navigate("/register")}
+                    >
+                      Sign up
+                    </Button></p>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+      {/* Remove any duplicate Toaster components */}
     </div>
   );
 };
