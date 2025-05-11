@@ -749,12 +749,12 @@ const AttendanceHistoryAdmin = () => {
             <div>
             
               <Button variant="outline-primary" onClick={exportToPDF}>
-                <i className="bi bi-download me-2"></i>Export PDF
-              </Button>
-            </div>
-            <Button variant="secondary" onClick={() => setShowStatsModal(false)}>
-              Close
-            </Button>
+                             <i className="bi bi-download me-2"></i>Export PDF
+                           </Button>
+                         </div>
+                         <Button  variant="outline-primary" onClick={() => setShowStatsModal(false)}>
+                           Close
+                         </Button>
           </Modal.Footer>
         </Modal>
       </div>

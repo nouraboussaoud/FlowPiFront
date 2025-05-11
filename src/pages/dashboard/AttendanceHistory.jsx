@@ -741,7 +741,7 @@ const AttendanceHistory = () => {
                 <i className="bi bi-download me-2"></i>Export PDF
               </Button>
             </div>
-            <Button variant="secondary" onClick={() => setShowStatsModal(false)}>
+            <Button  variant="outline-primary" onClick={() => setShowStatsModal(false)}>
               Close
             </Button>
           </Modal.Footer>
