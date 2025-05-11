@@ -1,72 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import axios from 'axios';
-import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
+import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress, FaPlay, FaPause, FaStop } from 'react-icons/fa';
 import Editor from '@monaco-editor/react';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-const PlagiarismChecker = ({ fileUrl }) => {
-  const [summary, setSummary] = useState('');
-  const [score, setScore] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [plagiarized, setPlagiarized] = useState(null);
-  const [error, setError] = useState('');
-  const [usedFallback, setUsedFallback] = useState(false);
-  
-  const handleCheckPlagiarism = async () => {
-    if (!fileUrl) {
-      alert('No file URL provided.');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    setSummary('');
-    setScore(null);
-    setPlagiarized(null);
-    setUsedFallback(false);
-    try {
-      const response = await axios.post('http://localhost:5000/api/summary', {
-        fileUrl,
-      });
-      const { summary, plagiarismScore, plagiarized, usedFallback } = response.data;
-      setSummary(summary);
-      setScore(plagiarismScore);
-      setPlagiarized(plagiarized);
-      setUsedFallback(usedFallback);
-    } catch (err) {
-      console.error(err);
-      setError('An error occurred while checking plagiarism.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  return (
-    <div style={{ marginTop: '20px' }}>
-      <button onClick={handleCheckPlagiarism} disabled={loading}>
-        {loading ? 'Checking...' : 'Check Plagiarism'}
-      </button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {summary && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>Summary:</h3>
-          <p>{summary}</p>
-        </div>
-      )}
-      {score !== null && (
-        <div style={{ marginTop: '10px' }}>
-          <p><strong>Plagiarism Score:</strong> {score}%</p>
-          <p style={{ color: plagiarized ? 'red' : 'green' }}>
-            {plagiarized ? '❌ Report is Plagiarized' : '✅ Report is Clean'}
-          </p>
-          {usedFallback && <p style={{ fontStyle: 'italic' }}>Fallback summary was used.</p>}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const navigate = useNavigate();
@@ -82,10 +22,8 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     requirement3: false,
   });
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [uploadedFileUrl, setUploadedFileUrl] = useState("");
-  const [summary, setSummary] = useState("");
+  const [uploadedFileUrl, setUploadedFileUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const [commitURL, setCommitURL] = useState('');
   const [fileTree, setFileTree] = useState([]);
   const [selectedFileContent, setSelectedFileContent] = useState('');
@@ -94,18 +32,24 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [loading, setLoading] = useState({
     tree: true,
     content: false,
-    submission: false
+    submission: false,
+    plagiarism: false,
   });
   const [error, setError] = useState({
     tree: null,
     content: null,
-    submission: null
+    submission: null,
+    plagiarism: null,
   });
   const [cache, setCache] = useState({});
   const [nestedFileTree, setNestedFileTree] = useState({});
   const [fullScreenEditor, setFullScreenEditor] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [pdfError, setPdfError] = useState(null);
+  const [plagiarismScore, setPlagiarismScore] = useState(null);
+  const [plagiarized, setPlagiarized] = useState(null);
+  const [plagiarismDetails, setPlagiarismDetails] = useState([]);
+  const [expandedMatches, setExpandedMatches] = useState({});
 
   // Rubric data
   const rubric = [
@@ -117,6 +61,140 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const [rubricScores, setRubricScores] = useState(
     rubric.reduce((acc, criterion) => ({ ...acc, [criterion.name]: 0 }), {})
   );
+
+  // Plagiarism check handler
+  const handleCheckPlagiarism = async () => {
+    if (!deliverable.file?.url) {
+      alert('No file URL provided.');
+      return;
+    }
+    setLoading((prev) => ({ ...prev, plagiarism: true }));
+    setError((prev) => ({ ...prev, plagiarism: null }));
+    setPlagiarismScore(null);
+    setPlagiarized(null);
+    setPlagiarismDetails([]);
+    setExpandedMatches({});
+
+    try {
+      const fileUrl = deliverable.file.url.replace(/\?.*$/, '');
+      const response = await axios.post('http://localhost:5000/api/summary', {
+        fileUrl,
+        includeSummary: false,
+      });
+      const { plagiarismScore, plagiarized, plagiarismDetails } = response.data;
+      setPlagiarismScore(plagiarismScore);
+      setPlagiarized(plagiarized);
+      setPlagiarismDetails(plagiarismDetails || []);
+    } catch (err) {
+      console.error(err);
+      setError((prev) => ({ ...prev, plagiarism: 'An error occurred while checking plagiarism.' }));
+    } finally {
+      setLoading((prev) => ({ ...prev, plagiarism: false }));
+    }
+  };
+
+  // Export plagiarism report as PDF
+  const exportPlagiarismReport = () => {
+    if (!plagiarismScore) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const lineHeight = 7;
+    let y = 20;
+
+    // Header
+    doc.setFontSize(16);
+    doc.text('Plagiarism Report', margin, y);
+    y += 10;
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, y, { align: 'right' });
+    y += 15;
+
+    // Document Info
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text('Document:', margin, y);
+    doc.setFontSize(12);
+    doc.text(deliverable.file.url.split('/').pop(), margin + 40, y);
+    y += 10;
+
+    doc.setFontSize(14);
+    doc.text('Plagiarism Score:', margin, y);
+    doc.setFontSize(12);
+    doc.text(`${plagiarismScore}%`, margin + 40, y);
+    y += 10;
+
+    doc.setFontSize(14);
+    doc.text('Status:', margin, y);
+    doc.setFontSize(12);
+    doc.text(plagiarized ? '❌ May be plagiarized' : '✅ Appears original', margin + 40, y, { maxWidth: pageWidth - margin - 40 });
+    y += 15;
+
+    // Plagiarism Details
+    if (plagiarismDetails.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Plagiarism Details:', margin, y);
+      y += 10;
+
+      plagiarismDetails.forEach((match, index) => {
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(`Matched Document ${index + 1}: ${match.documentUrl.split('/').pop()} (${match.similarityScore}%)`, margin, y);
+        y += 10;
+
+        if (match.similarSections && match.similarSections.length > 0) {
+          doc.setFontSize(10);
+          doc.setTextColor(100);
+          match.similarSections.forEach((section) => {
+            y += 5;
+            doc.text('Original:', margin + 5, y);
+            doc.setTextColor(0);
+            doc.text(section.original, margin + 20, y, { maxWidth: pageWidth - margin - 20 });
+            y += 10;
+
+            doc.setTextColor(100);
+            doc.text('Matched:', margin + 5, y);
+            doc.setTextColor(0);
+            doc.text(section.matched, margin + 20, y, { maxWidth: pageWidth - margin - 20 });
+            y += 10;
+
+            doc.setTextColor(100);
+            doc.text(`Similarity: ${section.similarity}%`, margin + 5, y);
+            y += 10;
+
+            if (y > 270) {
+              doc.addPage();
+              y = 20;
+              doc.setFontSize(14);
+              doc.text('Plagiarism Details (Continued):', margin, y);
+              y += 10;
+            }
+          });
+        }
+        y += 5;
+      });
+    }
+
+    // Footer
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, 290, { align: 'center' });
+    }
+
+    doc.save(`plagiarism_report_${deliverable.file.url.split('/').pop()}.pdf`);
+  };
+
+  const toggleMatchDetails = (index) => {
+    setExpandedMatches((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
   // Document handlers
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -148,26 +226,189 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
   const handleSummarize = async () => {
     if (isLoading) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       if (!deliverable.file || !deliverable.file.url) {
-        console.error("Missing deliverable file URL");
+        console.error('Missing deliverable file URL');
         return;
       }
-      
+
       const fileUrl = deliverable.file.url.replace(/\?.*$/, '');
-      
+
       const response = await axios.post('http://localhost:5000/api/summary', {
-        fileUrl: fileUrl
+        fileUrl: fileUrl,
+        includeSummary: true,
+        includeAudio: true,
       });
-      
-      setSummary(response.data.summary);
+
+      const { summary, audioUrl } = response.data;
+      if (summary) {
+        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        if (newWindow) {
+          newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Document Summary</title>
+              <style>
+                body {
+                  font-family: Arial, sans-serif;
+                  line-height: 1.6;
+                  margin: 20px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  background-color: #f4f4f4;
+                }
+                h1 {
+                  color: #333;
+                  border-bottom: 1px solid #ddd;
+                  padding-bottom: 10px;
+                }
+                .summary-content {
+                  background-color: #fff;
+                  padding: 20px;
+                  border-radius: 5px;
+                  border-left: 4px solid #007bff;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  white-space: pre-wrap;
+                }
+                .file-info {
+                  margin-bottom: 20px;
+                  color: #666;
+                }
+                .audio-controls {
+                  margin-top: 20px;
+                  display: flex;
+                  gap: 10px;
+                }
+                .audio-controls button {
+                  background-color: #007bff;
+                  color: white;
+                  border: none;
+                  padding: 8px 15px;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 14px;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                  transition: background-color 0.2s;
+                }
+                .audio-controls button:hover {
+                  background-color: #0056b3;
+                }
+                .audio-controls button:disabled {
+                  background-color: #6c757d;
+                  cursor: not-allowed;
+                }
+                .audio-player {
+                  margin-top: 20px;
+                }
+                .print-button {
+                  background-color: #28a745;
+                  color: white;
+                  border: none;
+                  padding: 10px 20px;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 14px;
+                  margin-top: 10px;
+                  transition: background-color 0.2s;
+                }
+                .print-button:hover {
+                  background-color: #218838;
+                }
+                @media print {
+                  .audio-controls, .audio-player, .print-button {
+                    display: none;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <h1>Document Summary</h1>
+              <div class="file-info">
+                <strong>Original File:</strong> ${deliverable.file.url.split('/').pop()}
+              </div>
+              <div class="summary-content">
+                ${summary.replace(/\n/g, '<br>')}
+              </div>
+              ${audioUrl ? `
+                <div class="audio-player">
+                  <audio id="audio-player" src="${audioUrl}" controls>
+                    Your browser does not support the audio element.
+                  </audio>
+                  <div class="audio-controls">
+                    <button id="play-btn"><FaPlay /> Play</button>
+                    <button id="pause-btn" disabled><FaPause /> Pause</button>
+                    <button id="stop-btn" disabled><FaStop /> Stop</button>
+                  </div>
+                </div>
+              ` : '<p>No audio available.</p>'}
+              <button class="print-button" onclick="window.print()">Print Summary</button>
+              <script>
+                const audio = document.getElementById('audio-player');
+                let isPlaying = false;
+
+                if (audio) {
+                  document.getElementById('play-btn').addEventListener('click', () => {
+                    if (!isPlaying) {
+                      audio.play();
+                      isPlaying = true;
+                      document.getElementById('play-btn').disabled = true;
+                      document.getElementById('pause-btn').disabled = false;
+                      document.getElementById('stop-btn').disabled = false;
+                    }
+                  });
+
+                  document.getElementById('pause-btn').addEventListener('click', () => {
+                    if (isPlaying) {
+                      audio.pause();
+                      isPlaying = false;
+                      document.getElementById('play-btn').disabled = false;
+                      document.getElementById('pause-btn').disabled = true;
+                    }
+                  });
+
+                  document.getElementById('stop-btn').addEventListener('click', () => {
+                    if (isPlaying || !audio.paused) {
+                      audio.pause();
+                      audio.currentTime = 0;
+                      isPlaying = false;
+                      document.getElementById('play-btn').disabled = false;
+                      document.getElementById('pause-btn').disabled = true;
+                      document.getElementById('stop-btn').disabled = true;
+                    }
+                  });
+
+                  audio.onended = () => {
+                    isPlaying = false;
+                    document.getElementById('play-btn').disabled = false;
+                    document.getElementById('pause-btn').disabled = true;
+                    document.getElementById('stop-btn').disabled = true;
+                  };
+                }
+
+                // Cleanup on window close
+                window.addEventListener('beforeunload', () => {
+                  if (audio && (isPlaying || !audio.paused)) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                  }
+                });
+              </script>
+            </body>
+            </html>
+          `);
+          newWindow.document.close();
+        }
+      }
     } catch (error) {
       console.error('Failed to summarize the document:', error);
-      setSummary(null);
-      alert("Failed to summarize the document. Please check if the file is accessible.");
+      alert('Failed to summarize the document. Please check if the file is accessible or contact support.');
     } finally {
       setIsLoading(false);
     }
@@ -176,68 +417,92 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   // Enhanced file type detection for Monaco
   const getFileLanguage = (filename) => {
     if (!filename) return 'plaintext';
-    
+
     const extension = filename.split('.').pop().toLowerCase();
-    switch(extension) {
-      case 'js': return 'javascript';
-      case 'jsx': return 'javascript';
-      case 'ts': return 'typescript';
-      case 'tsx': return 'typescript';
-      case 'py': return 'python';
-      case 'java': return 'java';
-      case 'c': return 'c';
+    switch (extension) {
+      case 'js':
+        return 'javascript';
+      case 'jsx':
+        return 'javascript';
+      case 'ts':
+        return 'typescript';
+      case 'tsx':
+        return 'typescript';
+      case 'py':
+        return 'python';
+      case 'java':
+        return 'java';
+      case 'c':
+        return 'c';
       case 'cpp':
       case 'cc':
       case 'cxx':
       case 'hpp':
-      case 'h': return 'cpp';
-      case 'cs': return 'csharp';
-      case 'go': return 'go';
-      case 'rs': return 'rust';
-      case 'rb': return 'ruby';
-      case 'php': return 'php';
-      case 'twig': return 'twig';
-      case 'sh': return 'shell';
+      case 'h':
+        return 'cpp';
+      case 'cs':
+        return 'csharp';
+      case 'go':
+        return 'go';
+      case 'rs':
+        return 'rust';
+      case 'rb':
+        return 'ruby';
+      case 'php':
+        return 'php';
+      case 'twig':
+        return 'twig';
+      case 'sh':
+        return 'shell';
       case 'html':
-      case 'htm': return 'html';
-      case 'css': return 'css';
-      case 'scss': return 'scss';
-      case 'sass': return 'sass';
-      case 'json': return 'json';
-      case 'md': return 'markdown';
+      case 'htm':
+        return 'html';
+      case 'css':
+        return 'css';
+      case 'scss':
+        return 'scss';
+      case 'sass':
+        return 'sass';
+      case 'json':
+        return 'json';
+      case 'md':
+        return 'markdown';
       case 'yml':
-      case 'yaml': return 'yaml';
-      case 'xml': return 'xml';
-      default: return 'plaintext';
+      case 'yaml':
+        return 'yaml';
+      case 'xml':
+        return 'xml';
+      default:
+        return 'plaintext';
     }
   };
 
   const fetchUploadedFiles = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("No token found");
-  
+      const token = localStorage.getItem('authToken');
+      if (!token) throw new Error('No token found');
+
       const response = await axios.get(`/api/deliverables/${deliverable._id}/file`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-  
+
       const file = response.data.file;
-  
+
       if (file?.url) {
         setUploadedFiles([
           {
             path: file.url,
             name: file.url.split('/').pop(),
-            public_id: file.public_id
-          }
+            public_id: file.public_id,
+          },
         ]);
       } else {
         setUploadedFiles([]);
       }
     } catch (error) {
-      console.error("Error fetching uploaded files:", error.message);
+      console.error('Error fetching uploaded files:', error.message);
     }
   };
 
@@ -245,10 +510,10 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     setAiScoreLoading(true);
     try {
       const res = await axios.get(`/api/aiDetection/${fileId}`);
-      setAiScore(res.data?.ai_probability || "No score available");
+      setAiScore(res.data?.ai_probability || 'No score available');
     } catch (error) {
-      console.error("AI detection fetch error:", error);
-      setAiScore("Error");
+      console.error('AI detection fetch error:', error);
+      setAiScore('Error');
     } finally {
       setAiScoreLoading(false);
     }
@@ -272,41 +537,38 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
   const handleSubmit = async () => {
     try {
-      // Clear previous errors
-      setError(prev => ({...prev, submission: null}));
-      setLoading(prev => ({...prev, submission: true}));
-      
-      // Validate the evaluation score
+      setError((prev) => ({ ...prev, submission: null }));
+      setLoading((prev) => ({ ...prev, submission: true }));
+
       if (!evaluationScore || isNaN(evaluationScore) || evaluationScore < 0 || evaluationScore > 100) {
-        setError(prev => ({...prev, submission: 'Please enter a valid evaluation score between 0 and 100'}));
-        setLoading(prev => ({...prev, submission: false}));
+        setError((prev) => ({
+          ...prev,
+          submission: 'Please enter a valid evaluation score between 0 and 100',
+        }));
+        setLoading((prev) => ({ ...prev, submission: false }));
         return;
       }
-  
-      // Prepare evaluation data
+
       const evaluationData = {
-        evaluationScore: parseFloat(evaluationScore), // Convert to number
+        evaluationScore: parseFloat(evaluationScore),
         notes,
       };
-  
-      // Call the onSubmitEvaluation prop with the evaluation data
+
       await onSubmitEvaluation(deliverable._id, evaluationData);
-      
-      // Set success state
+
       setSubmitSuccess(true);
-      
-      // Close the modal after a short delay to show success message
+
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (error) {
       console.error('Error submitting evaluation:', error);
-      setError(prev => ({
-        ...prev, 
-        submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.'
+      setError((prev) => ({
+        ...prev,
+        submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.',
       }));
     } finally {
-      setLoading(prev => ({...prev, submission: false}));
+      setLoading((prev) => ({ ...prev, submission: false }));
     }
   };
 
@@ -314,12 +576,14 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const fetchAiDetectionScore = async () => {
     setAiScoreLoading(true);
     try {
-      const res = await axios.get(`/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`);
+      const res = await axios.get(
+        `/api/aiDetection/${deliverable._id}?filePath=${encodeURIComponent(selectedFilePath)}`
+      );
       const score = res.data?.ai_probability;
       setAiScore(score);
     } catch (error) {
-      console.error("AI detection fetch error:", error);
-      setAiScore("Erreur");
+      console.error('AI detection fetch error:', error);
+      setAiScore('Erreur');
     } finally {
       setAiScoreLoading(false);
     }
@@ -343,7 +607,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
         throw new Error('Failed to fetch commit details.');
       }
     } catch (error) {
-      setError(prev => ({...prev, tree: error.message}));
+      setError((prev) => ({ ...prev, tree: error.message }));
     }
   };
 
@@ -360,96 +624,26 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
       if (response.data?.tree) {
         setFileTree(response.data.tree);
-        setLoading(prev => ({...prev, tree: false}));
-        setError(prev => ({...prev, tree: null}));
+        setLoading((prev) => ({ ...prev, tree: false }));
+        setError((prev) => ({ ...prev, tree: null }));
       } else {
         throw new Error('Failed to fetch file tree.');
       }
     } catch (error) {
-      setError(prev => ({...prev, tree: error.message}));
-      setLoading(prev => ({...prev, tree: false}));
-    }
-  };
-
-  const openSummaryInNewPage = () => {
-    if (!summary) return;
-    
-    const newWindow = window.open('', '_blank', 'width=800,height=600');
-    
-    if (newWindow) {
-      newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Document Summary</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              margin: 20px;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            h1 {
-              color: #333;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 10px;
-            }
-            .summary-content {
-              background-color: #f9f9f9;
-              padding: 15px;
-              border-radius: 5px;
-              border-left: 4px solid #007bff;
-            }
-            .file-info {
-              margin-bottom: 20px;
-              color: #666;
-            }
-            .print-button {
-              background-color: #007bff;
-              color: white;
-              border: none;
-              padding: 8px 16px;
-              border-radius: 4px;
-              cursor: pointer;
-              margin-top: 20px;
-            }
-            .print-button:hover {
-              background-color: #0056b3;
-            }
-            @media print {
-              .print-button {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Document Summary</h1>
-          <div class="file-info">
-            <strong>Original File:</strong> ${deliverable.file.url.split('/').pop()}
-          </div>
-          <div class="summary-content">
-            ${summary.replace(/\n/g, '<br>')}
-          </div>
-          <button class="print-button" onclick="window.print()">Print Summary</button>
-        </body>
-        </html>
-      `);
-      newWindow.document.close();
+      setError((prev) => ({ ...prev, tree: error.message }));
+      setLoading((prev) => ({ ...prev, tree: false }));
     }
   };
 
   const fetchFileContent = async (filePath) => {
     setSelectedFilePath(filePath);
-    setError(prev => ({...prev, content: null}));
-    setLoading(prev => ({...prev, content: true}));
-    
+    setError((prev) => ({ ...prev, content: null }));
+    setLoading((prev) => ({ ...prev, content: true }));
+
     try {
       if (cache[filePath]) {
         setSelectedFileContent(cache[filePath]);
-        setLoading(prev => ({...prev, content: false}));
+        setLoading((prev) => ({ ...prev, content: false }));
         setAiScore(null);
         fetchAiDetectionScore();
         return;
@@ -476,7 +670,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     } catch (error) {
       console.error('Error fetching file:', error);
       let errorMessage = error.message;
-      
+
       if (error.response) {
         if (error.response.status === 404) {
           errorMessage = 'File not found in repository (404)';
@@ -486,11 +680,11 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
           errorMessage = `API error: ${error.response.status}`;
         }
       }
-      
-      setError(prev => ({...prev, content: errorMessage}));
+
+      setError((prev) => ({ ...prev, content: errorMessage }));
       setSelectedFileContent(`Error loading file: ${errorMessage}\nPath: ${filePath}`);
     } finally {
-      setLoading(prev => ({...prev, content: false}));
+      setLoading((prev) => ({ ...prev, content: false }));
     }
   };
 
@@ -498,7 +692,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const buildFileTree = (files) => {
     const tree = {};
 
-    files.forEach(file => {
+    files.forEach((file) => {
       const parts = file.path.split('/');
       let currentLevel = tree;
 
@@ -510,7 +704,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             children: {},
             isOpen: false,
             path: parts.slice(0, index + 1).join('/'),
-            fileData: index === parts.length - 1 ? file : null
+            fileData: index === parts.length - 1 ? file : null,
           };
         }
         currentLevel = currentLevel[part].children;
@@ -527,19 +721,19 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       }
 
       const updatedChildren = {};
-      Object.keys(node.children).forEach(key => {
+      Object.keys(node.children).forEach((key) => {
         updatedChildren[key] = updateTree(node.children[key]);
       });
-      
+
       return {
         ...node,
-        children: updatedChildren
+        children: updatedChildren,
       };
     };
-    
-    setNestedFileTree(prevTree => {
+
+    setNestedFileTree((prevTree) => {
       const newTree = {};
-      Object.keys(prevTree).forEach(key => {
+      Object.keys(prevTree).forEach((key) => {
         newTree[key] = updateTree(prevTree[key]);
       });
       return newTree;
@@ -548,25 +742,27 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
   const renderFileTree = (tree, level = 0) => {
     const items = Object.values(tree);
-    const folders = items.filter(item => item.isFolder)
-                         .sort((a, b) => a.name.localeCompare(b.name));
-    const files = items.filter(item => !item.isFolder)
-                      .sort((a, b) => a.name.localeCompare(b.name));
+    const folders = items
+      .filter((item) => item.isFolder)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const files = items
+      .filter((item) => !item.isFolder)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     return (
       <>
-        {folders.map(node => (
+        {folders.map((node) => (
           <div key={node.path} style={{ marginLeft: `${level * 15}px` }}>
-            <div 
+            <div
               onClick={() => toggleFolder(node.path)}
-              style={{ 
+              style={{
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 padding: '5px 0',
                 fontWeight: 'bold',
                 color: '#1a73e8',
-                userSelect: 'none'
+                userSelect: 'none',
               }}
             >
               {node.isOpen ? (
@@ -577,15 +773,13 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               {node.name}
             </div>
             {node.isOpen && Object.keys(node.children).length > 0 && (
-              <div>
-                {renderFileTree(node.children, level + 1)}
-              </div>
+              <div>{renderFileTree(node.children, level + 1)}</div>
             )}
           </div>
         ))}
 
-        {files.map(node => (
-          <div 
+        {files.map((node) => (
+          <div
             key={node.path}
             onClick={() => fetchFileContent(node.path)}
             style={{
@@ -595,7 +789,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               padding: '5px 0',
               marginLeft: `${level * 15}px`,
               color: '#5f6368',
-              userSelect: 'none'
+              userSelect: 'none',
             }}
           >
             <FaFile style={{ marginRight: '8px', color: '#80868b' }} />
@@ -606,7 +800,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     );
   };
 
-  // Effects - moved to top level
+  // Effects
   useEffect(() => {
     if (fileTree.length > 0) {
       const structuredTree = buildFileTree(fileTree);
@@ -618,8 +812,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
     if (deliverable) {
       fetchCommitDetails();
       fetchFileTree();
-      
-      // Initialize form with existing evaluation data if available
+
       if (deliverable.evaluation) {
         if (deliverable.evaluation.evaluationScore) {
           setEvaluationScore(deliverable.evaluation.evaluationScore);
@@ -642,32 +835,36 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
   if (fullScreenEditor) {
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#1e1e1e',
-        zIndex: 2000,
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '10px',
-          backgroundColor: '#252526',
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#1e1e1e',
+          zIndex: 2000,
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid #444'
-        }}>
+          flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '10px',
+            backgroundColor: '#252526',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #444',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <FaFile style={{ marginRight: '8px', color: '#80868b' }} />
             {selectedFilePath.split('/').pop() || 'No file selected'}
           </div>
           <div>
-            <button 
+            <button
               onClick={toggleFullScreenEditor}
               style={{
                 background: 'none',
@@ -678,7 +875,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 borderRadius: '3px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px'
+                gap: '5px',
               }}
             >
               <FaCompress style={{ marginRight: '5px' }} />
@@ -686,26 +883,26 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             </button>
           </div>
         </div>
-        
+
         {/* Main content */}
-        <div style={{ 
-          flex: 1, 
-          overflow: 'hidden',
-          display: 'flex'
-        }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
           {/* File explorer */}
-          <div style={{
-            width: '250px',
-            borderRight: '1px solid #444',
-            backgroundColor: '#252526',
-            overflowY: 'auto',
-            padding: '10px'
-          }}>
-            <h5 style={{ 
-              color: '#d4d4d4',
-              marginBottom: '10px',
-              paddingLeft: '5px'
-            }}>
+          <div
+            style={{
+              width: '250px',
+              borderRight: '1px solid #444',
+              backgroundColor: '#252526',
+              overflowY: 'auto',
+              padding: '10px',
+            }}
+          >
+            <h5
+              style={{
+                color: '#d4d4d4',
+                marginBottom: '10px',
+                paddingLeft: '5px',
+              }}
+            >
               Files Explorer
             </h5>
             {loading.tree ? (
@@ -716,32 +913,33 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               renderFileTree(nestedFileTree)
             )}
           </div>
-          
+
           {/* Editor */}
-          <div style={{ 
-            flex: 1,
-            overflow: 'hidden'
-          }}>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
             {loading.content ? (
-              <div style={{ 
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#1e1e1e',
-                color: '#d4d4d4'
-              }}>
+              <div
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#1e1e1e',
+                  color: '#d4d4d4',
+                }}
+              >
                 Loading file content...
               </div>
             ) : error.content ? (
-              <div style={{ 
-                height: '100%',
-                padding: '15px',
-                backgroundColor: '#1e1e1e',
-                color: '#f48771',
-                whiteSpace: 'pre-wrap',
-                overflow: 'auto'
-              }}>
+              <div
+                style={{
+                  height: '100%',
+                  padding: '15px',
+                  backgroundColor: '#1e1e1e',
+                  color: '#f48771',
+                  whiteSpace: 'pre-wrap',
+                  overflow: 'auto',
+                }}
+              >
                 {selectedFileContent}
               </div>
             ) : selectedFileContent ? (
@@ -766,14 +964,16 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 }}
               />
             ) : (
-              <div style={{ 
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#1e1e1e',
-                color: '#d4d4d4'
-              }}>
+              <div
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#1e1e1e',
+                  color: '#d4d4d4',
+                }}
+              >
                 No file selected
               </div>
             )}
@@ -784,30 +984,34 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '100px',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      zIndex: 1000,
-      paddingTop: '20px',
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        width: '90%',
-        maxWidth: '1200px',
-        maxHeight: '85vh',
-        overflow: 'auto',
-        padding: '20px',
-        position: 'relative'
-      }}>
-        <button 
+    <div
+      style={{
+        position: 'fixed',
+        top: '100px',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        zIndex: 1000,
+        paddingTop: '20px',
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          width: '90%',
+          maxWidth: '1200px',
+          maxHeight: '85vh',
+          overflow: 'auto',
+          padding: '20px',
+          position: 'relative',
+        }}
+      >
+        <button
           onClick={onClose}
           style={{
             position: 'absolute',
@@ -817,7 +1021,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             border: 'none',
             fontSize: '1.5rem',
             cursor: 'pointer',
-            color: '#666'
+            color: '#666',
           }}
         >
           <FaTimes />
@@ -825,7 +1029,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <h2 style={{ marginBottom: '20px', color: '#333' }}>Deliverable Evaluation</h2>
-          
+
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {/* Evaluation Criteria */}
             <div style={{ flex: 1, minWidth: '250px' }}>
@@ -846,7 +1050,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                         width: '100%',
                         padding: '8px',
                         borderRadius: '4px',
-                        border: '1px solid #ddd'
+                        border: '1px solid #ddd',
                       }}
                     />
                   </li>
@@ -854,14 +1058,16 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               </ul>
               <div style={{ flex: 1, minWidth: '250px' }}>
                 <h5 style={{ marginBottom: '10px' }}>Files Explorer</h5>
-                <div style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  padding: '10px',
-                  height: '300px',
-                  overflowY: 'auto',
-                  backgroundColor: '#f9f9f9'
-                }}>
+                <div
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '10px',
+                    height: '300px',
+                    overflowY: 'auto',
+                    backgroundColor: '#f9f9f9',
+                  }}
+                >
                   {loading.tree ? (
                     <p>Loading files...</p>
                   ) : error.tree ? (
@@ -877,22 +1083,34 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             <div style={{ flex: 2, minWidth: '300px' }}>
               <div style={{ marginBottom: '20px' }}>
                 <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Deliverable Details</h3>
-                <p><strong>Title:</strong> {deliverable.title}</p>
-                <p><strong>Submission Date:</strong> {new Date(deliverable.submission_date).toLocaleDateString()}</p>
-                <p><strong>Description:</strong> {deliverable.description}</p>
-                <p><strong>Status:</strong> <span style={{
-                  color: deliverable.status === 'evaluated' ? '#28a745' : '#f0ad4e',
-                  fontWeight: 'bold'
-                }}>{deliverable.status.charAt(0).toUpperCase() + deliverable.status.slice(1)}</span></p>
-                
+                <p>
+                  <strong>Title:</strong> {deliverable.title}
+                </p>
+                <p>
+                  <strong>Submission Date:</strong> {new Date(deliverable.submission_date).toLocaleDateString()}
+                </p>
+                <p>
+                  <strong>Description:</strong> {deliverable.description}
+                </p>
+                <p>
+                  <strong>Status:</strong>{' '}
+                  <span
+                    style={{
+                      color: deliverable.status === 'evaluated' ? '#28a745' : '#f0ad4e',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {deliverable.status.charAt(0).toUpperCase() + deliverable.status.slice(1)}
+                  </span>
+                </p>
 
                 <div style={{ margin: '15px 0' }}>
                   <h5>Quick Links</h5>
-                  <ul style={{ listStyle: 'none', padding: 0 }}>
+                  <ul style={{ listStyle: 'none', padding: '0' }}>
                     <li style={{ marginBottom: '5px' }}>
-                      <a 
-                        href={commitURL} 
-                        target="_blank" 
+                      <a
+                        href={commitURL}
+                        target="_blank"
                         rel="noopener noreferrer"
                         style={{ color: '#1a73e8', textDecoration: 'none' }}
                       >
@@ -900,9 +1118,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                       </a>
                     </li>
                     <li>
-                      <a 
-                        href={`mailto:${deliverable.student_email}`} 
-                        target="_blank" 
+                      <a
+                        href={`mailto:${deliverable.student_email}`}
+                        target="_blank"
                         rel="noopener noreferrer"
                         style={{ color: '#1a73e8', textDecoration: 'none' }}
                       >
@@ -915,15 +1133,17 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: '250px' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    marginBottom: '10px'
-                  }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '10px',
+                    }}
+                  >
                     <h5>File Content</h5>
                     {selectedFileContent && (
-                      <button 
+                      <button
                         onClick={toggleFullScreenEditor}
                         style={{
                           background: 'none',
@@ -934,7 +1154,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                           alignItems: 'center',
                           gap: '5px',
                           padding: '2px 8px',
-                          borderRadius: '3px'
+                          borderRadius: '3px',
                         }}
                       >
                         <FaExpand size={12} />
@@ -942,32 +1162,38 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                       </button>
                     )}
                   </div>
-                  <div style={{
-                    border: '1px solid #444',
-                    borderRadius: '4px',
-                    height: '300px',
-                    overflow: 'hidden',
-                  }}>
+                  <div
+                    style={{
+                      border: '1px solid #444',
+                      borderRadius: '4px',
+                      height: '300px',
+                      overflow: 'hidden',
+                    }}
+                  >
                     {loading.content ? (
-                      <div style={{ 
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#1e1e1e',
-                        color: '#d4d4d4'
-                      }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#1e1e1e',
+                          color: '#d4d4d4',
+                        }}
+                      >
                         Loading file content...
                       </div>
                     ) : error.content ? (
-                      <div style={{ 
-                        height: '100%',
-                        padding: '15px',
-                        backgroundColor: '#1e1e1e',
-                        color: '#f48771',
-                        whiteSpace: 'pre-wrap',
-                        overflow: 'auto'
-                      }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          padding: '15px',
+                          backgroundColor: '#1e1e1e',
+                          color: '#f48771',
+                          whiteSpace: 'pre-wrap',
+                          overflow: 'auto',
+                        }}
+                      >
                         {selectedFileContent}
                       </div>
                     ) : selectedFileContent ? (
@@ -996,14 +1222,16 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                         }}
                       />
                     ) : (
-                      <div style={{ 
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#1e1e1e',
-                        color: '#d4d4d4'
-                      }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#1e1e1e',
+                          color: '#d4d4d4',
+                        }}
+                      >
                         No file selected
                       </div>
                     )}
@@ -1015,7 +1243,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             {/* Evaluation Area */}
             <div style={{ flex: 1, minWidth: '250px' }}>
               <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Evaluation</h3>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <h5>Checklist</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1057,46 +1285,47 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                     padding: '8px',
                     borderRadius: '4px',
                     border: '1px solid #ddd',
-                    minHeight: '100px'
+                    minHeight: '100px',
                   }}
                   placeholder="Write your feedback here..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 ></textarea>
               </div>
-              
+
               <div style={{ marginBottom: '20px' }}>
-                  {selectedFilePath && (
-                    <>
-                      <h5>report :</h5>
-                      <a
-                        href={selectedFilePath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-block',
-                          marginBottom: '10px',
-                          color: '#007bff',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        {selectedFilePath.split('/').pop()}
-                      </a>
-                      <div>
-                        <strong>AI Detection Score :</strong>{' '}
-                        {aiScoreLoading ? 'Analyzing...' : 
-                          aiScore !== null ? 
-                            (typeof aiScore === 'number' ? 
-                              `${(aiScore * 100).toFixed(2)}%` : 
-                              aiScore) : 
-                            'No analysis available'}
-                      </div>
-                    </>
-                  )}
+                {selectedFilePath && (
+                  <>
+                    <h5>report :</h5>
+                    <a
+                      href={selectedFilePath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        marginBottom: '10px',
+                        color: '#007bff',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      {selectedFilePath.split('/').pop()}
+                    </a>
+                    <div>
+                      <strong>AI Detection Score :</strong>{' '}
+                      {aiScoreLoading
+                        ? 'Analyzing...'
+                        : aiScore !== null
+                        ? typeof aiScore === 'number'
+                          ? `${(aiScore * 100).toFixed(2)}%`
+                          : aiScore
+                        : 'No analysis available'}
+                    </div>
+                  </>
+                )}
               </div>
               <div style={{ marginBottom: '20px' }}>
                 <h5>Uploaded Report</h5>
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <p style={{ margin: 0 }}>
                     <strong>File:</strong>{' '}
                     <a
@@ -1106,7 +1335,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                       style={{
                         color: '#007bff',
                         textDecoration: 'underline',
-                        wordBreak: 'break-all'
+                        wordBreak: 'break-all',
                       }}
                     >
                       {deliverable.file.url.split('/').pop()}
@@ -1115,36 +1344,196 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
                   <button
                     onClick={openPdfInNewTab}
-                    className="btn open-pdf-btn"
+                    style={{
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 15px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#0056b3')}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#007bff')}
                   >
                     Open PDF
                   </button>
 
                   <button
                     type="button"
-                    className="btn btn-secondary mt-2 ms-2"
                     onClick={handleSummarize}
                     disabled={isLoading}
+                    style={{
+                      backgroundColor: isLoading ? '#6c757d' : '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 15px',
+                      borderRadius: '4px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseOver={(e) => {
+                      if (!isLoading) e.currentTarget.style.backgroundColor = '#5a6268';
+                    }}
+                    onMouseOut={(e) => {
+                      if (!isLoading) e.currentTarget.style.backgroundColor = '#6c757d';
+                    }}
                   >
                     {isLoading ? 'Summarizing...' : 'Summarize File'}
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCheckPlagiarism}
+                    disabled={loading.plagiarism}
+                    style={{
+                      backgroundColor: loading.plagiarism ? '#6c757d' : '#17a2b8',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 15px',
+                      borderRadius: '4px',
+                      cursor: loading.plagiarism ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      transition: 'background-color 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                    onMouseOver={(e) => {
+                      if (!loading.plagiarism) e.currentTarget.style.backgroundColor = '#138496';
+                    }}
+                    onMouseOut={(e) => {
+                      if (!loading.plagiarism) e.currentTarget.style.backgroundColor = '#17a2b8';
+                    }}
+                  >
+                    {loading.plagiarism ? (
+                      <>
+                        <div
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            border: '2px solid #fff',
+                            borderTop: '2px solid transparent',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                          }}
+                        />
+                        Checking...
+                      </>
+                    ) : (
+                      'Check Plagiarism'
+                    )}
+                  </button>
                 </div>
 
-                {summary && (
-                  <div className="mt-3">
-                    <h5>Summary:</h5>
-                    <p>{summary}</p>
-                    <button 
-                      className="btn btn-primary mt-2"
-                      onClick={openSummaryInNewPage}
-                    >
-                      Open Summary in New Page
-                    </button>
-                  </div>
+                {error.plagiarism && (
+                  <p
+                    style={{
+                      color: '#dc3545',
+                      marginTop: '10px',
+                      backgroundColor: '#f8d7da',
+                      padding: '8px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {error.plagiarism}
+                  </p>
                 )}
 
-                {/* Added Plagiarism Checker component */}
-                <PlagiarismChecker fileUrl={deliverable.file?.url} />
+                {plagiarismScore !== null && (
+                  <div style={{ marginTop: '15px' }}>
+                    <p style={{ fontWeight: 'bold', color: '#333' }}>
+                      Plagiarism Score: {plagiarismScore}%
+                    </p>
+                    <p
+                      style={{
+                        fontWeight: 'bold',
+                        color: plagiarized ? '#dc3545' : '#28a745',
+                        marginTop: '5px',
+                      }}
+                    >
+                      {plagiarized ? '❌ Report may be plagiarized' : '✅ Report appears original'}
+                    </p>
+
+                    <button
+                      onClick={exportPlagiarismReport}
+                      disabled={!plagiarismScore}
+                      style={{
+                        backgroundColor: plagiarismScore ? '#ffc107' : '#6c757d',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 15px',
+                        borderRadius: '4px',
+                        cursor: plagiarismScore ? 'pointer' : 'not-allowed',
+                        fontSize: '14px',
+                        marginTop: '10px',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseOver={(e) => {
+                        if (plagiarismScore) e.currentTarget.style.backgroundColor = '#e0a800';
+                      }}
+                      onMouseOut={(e) => {
+                        if (plagiarismScore) e.currentTarget.style.backgroundColor = '#ffc107';
+                      }}
+                    >
+                      Export Plagiarism Report
+                    </button>
+
+                    {plagiarismDetails.length > 0 && (
+                      <div style={{ marginTop: '15px' }}>
+                        <h5 style={{ color: '#333', marginBottom: '10px' }}>Plagiarism Details:</h5>
+                        {plagiarismDetails.map((match, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              marginBottom: '10px',
+                              padding: '10px',
+                              backgroundColor: '#fff',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => toggleMatchDetails(index)}
+                            >
+                              <p style={{ margin: '0', fontWeight: 'bold', fontSize: '14px' }}>
+                                Matched Document: {match.documentUrl.split('/').pop()} (
+                                {match.similarityScore}%)
+                              </p>
+                              <span style={{ fontSize: '14px', color: '#007bff' }}>
+                                {expandedMatches[index] ? 'Hide Details' : 'Show Details'}
+                              </span>
+                            </div>
+                            {expandedMatches[index] && match.similarSections.length > 0 && (
+                              <div style={{ marginTop: '10px' }}>
+                                <h6 style={{ fontSize: '14px', color: '#333', marginBottom: '8px' }}>
+                                  Similar Sections:
+                                </h6>
+                                <ul style={{ paddingLeft: '20px', fontSize: '13px', color: '#555' }}>
+                                  {match.similarSections.map((section, i) => (
+                                    <li key={i} style={{ marginBottom: '10px' }}>
+                                      <strong>Original:</strong> {section.original} <br />
+                                      <strong>Matched:</strong> {section.matched} <br />
+                                      <strong>Similarity:</strong> {section.similarity}%
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: '20px' }}>
@@ -1160,38 +1549,42 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                     width: '100%',
                     padding: '8px',
                     borderRadius: '4px',
-                    border: '1px solid #ddd'
+                    border: '1px solid #ddd',
                   }}
                 />
               </div>
 
               {error.submission && (
-                <div style={{ 
-                  marginBottom: '15px', 
-                  color: '#dc3545', 
-                  backgroundColor: '#f8d7da',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #f5c6cb'
-                }}>
+                <div
+                  style={{
+                    marginBottom: '15px',
+                    color: '#dc3545',
+                    backgroundColor: '#f8d7da',
+                    padding: '10px',
+                    borderRadius: '4px',
+                    border: '1px solid #f5c6cb',
+                  }}
+                >
                   {error.submission}
                 </div>
               )}
 
               {submitSuccess && (
-                <div style={{ 
-                  marginBottom: '15px', 
-                  color: '#155724', 
-                  backgroundColor: '#d4edda',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #c3e6cb'
-                }}>
+                <div
+                  style={{
+                    marginBottom: '15px',
+                    color: '#155724',
+                    backgroundColor: '#d4edda',
+                    padding: '10px',
+                    borderRadius: '4px',
+                    border: '1px solid #c3e6cb',
+                  }}
+                >
                   Evaluation submitted successfully!
                 </div>
               )}
 
-              <button 
+              <button
                 onClick={handleSubmit}
                 disabled={loading.submission}
                 style={{
@@ -1205,7 +1598,8 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   fontSize: '1rem',
                   display: 'flex',
                   justifyContent: 'center',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  transition: 'background-color 0.2s',
                 }}
                 onMouseOver={(e) => {
                   if (!loading.submission) e.currentTarget.style.backgroundColor = '#218838';
@@ -1219,6 +1613,15 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             </div>
           </div>
         </div>
+
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
       </div>
     </div>
   );

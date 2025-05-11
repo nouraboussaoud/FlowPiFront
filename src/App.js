@@ -17,6 +17,7 @@ import SubjectForm from "./pages/dashboard/SubjectForm";
 import SubjectList from "./pages/dashboard/SubjectList";
 import CreateGroup from "./pages/dashboard/CreateGroup";
 
+
 import SkillsManager from "./pages/dashboard/SkillsManager";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import TutorDashboard from "./pages/dashboard/TutorDashboard";
@@ -91,7 +92,7 @@ function App() {
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
           <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
-          <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
+          
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
           <Route path="/dashboard-stat" element={<Dashboard />} />
           <Route path="/users-table" element={<UsersTable />} />
