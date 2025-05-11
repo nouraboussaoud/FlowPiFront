@@ -24,7 +24,16 @@ const QuizAnalyticsPanel = ({ taskId, onClose }) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setAnalytics(response.data.analytics || []);
+        // Ensure we have proper user information in the analytics
+        const processedAnalytics = response.data.analytics.map(quiz => ({
+          ...quiz,
+          attempts: quiz.attempts.map(attempt => ({
+            ...attempt,
+            username: attempt.username || attempt.email || 'Unknown Student'
+          }))
+        }));
+
+        setAnalytics(processedAnalytics || []);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching quiz analytics:', error);
@@ -49,45 +58,127 @@ const QuizAnalyticsPanel = ({ taskId, onClose }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content analytics-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">
+      <div className="modal-content analytics-panel" onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: 'white',
+          color: '#1f2937',
+          maxWidth: '900px',
+          width: '90%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+        }}
+      >
+        <div className="modal-header" style={{ 
+          backgroundColor: '#f8fafc', 
+          borderBottom: '1px solid #edf2f7',
+          padding: '16px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h2 className="modal-title" style={{
+            margin: 0,
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            color: '#1f2937',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
             <BarChart2 size={20} className="me-2" />
             Quiz Analytics
           </h2>
-          <button className="close-button" onClick={onClose}>
+          <button className="close-button" onClick={onClose} style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            color: '#6b7280'
+          }}>
             <X size={20} />
           </button>
         </div>
 
         {loading ? (
-          <div className="loading-container">
+          <div className="loading-container" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px',
+            backgroundColor: 'white'
+          }}>
             <div className="spinner"></div>
-            <p>Loading analytics...</p>
+            <p style={{ color: '#6b7280', marginTop: '16px' }}>Loading analytics...</p>
           </div>
         ) : error ? (
-          <div className="error-message">
+          <div className="error-message" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '24px',
+            color: '#ef4444',
+            backgroundColor: 'white'
+          }}>
             <AlertCircle size={20} />
             <p>{error}</p>
           </div>
         ) : analytics.length === 0 ? (
-          <div className="empty-state">
+          <div className="empty-state" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px',
+            color: '#6b7280',
+            backgroundColor: 'white'
+          }}>
             <Award size={48} color="#9ca3af" />
             <p>No quiz attempts found for this task.</p>
           </div>
         ) : (
-          <div className="analytics-content">
+          <div className="analytics-content" style={{ 
+            padding: '24px',
+            backgroundColor: 'white'
+          }}>
             {selectedQuiz ? (
-              <div className="quiz-details">
+              <div className="quiz-details" style={{ backgroundColor: 'white' }}>
                 <button 
                   className="back-button"
                   onClick={() => setSelectedQuiz(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#4a6cf7',
+                    fontWeight: '500',
+                    padding: '8px 0',
+                    marginBottom: '16px',
+                    cursor: 'pointer'
+                  }}
                 >
                   ← Back to all quizzes
                 </button>
                 
-                <h3>Quiz Attempt Details</h3>
-                <div className="attempt-info">
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  marginBottom: '16px',
+                  color: '#1f2937',
+                  borderBottom: '1px solid #e5e7eb',
+                  paddingBottom: '8px'
+                }}>Quiz Attempt Details</h3>
+                
+                <div className="attempt-info" style={{
+                  backgroundColor: '#f8fafc',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  marginBottom: '24px'
+                }}>
                   <p><strong>Student:</strong> {selectedQuiz.username}</p>
                   <p><strong>Date:</strong> {formatDate(selectedQuiz.completedAt)}</p>
                   <p><strong>Score:</strong> <span style={{ color: getScoreColor(selectedQuiz.score) }}>{selectedQuiz.score}%</span></p>
@@ -97,23 +188,50 @@ const QuizAnalyticsPanel = ({ taskId, onClose }) => {
                   </p>
                 </div>
                 
-                <h4>Question Results</h4>
+                <h4 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  marginBottom: '16px',
+                  color: '#374151'
+                }}>Question Results</h4>
+                
                 {selectedQuiz.results && selectedQuiz.results.length > 0 ? (
-                  <div className="question-results">
+                  <div className="question-results" style={{ backgroundColor: 'white' }}>
                     {selectedQuiz.results.map((result, index) => (
                       <div 
                         key={index} 
                         className={`result-item ${result.isCorrect ? 'correct' : 'incorrect'}`}
+                        style={{
+                          padding: '16px',
+                          borderRadius: '8px',
+                          marginBottom: '16px',
+                          position: 'relative',
+                          backgroundColor: result.isCorrect ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                          borderLeft: `4px solid ${result.isCorrect ? '#10b981' : '#ef4444'}`
+                        }}
                       >
-                        <p className="question-text">{result.question}</p>
-                        <div className="answer-details">
+                        <p className="question-text" style={{ color: '#1f2937', fontWeight: '500' }}>{result.question}</p>
+                        <div className="answer-details" style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                          padding: '12px',
+                          borderRadius: '6px',
+                          marginBottom: '12px',
+                          borderLeft: `3px solid ${result.isCorrect ? '#10b981' : '#ef4444'}`
+                        }}>
                           <p><strong>Student's Answer:</strong> {result.studentAnswer}</p>
                           {!result.isCorrect && (
                             <p><strong>Correct Answer:</strong> {result.correctAnswer}</p>
                           )}
                         </div>
                         {result.explanation && (
-                          <div className="explanation">
+                          <div className="explanation" style={{
+                            backgroundColor: '#f8fafc',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            fontStyle: 'italic',
+                            color: '#4b5563',
+                            borderLeft: '3px solid #9ca3af'
+                          }}>
                             <p><strong>Explanation:</strong> {result.explanation}</p>
                           </div>
                         )}
@@ -121,28 +239,66 @@ const QuizAnalyticsPanel = ({ taskId, onClose }) => {
                     ))}
                   </div>
                 ) : (
-                  <p>No detailed results available for this attempt.</p>
+                  <p style={{ color: '#6b7280' }}>No detailed results available for this attempt.</p>
                 )}
               </div>
             ) : (
               <>
-                <h3>Quiz Attempts</h3>
-                <div className="attempts-list">
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  marginBottom: '16px',
+                  color: '#1f2937',
+                  borderBottom: '1px solid #e5e7eb',
+                  paddingBottom: '8px'
+                }}>Quiz Attempts</h3>
+                <div className="attempts-list" style={{ backgroundColor: 'white' }}>
                   {analytics.flatMap(quiz => 
                     quiz.attempts.map((attempt, index) => (
                       <div 
                         key={`${quiz.quizId}-${index}`} 
                         className="attempt-card"
                         onClick={() => setSelectedQuiz(attempt)}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '8px',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                          padding: '16px',
+                          marginBottom: '16px',
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          border: '1px solid #e5e7eb'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                        }}
                       >
-                        <div className="attempt-header">
-                          <span className="attempt-date">{formatDate(attempt.completedAt)}</span>
+                        <div className="attempt-header" style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '12px'
+                        }}>
+                          <span className="attempt-date" style={{
+                            fontSize: '14px',
+                            color: '#6b7280'
+                          }}>{formatDate(attempt.completedAt)}</span>
                           {attempt.passed ? 
                             <span className="passed-badge">Passed</span> : 
                             <span className="failed-badge">Failed</span>}
                         </div>
                         <div className="attempt-body">
-                          <p className="student-name">{attempt.username}</p>
+                          <p className="student-name" style={{
+                            fontWeight: '600',
+                            fontSize: '16px',
+                            marginBottom: '8px',
+                            color: '#1f2937'
+                          }}>{attempt.username}</p>
                           <div className="score-container">
                             <div className="score-bar-container">
                               <div 
@@ -158,8 +314,20 @@ const QuizAnalyticsPanel = ({ taskId, onClose }) => {
                             </span>
                           </div>
                         </div>
-                        <div className="attempt-footer">
-                          <button className="view-details-button">View Details</button>
+                        <div className="attempt-footer" style={{
+                          marginTop: '12px',
+                          textAlign: 'right'
+                        }}>
+                          <button className="view-details-button" style={{
+                            backgroundColor: '#f3f4f6',
+                            color: '#4b5563',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer'
+                          }}>View Details</button>
                         </div>
                       </div>
                     ))

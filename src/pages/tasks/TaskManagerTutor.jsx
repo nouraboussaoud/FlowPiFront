@@ -198,13 +198,16 @@ const TaskManagerTutor = () => {
       let quizScore, quizPassed;
       try {
         const quizResponse = await axios.get(
-          `http://localhost:5000/quizAnalytics/${taskId}`,
+          `http://localhost:5000/api/tasks/quizAnalytics/${taskId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        
+        // Find attempts for the assigned user
         const latestAttempt = quizResponse.data.analytics
           .flatMap(quiz => quiz.attempts)
           .filter(attempt => attempt.userId === task.assignedTo)
           .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+        
         quizScore = latestAttempt?.score;
         quizPassed = latestAttempt?.passed;
       } catch (error) {
@@ -256,13 +259,19 @@ const TaskManagerTutor = () => {
       const tasksWithQuizData = await Promise.all(response.data.map(async (task) => {
         try {
           const quizResponse = await axios.get(
-            `http://localhost:5000/quizAnalytics/${task._id}`,
+            `http://localhost:5000/api/tasks/quizAnalytics/${task._id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
+          
+          // Find attempts for the assigned user
           const latestAttempt = quizResponse.data.analytics
             .flatMap(quiz => quiz.attempts)
-            .filter(attempt => attempt.userId === task.assignedTo)
+            .filter(attempt => 
+              attempt.userId === task.assignedTo || 
+              attempt.email === getUserInfo(task.assignedTo).email
+            )
             .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+          
           return {
             ...task,
             quizScore: latestAttempt?.score,

@@ -64,6 +64,9 @@ import EditProfileTutor from "./pages/auth/EditProfileTutor";
 import EditProfileAdmin from "./pages/auth/EditProfileAdmin";
 import EditProfileStudent from "./pages/auth/EditProfileStudent";
 
+// Import global CSS for modals
+import "./styles/global.css";
+
 function App() {
   return (
     <div>
@@ -129,6 +132,8 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster position="top-center" />
+      {/* Modal container for global modals */}
+      <div id="modal-root"></div>
     </div>
   );
 }
