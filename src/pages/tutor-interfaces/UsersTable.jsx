@@ -950,7 +950,6 @@ const UsersTable = () => {
                   >
                     <option value="student">Student</option>
                     <option value="tutor">Tutor</option>
-                    <option value="admin">Admin</option>
                   </select>
                 </div>
               </form>
@@ -1028,7 +1027,7 @@ const UsersTable = () => {
                   <label className="form-label fw-bold">Profile Picture</label>
                   <div>
                     <img
-                      src={`http://localhost:5000/uploads/${detailsModalUser.profilePic}`}
+                      src={`http://localhost:5000/uploads/profiles/${detailsModalUser.profilePic}`}
                       className="rounded-circle"
                       alt={`${detailsModalUser.name}'s avatar`}
                       width="80"
