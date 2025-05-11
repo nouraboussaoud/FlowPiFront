@@ -458,3 +458,112 @@
     width: 100%;
   }
 }
+
+/* Add these styles to match DashboardTasks */
+.simple-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.task-counts {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.button-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.button-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.button-info {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.button-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.button-danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.task-button-group {
+  display: flex;
+  gap: 5px;
+}
+
+.priority-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+}
+
+.priority-urgent {
+  background-color: #ef4444;
+}
+
+.priority-high {
+  background-color: #f59e0b;
+}
+
+.priority-medium {
+  background-color: #3b82f6;
+}
+
+.priority-low {
+  background-color: #10b981;
+}
+
+.margin-left-half {
+  margin-left: 5px;
+}
+
+.status-buttons {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.status-button {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-button.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
