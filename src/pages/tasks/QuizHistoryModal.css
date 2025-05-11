@@ -1,0 +1,66 @@
+/* QuizHistoryModal.css */
+.quiz-history-modal {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
+.quiz-history-modal * {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
+.quiz-history-modal h2,
+.quiz-history-modal h3,
+.quiz-history-modal h4,
+.quiz-history-modal p,
+.quiz-history-modal div {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
+/* Exceptions for specific elements */
+.quiz-history-modal .modal-header {
+  background-color: #f8fafc !important;
+}
+
+.quiz-history-modal .status-passed {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+}
+
+.quiz-history-modal .status-failed {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+}
+
+.quiz-history-modal .correct-answer {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.quiz-history-modal .incorrect-answer {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .quiz-history-modal {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+[data-theme="dark"] .quiz-history-modal * {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+[data-theme="dark"] .quiz-history-modal .modal-header {
+  background-color: #111827 !important;
+}
+
+[data-theme="dark"] .quiz-history-modal h2,
+[data-theme="dark"] .quiz-history-modal h3,
+[data-theme="dark"] .quiz-history-modal h4,
+[data-theme="dark"] .quiz-history-modal p,
+[data-theme="dark"] .quiz-history-modal div {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
