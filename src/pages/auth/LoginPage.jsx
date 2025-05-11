@@ -31,7 +31,12 @@ const LoginPage = () => {
   const currentBg = useAnimatedBackground(backgroundImages,5000);
 
   const googleAuth = () => {
-    // Rediriger vers l'authentification Google
+    // Clear any existing auth data before starting new auth flow
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    // Add other items you store during auth
+   
+    
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   };
   

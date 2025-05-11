@@ -525,7 +525,66 @@ const LayoutTutorss = ({ children }) => {
                     </ul>
                   )}
                 </li>
+       
+                <li className="nav-item dropdown">
+  <div
+    className={`nav-link dropdown-toggle ${isActive('/group-attendance') || isActive('/AttendanceHistory') ? 'active' : ''}`}
+    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDropdown('attendance');
+    }}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDropdown('attendance');
+      }
+    }}
+    tabIndex={0}
+    role="button"
+    aria-expanded={activeDropdown === 'attendance'}
+  >
+    Attendance Management
+  </div>
 
+  {activeDropdown === 'attendance' && (
+    <div 
+      className="dropdown-menu show"
+      style={{
+        zIndex: 1050, // Plus élevé que les modaux (1060)
+        position: 'absolute'
+      }}
+    >
+      <button
+        className="dropdown-item"
+        onClick={(e) => {
+          e.preventDefault();
+          navigate("/group-attendance");
+          setShowMobileMenu(false);
+          setActiveDropdown(null);
+        }}
+        style={{ cursor: 'pointer' }}
+        type="button"
+      >
+        Record Attendance
+      </button>
+      <button
+        className="dropdown-item"
+        onClick={(e) => {
+          e.preventDefault();
+          navigate("/AttendanceHistory");
+          setShowMobileMenu(false);
+          setActiveDropdown(null);
+        }}
+        style={{ cursor: 'pointer' }}
+        type="button"
+      >
+        View Attendance History
+      </button>
+    </div>
+  )}
+</li>
                 {/* Students */}
                 <li className="nav-item">
                   <div
@@ -561,6 +620,7 @@ const LayoutTutorss = ({ children }) => {
                     Deliverables
                   </div>
                 </li>
+
               </ul>
 
               {/* Right side controls */}

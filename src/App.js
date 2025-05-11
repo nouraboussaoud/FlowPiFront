@@ -1,6 +1,9 @@
 import React from "react";
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+import 'bootstrap/dist/js/bootstrap.bundle.min';
+
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Courses from "./pages/Courses";
@@ -16,6 +19,10 @@ import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import SubjectForm from "./pages/dashboard/SubjectForm";
 import SubjectList from "./pages/dashboard/SubjectList";
 import CreateGroup from "./pages/dashboard/CreateGroup";
+import AttendancePerStudent from "./pages/dashboard/AttendancePerStudent";
+
+import GroupAttendance from "./pages/dashboard/GroupAttendance";
+import AttendanceHistory from "./pages/dashboard/AttendanceHistory";
 
 import SkillsManager from "./pages/dashboard/SkillsManager";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
@@ -72,7 +79,10 @@ function App() {
           <Route path="/Subject-Form" element={<SubjectForm />} />
           <Route path="/Subject-List" element={<SubjectList />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          
+          <Route path="/AttendancePerStudent" element={<AttendancePerStudent />} />
+       
+          <Route path="/AttendanceHistory" element={<AttendanceHistory />} />
+          <Route path="/group-attendance" element={<GroupAttendance />} />
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />
           <Route path="/SubjectAdmin" element={<SubjectAdmin />} />
@@ -91,7 +101,7 @@ function App() {
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
           <Route path="/dashboard-tasks" element={< AdminTaskDashboard/>} />
-          <Route path="/report-viewer/:id" element={<ReportViewer/>}/>
+
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
           <Route path="/dashboard-stat" element={<Dashboard />} />
           <Route path="/users-table" element={<UsersTable />} />

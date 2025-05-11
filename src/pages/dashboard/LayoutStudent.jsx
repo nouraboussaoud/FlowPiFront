@@ -183,6 +183,11 @@ const LayoutStudent = ({ children }) => {
     navigate("/Project-Manager");
     setShowMobileMenu(false);
   };
+  // Ajoutez avec les autres handlers de navigation
+const handleNavigateToAttendance = () => {
+  navigate("/AttendancePerStudent");
+  setShowMobileMenu(false);
+};
 
   const handleNavigateToStudentDashboard = () => {
     navigate("/student-dashboard");
@@ -444,6 +449,15 @@ const LayoutStudent = ({ children }) => {
                     style={{ cursor: 'pointer', ...navbarStyles.navLink }}
                   >
                     Projects
+                  </div>
+                </li>
+                <li className="nav-item">
+                  <div
+                    className={`nav-link ${isActive('/AttendancePerStudent') ? 'active' : ''}`}
+                    onClick={handleNavigateToAttendance}
+                    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+                  >
+                    Attendance
                   </div>
                 </li>
                 <li className="nav-item">
