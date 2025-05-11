@@ -737,10 +737,18 @@ const TaskManagerTutor = () => {
         )}
 
         {showAnalyticsPanel && (
-          <QuizAnalyticsPanel
-            taskId={showAnalyticsPanel}
-            onClose={() => setShowAnalyticsPanel(null)}
-          />
+          <div className="modal-overlay">
+            <QuizAnalyticsPanel 
+              taskId={showAnalyticsPanel} 
+              onClose={() => setShowAnalyticsPanel(null)}
+              githubInfo={{
+                repoOwner: tasks.find(t => t._id === showAnalyticsPanel)?.repoOwner ,
+                repoName: tasks.find(t => t._id === showAnalyticsPanel)?.repoName ,
+                commitSha: tasks.find(t => t._id === showAnalyticsPanel)?.commitSha ,
+                branch: tasks.find(t => t._id === showAnalyticsPanel)?.branchName 
+              }}
+            />
+          </div>
         )}
 
         {isLoading && tasks.length === 0 ? (
