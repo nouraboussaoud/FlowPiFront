@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../DashboardLayout';
 import { Pie, Bar, Doughnut, PolarArea, Line, Radar, Bubble } from 'react-chartjs-2';
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Chart as ChartJS, 
   ArcElement, 
@@ -42,6 +43,21 @@ const AdminDashboard = () => {
     skills: { labels: [], data: [] },
     subjects: { labels: [], data: [] }
   });
+  const location = useLocation();
+    const navigate = useNavigate();
+    
+   
+      
+       useEffect(() => {
+         const queryParams = new URLSearchParams(location.search);
+         const token = queryParams.get('token');
+         
+         if (token) {
+           localStorage.setItem('token', token);
+           console.log('Token stored in localStorage:', token);
+           navigate('/admin-dashboard', { replace: true });
+         }
+       }, [location, navigate]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {

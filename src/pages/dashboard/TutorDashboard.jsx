@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from "react-router-dom";
 import LayoutTutorss from './LayoutTutorss';
 import UsersTable from '../tutor-interfaces/UsersTable';
 import { Pie, Doughnut, Line, Bar } from 'react-chartjs-2';
@@ -10,11 +10,18 @@ import axios from 'axios';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title);
 
 const TutorDashboard = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  
+ 
+   
+    
+   
+      
+    
   // Data states
   const [students, setStudents] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -84,7 +91,21 @@ const TutorDashboard = () => {
       borderWidth: 1
     }]
   });
+  
 
+  
+ 
+    
+     useEffect(() => {
+       const queryParams = new URLSearchParams(location.search);
+       const token = queryParams.get('token');
+       
+       if (token) {
+         localStorage.setItem('token', token);
+         console.log('Token stored in localStorage:', token);
+         navigate('/tutor-dashboard', { replace: true });
+       }
+     }, [location, navigate]);
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {

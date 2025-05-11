@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
-import LayoutTutorss from './LayoutTutorss';
+import DashboardLayout from "./DashboardLayout";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,7 @@ import debounce from 'lodash.debounce';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const AttendanceHistory = () => {
+const AttendanceHistoryAdmin = () => {
   const [records, setRecords] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [stats, setStats] = useState(null);
@@ -142,7 +142,7 @@ const AttendanceHistory = () => {
 
   // Handle edit
   const handleEdit = (record) => {
-    navigate(`/group-attendance`, {
+    navigate(`/AttendaceFormAdmin`, {
       state: {
         groupId: record.group?._id,
         sessionDate: record.sessionDate,
@@ -160,195 +160,212 @@ const AttendanceHistory = () => {
 
   // Export to PDF
   const exportToPDF = () => {
-      if (!stats) return;
-  
-      try {
-          const doc = new jsPDF({
-        orientation: 'landscape'
-      });
-  
-      // Title
-      doc.setFontSize(18);
-      doc.text(`Attendance Statistics for Group: ${modalGroupName}`, 14, 15);
-  
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
-  
-      // Main stats table
-      const headers = [
-        'Member',
-        'Email', // Nouvelle colonne pour l'email
-        'Present',
-        'Absent',
-        'Normal Follow-up',
-        'Validation Day',
-        'Justified',
-        'Total',
-        '% Presence',
-        'Status'
-      ];
-  
-      const data = stats.map(member => [
-        member.name,
-        member.email || 'N/A', // Ajout de l'email
-        member.present,
-        member.absent,
-        member.normalFollowUpAbsences,
-        member.validationDayAbsences,
-        member.justifiedAbsences,
-        member.totalSessions,
-        member.totalSessions > 0 ? `${member.presencePercentage}%` : 'N/A',
-        member.totalSessions > 0 
-          ? member.presencePercentage >= 80 
-            ? "Excellent" 
-            : member.presencePercentage >= 50 
-              ? "Fair" 
-              : "Poor"
-          : 'N/A'
-      ]);
-  
-      autoTable(doc, {
-        head: [headers],
-        body: data,
-        startY: 30,
-        styles: {
-          fontSize: 8,
-          cellPadding: 2,
-          overflow: 'linebreak'
-        },
-        columnStyles: {
-          0: { cellWidth: 'auto' },
-          1: { cellWidth: 'auto' },
-          2: { cellWidth: 'auto' },
-          3: { cellWidth: 'auto' },
-          4: { cellWidth: 'auto' },
-          5: { cellWidth: 'auto' },
-          6: { cellWidth: 'auto' },
-          7: { cellWidth: 'auto' },
-          8: { cellWidth: 'auto' },
-          9: { cellWidth: 'auto' }
-        }
-      });
-  
-      // Add absence details for each member
-      
-      
-      let yPos = doc.lastAutoTable.finalY + 10;
-      
-      stats.forEach(member => {
-        if (member.absent > 0) {
-          // Member title with photo if available
-          doc.setFontSize(12);
-          
-          // Ajouter la photo si disponible
-          if (member.profilePic) {
-            try {
-              const imgData = member.profilePic.includes("http") 
-                ? member.profilePic 
-                : `http://localhost:5000/uploads/${member.profilePic}`;
-              
-              // Add small profile image (10x10 mm)
-              doc.addImage(imgData, 'JPEG', 14, yPos, 10, 10);
-              doc.text(`${member.name} - ${member.absent} absence(s)`, 26, yPos + 7);
-              yPos += 15; // Plus d'espace pour l'image
-            } catch (error) {
-              console.error('Error adding image:', error);
-              doc.text(`${member.name} - ${member.absent} absence(s)`, 14, yPos);
-              yPos += 7;
-            }
-          } else {
+    if (!stats) return;
+
+    try {
+        const doc = new jsPDF({
+      orientation: 'landscape'
+    });
+
+    // Title
+    doc.setFontSize(18);
+    doc.text(`Attendance Statistics for Group: ${modalGroupName}`, 14, 15);
+
+    // Add date
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+
+    // Main stats table
+    const headers = [
+      'Member',
+      'Email', // Nouvelle colonne pour l'email
+      'Present',
+      'Absent',
+      'Normal Follow-up',
+      'Validation Day',
+      'Justified',
+      'Total',
+      '% Presence',
+      'Status'
+    ];
+
+    const data = stats.map(member => [
+      member.name,
+      member.email || 'N/A', // Ajout de l'email
+      member.present,
+      member.absent,
+      member.normalFollowUpAbsences,
+      member.validationDayAbsences,
+      member.justifiedAbsences,
+      member.totalSessions,
+      member.totalSessions > 0 ? `${member.presencePercentage}%` : 'N/A',
+      member.totalSessions > 0 
+        ? member.presencePercentage >= 80 
+          ? "Excellent" 
+          : member.presencePercentage >= 50 
+            ? "Fair" 
+            : "Poor"
+        : 'N/A'
+    ]);
+
+    autoTable(doc, {
+      head: [headers],
+      body: data,
+      startY: 30,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: 'linebreak'
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 'auto' },
+        4: { cellWidth: 'auto' },
+        5: { cellWidth: 'auto' },
+        6: { cellWidth: 'auto' },
+        7: { cellWidth: 'auto' },
+        8: { cellWidth: 'auto' },
+        9: { cellWidth: 'auto' }
+      }
+    });
+
+    // Add absence details for each member
+    
+    
+    let yPos = doc.lastAutoTable.finalY + 10;
+    
+    stats.forEach(member => {
+      if (member.absent > 0) {
+        // Member title with photo if available
+        doc.setFontSize(12);
+        
+        // Ajouter la photo si disponible
+        if (member.profilePic) {
+          try {
+            const imgData = member.profilePic.includes("http") 
+              ? member.profilePic 
+              : `http://localhost:5000/uploads/${member.profilePic}`;
+            
+            // Add small profile image (10x10 mm)
+            doc.addImage(imgData, 'JPEG', 14, yPos, 10, 10);
+            doc.text(`${member.name} - ${member.absent} absence(s)`, 26, yPos + 7);
+            yPos += 15; // Plus d'espace pour l'image
+          } catch (error) {
+            console.error('Error adding image:', error);
             doc.text(`${member.name} - ${member.absent} absence(s)`, 14, yPos);
             yPos += 7;
           }
-  
-          // Absence details table - updated to include email
-          const absenceHeaders = [
-            'Date', 
-            'Status', 
-            'Follow-up Type', 
-            'Justification',
-            'Email' // Nouvelle colonne
-          ];
-          
-          const absenceData = member.absenceDetails.map(absence => [
-            absence.date ? new Date(absence.date).toLocaleDateString() : 'N/A',
-            absence.isJustified ? 'Justified' : 'Unjustified',
-            absence.followUpType || 'N/A',
-            absence.justification || 'No justification',
-            member.email || 'N/A' // Ajout de l'email
-          ]);
-  
-          autoTable(doc, {
-            head: [absenceHeaders],
-            body: absenceData,
-            startY: yPos,
-            styles: {
-              fontSize: 8,
-              cellPadding: 2
-            },
-            columnStyles: {
-              0: { cellWidth: 'auto' },
-              1: { cellWidth: 'auto' },
-              2: { cellWidth: 'auto' },
-              3: { cellWidth: 'auto' },
-              4: { cellWidth: 'auto' }
-            }
-          });
-  
-          yPos = doc.lastAutoTable.finalY + 10;
-          
-          // Add page break if we're getting close to the bottom
-          if (yPos > 180) {
-            doc.addPage();
-            yPos = 20;
-          }
+        } else {
+          doc.text(`${member.name} - ${member.absent} absence(s)`, 14, yPos);
+          yPos += 7;
         }
-      });
-  
-      // Save the PDF
-      doc.save(`Attendance_Stats_${modalGroupName}_${new Date().toISOString().slice(0, 10)}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast.error('Failed to generate PDF');
-    }
-  };
-    // Pagination calculations
-    const offset = currentPage * recordsPerPage;
-    const currentRecords = filteredRecords.slice(offset, offset + recordsPerPage);
-    const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+
+        // Absence details table - updated to include email
+        const absenceHeaders = [
+          'Date', 
+          'Status', 
+          'Follow-up Type', 
+          'Justification',
+          'Email' // Nouvelle colonne
+        ];
+        
+        const absenceData = member.absenceDetails.map(absence => [
+          absence.date ? new Date(absence.date).toLocaleDateString() : 'N/A',
+          absence.isJustified ? 'Justified' : 'Unjustified',
+          absence.followUpType || 'N/A',
+          absence.justification || 'No justification',
+          member.email || 'N/A' // Ajout de l'email
+        ]);
+
+        autoTable(doc, {
+          head: [absenceHeaders],
+          body: absenceData,
+          startY: yPos,
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 'auto' },
+            4: { cellWidth: 'auto' }
+          }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+        
+        // Add page break if we're getting close to the bottom
+        if (yPos > 180) {
+          doc.addPage();
+          yPos = 20;
+        }
+      }
+    });
+
+    // Save the PDF
+    doc.save(`Attendance_Stats_${modalGroupName}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    toast.error('Failed to generate PDF');
+  }
+};
+  // Pagination calculations
+  const offset = currentPage * recordsPerPage;
+  const currentRecords = filteredRecords.slice(offset, offset + recordsPerPage);
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
 
   return (
-    <LayoutTutorss>
+    <DashboardLayout>
       <style>
-        {`
-          /* Styles pour la modal étendue */
-          .modal-90w {
-            max-width: 90%;
-            width: 90%;
-          }
+    {`
+      /* Custom width for the modal */
+      .modal-90w {
+        max-width: 100% !important; /* Increase width to 90% of the screen */
+        width: 90% !important;
+      }
 
-          /* Pour le header fixe lors du défilement */
-          .table-responsive {
-            position: relative;
-          }
+      /* Ensure the modal is centered */
+      .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
 
-          .sticky-top {
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 10;
-          }
+      /* For the header fixed during scroll */
+      .table-responsive {
+        position: relative;
+      }
 
-          /* Pour la première colonne fixe lors du défilement horizontal */
-          .sticky-cell {
-            position: sticky;
-            left: 0;
-            background: white;
-            z-index: 5;
-          }
-        `}
-      </style>
+      .sticky-top {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+      }
+
+      /* For the first column fixed during horizontal scroll */
+      .sticky-cell {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 5;
+      }
+
+      /* Ensure modal content is scrollable and fits well */
+      .modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+        padding: 20px;
+        width: 100% !important;
+      }
+    `}
+  </style>
+     
       <div className="container mt-4">
       <br></br>
         <h2 className="mb-4">📋 Attendance History</h2>
@@ -564,33 +581,27 @@ const AttendanceHistory = () => {
 
         {/* Stats Modal */}
         <Modal
-          show={showStatsModal}
-          onHide={() => setShowStatsModal(false)}
-          size="xl"
-          scrollable
-          centered
-          dialogClassName="modal-dialog-centered modal-xl"
-          contentClassName="mx-auto"
-          style={{ display: 'flex', alignItems: 'center', zIndex: 1050, justifyContent: 'center' }}
-        >
+         show={showStatsModal}
+         onHide={() => setShowStatsModal(false)}
+         size="xl"
+         scrollable
+         centered
+         dialogClassName="modal-90w modal-dialog-centered" // Use the custom class for width
+         contentClassName="mx-auto"
+         style={{ display: 'flex', alignItems: 'center', zIndex: 1050, justifyContent: 'center' }}
+       >
           <Modal.Header closeButton className="bg-info text-dark">
             <Modal.Title>
               📊 Statistics for Group: {modalGroupName}
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body 
-            style={{
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              padding: '20px',
-            }}
-          >
-            {statsLoading ? (
-              <div className="text-center py-4">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-              </div>
+          <Modal.Body>
+      {statsLoading ? (
+        <div className="text-center py-4">
+          <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
             ) : stats ? (
               <div className="container-fluid">
                 {/* Tableau principal des stats */}
@@ -747,8 +758,8 @@ const AttendanceHistory = () => {
           </Modal.Footer>
         </Modal>
       </div>
-    </LayoutTutorss>
+      </DashboardLayout>
   );
 };
 
-export default AttendanceHistory;
+export default AttendanceHistoryAdmin;

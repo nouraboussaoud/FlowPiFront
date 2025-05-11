@@ -287,6 +287,9 @@ const SubjectList = () => {
         {editingSubject && (
           <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg">
+              <br></br>
+              <br></br>
+              <br></br>
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Edit Subject</h5>

@@ -9,6 +9,7 @@ import {
   faUsers, 
   faLayerGroup, 
   faProjectDiagram, 
+  faHistory,
   faBookOpen, 
   faList, 
   faCog,
@@ -35,6 +36,16 @@ const LayoutAdmin = ({ children, title }) => {
     { title: "Projects", icon: faProjectDiagram, path: "/ProjectAdmin" },
     { title: "Create Subjects", icon: faBookOpen, path: "/CreateSubjectAdmin" },
     { title: "All Subjects", icon: faList, path: "/SubjectAdmin" },
+    { 
+      title: "Subject Assignment", 
+      icon: faBookOpen, 
+      path: "/SubjectAssignmentadmin" 
+    },
+    { 
+      title: "Attendance History", 
+      icon: faHistory,
+      path: "/AttendanceHistoryAdmin" 
+    },
     { title: "Settings", icon: faCog, path: "/user-settings" }
   ];
 

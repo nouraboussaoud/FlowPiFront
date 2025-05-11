@@ -34,6 +34,9 @@ import GroupList from "./pages/GroupList";
 import SubjectAdmin from "./pages/SubjectAdmin";
 import CreateSubjectAdmin from "./pages/CreateSubjectAdmin";
 import ProjectAdmin from "./pages/ProjectAdmin";
+import SubjectAssignmentadmin from "./pages/SubjectAssignmentadmin";
+import AttendanceHistoryAdmin from "./pages/AttendanceHistoryAdmin";
+import AttendaceFormAdmin from "./pages/AttendaceFormAdmin";
 import GroupTutor from "./pages/GroupTutor";
 import InvitationList from "./pages/UserGroupInvitations";
 import Logout from "./pages/auth/Logout";
@@ -94,6 +97,9 @@ function App() {
           <Route path="/SubjectAdmin" element={<SubjectAdmin />} />
           <Route path="/CreateSubjectAdmin" element={<CreateSubjectAdmin />} />
           <Route path="/ProjectAdmin" element={<ProjectAdmin />} />
+          <Route path="/SubjectAssignmentadmin" element={<SubjectAssignmentadmin />} />
+          <Route path="/AttendaceFormAdmin" element={<AttendaceFormAdmin />} />
+          <Route path="/AttendanceHistoryAdmin" element={<AttendanceHistoryAdmin />} />
           <Route path="/GroupTutor" element={<GroupTutor />} />
           <Route path="/Project-Manager" element={<ProjectManager />} />
           <Route path="/Project-Tutor" element={<ProjectTutor />} />

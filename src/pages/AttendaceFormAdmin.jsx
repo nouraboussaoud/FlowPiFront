@@ -4,9 +4,9 @@ import "react-toastify/dist/ReactToastify.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useLocation } from "react-router-dom";
-import LayoutTutor from "./LayoutTutorss";
+import DashboardLayout from "./DashboardLayout";
 
-const GroupAttendance = () => {
+const AttendaceFormAdmin = () => {
   const location = useLocation();
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -213,15 +213,15 @@ const GroupAttendance = () => {
 };
   return (
     <div>
-      <LayoutTutor>
-        <br />
+     <DashboardLayout>
+        <br></br>
         <br></br>
         <div className="container mt-4">
           <h2 className="mb-4">Group Attendance Management</h2>
           
           <div className="row">
             <div className="col-md-4">
-              <br></br>
+                <br></br>
               <div className="card mb-4">
                 <div className="card-header bg-light text-dark">
                   <h5>Select Group</h5>
@@ -393,11 +393,11 @@ const GroupAttendance = () => {
             </div>
           </div>
         </div>
-      </LayoutTutor>
+        </DashboardLayout>
 
       <ToastContainer position="top-right" autoClose={5000} />
     </div>
   );
 };
 
-export default GroupAttendance;
+export default AttendaceFormAdmin;
