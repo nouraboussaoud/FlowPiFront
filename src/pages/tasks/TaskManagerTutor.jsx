@@ -2,16 +2,17 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import LayoutTutor from "../dashboard/LayoutTutorss";
 import "./Tasks.css";
-import { Clock, BarChart2, GitCommit, AlertCircle } from "lucide-react";
+import { Clock, BarChart2, GitCommit, AlertCircle, BookOpen } from "lucide-react";
+import QuizAnalyticsPanel from './QuizAnalyticsPanel';
 
 const TaskManagerTutor = () => {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [githubData, setGithubData] = useState({ commits: [], pull_requests: [] });
   const [error, setError] = useState(null);
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [showCommitsModal, setShowCommitsModal] = useState(false);
+  const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(null);
   const [riskAssessment, setRiskAssessment] = useState({
     risk: "",
     confidence: 0,
@@ -32,7 +33,7 @@ const TaskManagerTutor = () => {
 
   // Helper functions for risk assessment
   const getRiskColor = (risk) => {
-    switch (risk.toLowerCase()) {
+    switch (risk?.toLowerCase()) {
       case "high risk":
         return "#ef4444";
       case "low risk":
@@ -43,7 +44,7 @@ const TaskManagerTutor = () => {
   };
 
   const getRiskDescription = (risk) => {
-    switch (risk.toLowerCase()) {
+    switch (risk?.toLowerCase()) {
       case "high risk":
         return "This task has significant challenges that may impact deadlines or quality.";
       case "low risk":
@@ -54,7 +55,7 @@ const TaskManagerTutor = () => {
   };
 
   const getRiskFactors = (risk) => {
-    switch (risk.toLowerCase()) {
+    switch (risk?.toLowerCase()) {
       case "high risk":
         return [
           "Complex requirements",
@@ -70,7 +71,7 @@ const TaskManagerTutor = () => {
   };
 
   const getRecommendations = (risk) => {
-    switch (risk.toLowerCase()) {
+    switch (risk?.toLowerCase()) {
       case "high risk":
         return [
           "Break task into smaller subtasks",
@@ -89,46 +90,44 @@ const TaskManagerTutor = () => {
     }
   };
 
-  // Helper function to calculate progress based on GitHub activity
-  const calculateProgress = (commits, pullRequests, taskStatus) => {
+  // Helper function to calculate progress
+  const calculateProgress = (commits, pull_requests, taskStatus, quizScore) => {
     let progress = 0;
 
-    // Base progress caps based on status
     if (taskStatus === "completed") {
       return 100;
     } else if (taskStatus === "pending") {
-      progress = Math.min(progress, 10); // Cap pending tasks at 10% unless activity suggests more
+      progress = Math.min(progress, 10);
     }
 
-    // Calculate progress from commits
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     commits.forEach((commit) => {
       const commitDate = new Date(commit.date);
       const isRecent = commitDate > oneWeekAgo;
-      // Each commit adds 1% (2% if recent), capped at 50% total from commits
       progress += isRecent ? 2 : 1;
     });
-    progress = Math.min(progress, 50); // Cap commit contribution
+    progress = Math.min(progress, 50);
 
-    // Calculate progress from pull requests
-    pullRequests.forEach((pr) => {
+    pull_requests.forEach((pr) => {
       const prDate = new Date(pr.merge_date);
       const isRecent = prDate > oneWeekAgo;
-      // Each merged PR adds 10% (15% if recent), capped at 40% total from PRs
       progress += isRecent ? 15 : 10;
     });
-    progress = Math.min(progress, 90); // Cap total progress to leave room for completion
+    progress = Math.min(progress, 90);
 
-    // If no recent activity (last week), reduce progress to reflect stagnation
-    const hasRecentActivity = commits.some((c) => new Date(c.date) > oneWeekAgo) ||
-                             pullRequests.some((pr) => new Date(pr.merge_date) > oneWeekAgo);
-    if (!hasRecentActivity && taskStatus !== "completed") {
-      progress = Math.min(progress, 30); // Cap at 30% for inactive tasks
+    if (quizScore !== undefined) {
+      progress = Math.min(progress + quizScore * 0.5, 90);
     }
 
-    return Math.round(Math.min(progress, 100)); // Ensure progress is 0-100%
+    const hasRecentActivity = commits.some((c) => new Date(c.date) > oneWeekAgo) ||
+                             pull_requests.some((pr) => new Date(pr.merge_date) > oneWeekAgo);
+    if (!hasRecentActivity && taskStatus !== "completed") {
+      progress = Math.min(progress, 30);
+    }
+
+    return Math.round(Math.min(progress, 100));
   };
 
   const openRiskModal = async (taskId) => {
@@ -174,7 +173,6 @@ const TaskManagerTutor = () => {
 
       setIsLoading(true);
 
-      // Fetch task details to verify GitHub info and get status
       const taskResponse = await axios.get(
         `http://localhost:5000/api/tasks/getTaskById/${taskId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -185,15 +183,9 @@ const TaskManagerTutor = () => {
         throw new Error("GitHub repository information is incomplete");
       }
 
-      // Fetch commits and pull requests
       const githubResponse = await axios.get(
         `http://localhost:5000/api/tasks/track-commits/${taskId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
 
       if (!githubResponse.data) {
@@ -202,13 +194,35 @@ const TaskManagerTutor = () => {
 
       const { commits, pull_requests } = githubResponse.data;
 
-      // Calculate progress based on GitHub activity
-      const calculatedProgress = calculateProgress(commits, pull_requests, task.status);
+      // Fetch quiz analytics
+      let quizScore, quizPassed;
+      try {
+        const quizResponse = await axios.get(
+          `http://localhost:5000/quizAnalytics/${taskId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const latestAttempt = quizResponse.data.analytics
+          .flatMap(quiz => quiz.attempts)
+          .filter(attempt => attempt.userId === task.assignedTo)
+          .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+        quizScore = latestAttempt?.score;
+        quizPassed = latestAttempt?.passed;
+      } catch (error) {
+        console.error("Error fetching quiz analytics:", error);
+        quizScore = null;
+        quizPassed = null;
+      }
 
-      // Update task progress in state
+      const calculatedProgress = calculateProgress(
+        commits,
+        pull_requests,
+        task.status,
+        quizScore
+      );
+
       setTasks((prevTasks) =>
         prevTasks.map((t) =>
-          t._id === taskId ? { ...t, progressPercentage: calculatedProgress } : t
+          t._id === taskId ? { ...t, progressPercentage: calculatedProgress, quizScore, quizPassed } : t
         )
       );
 
@@ -220,17 +234,7 @@ const TaskManagerTutor = () => {
       setError(null);
     } catch (error) {
       console.error("Error tracking GitHub activity:", error);
-      let errorMessage = "Error tracking GitHub activity";
-      
-      if (error.response) {
-        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-      } else if (error.request) {
-        errorMessage = "No response from server";
-      } else {
-        errorMessage = error.message || "Request setup error";
-      }
-      
-      setError(errorMessage);
+      setError(error.response?.data?.message || error.message || "Error tracking GitHub activity");
     } finally {
       setIsLoading(false);
     }
@@ -248,8 +252,29 @@ const TaskManagerTutor = () => {
       const response = await axios.get("http://localhost:5000/api/tasks/getAllTasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTasks(response.data);
-      setCurrentPage(1); // Reset to first page when tasks are fetched
+
+      const tasksWithQuizData = await Promise.all(response.data.map(async (task) => {
+        try {
+          const quizResponse = await axios.get(
+            `http://localhost:5000/quizAnalytics/${task._id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const latestAttempt = quizResponse.data.analytics
+            .flatMap(quiz => quiz.attempts)
+            .filter(attempt => attempt.userId === task.assignedTo)
+            .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+          return {
+            ...task,
+            quizScore: latestAttempt?.score,
+            quizPassed: latestAttempt?.passed
+          };
+        } catch (error) {
+          return { ...task, quizScore: null, quizPassed: null };
+        }
+      }));
+
+      setTasks(tasksWithQuizData);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setError(error.response?.data?.message || "Error fetching tasks");
@@ -284,7 +309,6 @@ const TaskManagerTutor = () => {
     }
 
     try {
-      // Change the endpoint from "all" to "getAll" to match the working endpoint used in other components
       const response = await axios.get("http://localhost:5000/api/users/getAll", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -311,6 +335,8 @@ const TaskManagerTutor = () => {
       if (e.key === "Escape") {
         setShowRiskModal(false);
         setShowCommitsModal(false);
+        setShowAnalyticsPanel(null);
+        setShowTaskDetailsModal(false);
       }
     };
     window.addEventListener("keydown", handleEscape);
@@ -331,7 +357,6 @@ const TaskManagerTutor = () => {
       });
       setTasks(tasks.filter((task) => task._id !== taskId));
       setError(null);
-      // Adjust current page if necessary
       const newTotalPages = Math.ceil((tasks.length - 1) / tasksPerPage);
       if (currentPage > newTotalPages && newTotalPages > 0) {
         setCurrentPage(newTotalPages);
@@ -358,7 +383,7 @@ const TaskManagerTutor = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "pending":
         return "#9ca3af";
       case "in-progress":
@@ -370,14 +395,12 @@ const TaskManagerTutor = () => {
     }
   };
 
-  // Check for stalled tasks (no activity in the last week)
   const isTaskStalled = (task) => {
     if (task.status === "completed") return false;
     if (!task.progressPercentage || task.progressPercentage === 0) return true;
     return task.progressPercentage < 30;
   };
 
-  // Pagination handlers
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -443,7 +466,6 @@ const TaskManagerTutor = () => {
   };
 
   const getUserInfo = (userId) => {
-    // Handle cases where userId is undefined, null, or invalid
     if (!userId || userId === "undefined" || userId === "null") {
       return { 
         name: "Unassigned", 
@@ -452,10 +474,8 @@ const TaskManagerTutor = () => {
       };
     }
     
-    // Find the user in the users array
     const user = users.find(u => u && u._id === userId);
     
-    // Return user info if found, otherwise return default values
     return user ? 
       { 
         name: user.name || "Unknown", 
@@ -469,7 +489,6 @@ const TaskManagerTutor = () => {
       };
   };
 
-  // Helper function to get profile picture URL
   const getProfilePicUrl = (profilePic) => {
     if (!profilePic) {
       return "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
@@ -534,7 +553,6 @@ const TaskManagerTutor = () => {
                   ×
                 </button>
               </div>
-
               <div className="risk-assessment-content">
                 <div className="risk-visualization">
                   <div className="risk-gauge">
@@ -553,7 +571,6 @@ const TaskManagerTutor = () => {
                       <span>High</span>
                     </div>
                   </div>
-
                   <div className="risk-summary">
                     <h3>
                       <span
@@ -571,13 +588,11 @@ const TaskManagerTutor = () => {
                     </p>
                   </div>
                 </div>
-
                 <div className="risk-details">
                   <div className="detail-card">
                     <h4>AI Analysis</h4>
                     <p>{riskAssessment.explanation}</p>
                   </div>
-
                   <div className="detail-card">
                     <h4>Potential Issues</h4>
                     <ul className="risk-factors">
@@ -602,7 +617,6 @@ const TaskManagerTutor = () => {
                       ))}
                     </ul>
                   </div>
-
                   <div className="detail-card recommendations">
                     <h4>AI Recommendations</h4>
                     <div className="recommendation-grid">
@@ -615,7 +629,6 @@ const TaskManagerTutor = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="ai-footer">
                   <div className="ai-powered">
                     <svg
@@ -681,7 +694,6 @@ const TaskManagerTutor = () => {
                 ) : (
                   <p>No commits found.</p>
                 )}
-
                 <h3>Merged Pull Requests</h3>
                 {githubData.pull_requests.length > 0 ? (
                   <ul className="pr-list">
@@ -715,6 +727,13 @@ const TaskManagerTutor = () => {
           </div>
         )}
 
+        {showAnalyticsPanel && (
+          <QuizAnalyticsPanel
+            taskId={showAnalyticsPanel}
+            onClose={() => setShowAnalyticsPanel(null)}
+          />
+        )}
+
         {isLoading && tasks.length === 0 ? (
           <div className="empty-state">
             <svg
@@ -745,7 +764,6 @@ const TaskManagerTutor = () => {
                   <h3 className="task-title">{task.title}</h3>
                   <p className="task-description">{task.description}</p>
 
-                  {/* Add user information */}
                   <div className="task-assigned-user">
                     <div className="user-info-container">
                       <div className="user-avatar">
@@ -784,7 +802,7 @@ const TaskManagerTutor = () => {
 
                   {typeof task.progressPercentage === "number" &&
                   task.progressPercentage > 0 ? (
-                    <div className="task-progress" title="Progress based on GitHub activity">
+                    <div className="task-progress" title="Progress based on GitHub activity and quiz results">
                       <div className="progress-label">
                         <BarChart2 size={14} />
                         <span>Progress: {task.progressPercentage}%</span>
@@ -812,6 +830,20 @@ const TaskManagerTutor = () => {
                     </div>
                   )}
 
+                  {task.quizScore !== undefined && (
+                    <div className="task-quiz-status">
+                      <BookOpen size={14} />
+                      <span>
+                        Quiz: {task.quizScore}/100 (
+                        {task.quizPassed ? (
+                          <span style={{ color: '#10b981' }}>Passed</span>
+                        ) : (
+                          <span style={{ color: '#ef4444' }}>Failed</span>
+                        )})
+                      </span>
+                    </div>
+                  )}
+
                   <div className="task-meta">
                     <div>
                       <span className={`priority-badge priority-${task.priority}`}>
@@ -825,7 +857,6 @@ const TaskManagerTutor = () => {
                       </span>
                     </div>
                     <div className="task-button-group">
-                      {/* Add View Details button */}
                       <button
                         className="button button-secondary"
                         onClick={() => openTaskDetailsModal(task)}
@@ -853,7 +884,6 @@ const TaskManagerTutor = () => {
                           />
                         </svg>
                       </button>
-                      
                       <button
                         className="button button-info"
                         onClick={() => openRiskModal(task._id)}
@@ -879,7 +909,6 @@ const TaskManagerTutor = () => {
                           />
                         </svg>
                       </button>
-
                       <button
                         className="button button-primary"
                         onClick={() => trackCommits(task._id)}
@@ -888,7 +917,14 @@ const TaskManagerTutor = () => {
                       >
                         <GitCommit size={14} />
                       </button>
-
+                      <button
+                        className="button button-success"
+                        onClick={() => setShowAnalyticsPanel(task._id)}
+                        disabled={isLoading}
+                        title="View Quiz Analytics"
+                      >
+                        <BarChart2 size={14} />
+                      </button>
                       <button
                         className="button button-danger"
                         onClick={() => deleteTask(task._id)}
@@ -1053,6 +1089,19 @@ const TaskManagerTutor = () => {
                       <span className="progress-text">{selectedTaskDetails.progressPercentage}%</span>
                     </div>
                   )}
+                  {selectedTaskDetails.quizScore !== undefined && (
+                    <div className="detail-item">
+                      <span className="detail-label">Quiz Result:</span>
+                      <span className="detail-value">
+                        {selectedTaskDetails.quizScore}/100 (
+                        {selectedTaskDetails.quizPassed ? (
+                          <span style={{ color: '#10b981' }}>Passed</span>
+                        ) : (
+                          <span style={{ color: '#ef4444' }}>Failed</span>
+                        )})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1121,6 +1170,13 @@ const TaskManagerTutor = () => {
                 >
                   <GitCommit size={14} className="me-2" />
                   Track GitHub Activity
+                </button>
+                <button
+                  className="button button-success"
+                  onClick={() => setShowAnalyticsPanel(selectedTaskDetails._id)}
+                >
+                  <BarChart2 size={14} className="me-2" />
+                  View Quiz Analytics
                 </button>
               </div>
             </div>
@@ -1272,7 +1328,15 @@ const TaskManagerTutor = () => {
           flex-direction: column;
         }
 
-        /* Task Details Modal Styles */
+        .task-quiz-status {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: #4b5563;
+          margin-top: 8px;
+        }
+
         .task-details-modal {
           max-width: 700px;
           width: 90%;
@@ -1415,6 +1479,17 @@ const TaskManagerTutor = () => {
 
         .me-2 {
           margin-right: 0.5rem;
+        }
+
+        .button-success {
+          background-color: #10b981;
+          border-color: #10b981;
+          color: white;
+        }
+
+        .button-success:hover {
+          background-color: #059669;
+          border-color: #059669;
         }
 
         @media (max-width: 640px) {

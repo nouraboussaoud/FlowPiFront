@@ -132,7 +132,7 @@ const LayoutStudent = ({ children }) => {
 
   // Navigation handlers
   const handleEditProfile = () => {
-    navigate("/edit-profile");
+    navigate("/edit-profile-student");
     setShowProfileDropdown(false);
   };
 

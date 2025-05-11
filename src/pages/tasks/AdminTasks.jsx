@@ -44,7 +44,7 @@ const AdminTaskDashboard = () => {
     repoName: "",
     branchName: "",
   });
-  const tasksPerPage = 5;
+  const tasksPerPage = 6 ;
 
   // Pagination calculations
   const filteredTasks = tasks.filter((task) => {

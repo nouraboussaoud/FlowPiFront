@@ -1,0 +1,38 @@
+.profile-container {
+  padding: 20px 0;
+}
+
+.profile-card, .skills-card {
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.profile-header, .skills-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eaeaea;
+  padding: 15px 20px;
+}
+
+.profile-header h4, .skills-header h4 {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+  font-size: 18px;
+}
+
+.card-body {
+  padding: 25px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 10px 0;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+}

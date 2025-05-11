@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { Helmet } from "react-helmet";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LayoutStudent from "../dashboard/LayoutStudent";
 import SkillsManager from "../dashboard/SkillsManager";
-import "../tasks/Tasks.css";
+import "./Edit.css";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -20,8 +19,11 @@ const EditProfile = () => {
   const [errors, setErrors] = useState({});
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
+  const userRole = localStorage.getItem("userRole") || "";
+  const isStudent = userRole === "student";
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -57,13 +59,15 @@ const EditProfile = () => {
         const data = await response.json();
         setName(data.name || "");
         setEmail(data.email || "");
-        setRole(data.role || "");
+        
+        // Set role from user data or localStorage
+        setRole(data.role || userRole || "");
         
         // Set profile picture with proper URL formatting
         if (data.profilePic) {
           const profilePicUrl = data.profilePic.startsWith('http') 
             ? data.profilePic 
-            : `http://localhost:5000/uploads/${data.profilePic}`;
+            : `http://localhost:5000/uploads/profiles/${data.profilePic}`;
           setProfilePicture(profilePicUrl);
         } else {
           setProfilePicture("");
@@ -78,7 +82,7 @@ const EditProfile = () => {
     };
 
     fetchUserData();
-  }, [token, userId, navigate]);
+  }, [token, userId, navigate, userRole]);
 
   const validateProfile = () => {
     const newErrors = {};
@@ -92,11 +96,9 @@ const EditProfile = () => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address.";
     }
-    if (!role) {
-      newErrors.role = "Role is required.";
-    } else if (!["student", "tutor"].includes(role)) {
-      newErrors.role = "Role must be student or tutor.";
-    }
+    
+    // Remove all role validation since role is read-only for all users
+    
     if (profilePictureFile) {
       const validTypes = ["image/jpeg", "image/png"];
       if (!validTypes.includes(profilePictureFile.type)) {
@@ -156,7 +158,10 @@ const EditProfile = () => {
       const formData = new FormData();
       formData.append("name", name);
       formData.append("email", email);
+      
+      // Always send the current role (which is read-only in the UI)
       formData.append("role", role);
+      
       if (profilePictureFile) {
         formData.append("profilePicture", profilePictureFile);
       }
@@ -292,11 +297,252 @@ const EditProfile = () => {
   };
 
   return (
-    <LayoutStudent>
+    <>
+      <Helmet>
+      </Helmet>
       
-        <title>Edit Profile</title>
-   
-      <div className="container">
+      <div className="profile-page-container">
+        <div className="profile-header">
+          <h1>My Profile</h1>
+        </div>
+        
+        <div className="profile-content">
+          {/* Sidebar with profile picture and navigation */}
+          <div className="profile-sidebar">
+            {/* Profile picture section */}
+            <div className="profile-picture-container">
+              {profilePicture ? (
+                <img
+                  src={profilePicture}
+                  alt="Profile"
+                  className="profile-picture"
+                  onError={(e) => {
+                    e.target.src = "/assets/images/avatar-placeholder.png";
+                  }}
+                />
+              ) : (
+                <div className="profile-picture-placeholder">
+                  {name ? name[0].toUpperCase() : "U"}
+                </div>
+              )}
+              
+              <label htmlFor="profilePicture" className="change-photo-button">
+                Change Photo
+              </label>
+              
+              <input
+                type="file"
+                id="profilePicture"
+                accept="image/jpeg,image/png"
+                onChange={handleProfilePictureChange}
+                className="file-input"
+              />
+            </div>
+            
+            <div className="profile-info">
+              <div className="profile-name">{name || "Your Name"}</div>
+              <div className="profile-role">{role || "Role"}</div>
+              <div className="profile-email">{email || "email@example.com"}</div>
+            </div>
+            
+            <div className="profile-tabs">
+              <button 
+                className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Personal Information
+              </button>
+              
+              <button 
+                className={`tab-button ${activeTab === 'security' ? 'active' : ''}`}
+                onClick={() => setActiveTab('security')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Security
+              </button>
+              
+              {isStudent && (
+                <button 
+                  className={`tab-button ${activeTab === 'skills' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('skills')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  Skills
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Main content area */}
+          <div className="profile-main">
+            {/* Personal Information Tab */}
+            {activeTab === 'profile' && (
+              <div className="tab-pane">
+                <h2>Personal Information</h2>
+                <p className="tab-description">Update your personal details and profile information</p>
+                
+                <form onSubmit={handleUpdateUser} className="profile-form">
+                  <div className="form-group">
+                    <label htmlFor="name">Full Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        setErrors((prev) => ({ ...prev, name: null }));
+                      }}
+                      placeholder="Enter your full name"
+                      className={errors.name ? "error" : ""}
+                    />
+                    {errors.name && <div className="error-message">{errors.name}</div>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="email">Email Address</label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors((prev) => ({ ...prev, email: null }));
+                      }}
+                      placeholder="Enter your email address"
+                      className={errors.email ? "error" : ""}
+                    />
+                    {errors.email && <div className="error-message">{errors.email}</div>}
+                  </div>
+                  
+                  {/* Role field - displayed as read-only for all users */}
+                  <div className="form-group">
+                    <label htmlFor="role">Role</label>
+                    <input
+                      type="text"
+                      id="role"
+                      value={role}
+                      className="form-control"
+                      disabled
+                    />
+                    {errors.role && <div className="error-message">{errors.role}</div>}
+                  </div>
+                  
+                  <div className="form-actions">
+                    <button
+                      type="submit"
+                      className="save-button"
+                      disabled={isLoadingProfile}
+                    >
+                      {isLoadingProfile ? (
+                        <>
+                          <span className="spinner"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+            
+            {/* Security Tab */}
+            {activeTab === 'security' && (
+              <div className="tab-pane">
+                <h2>Security Settings</h2>
+                <p className="tab-description">Manage your password and account security</p>
+                
+                <form className="profile-form">
+                  <div className="form-group">
+                    <label htmlFor="oldPassword">Current Password</label>
+                    <input
+                      type="password"
+                      id="oldPassword"
+                      value={oldPassword}
+                      onChange={(e) => {
+                        setOldPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, oldPassword: null }));
+                      }}
+                      placeholder="Enter your current password"
+                      className={errors.oldPassword ? "error" : ""}
+                    />
+                    {errors.oldPassword && <div className="error-message">{errors.oldPassword}</div>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="newPassword">New Password</label>
+                    <input
+                      type="password"
+                      id="newPassword"
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, newPassword: null }));
+                      }}
+                      placeholder="Enter your new password"
+                      className={errors.newPassword ? "error" : ""}
+                    />
+                    {errors.newPassword && <div className="error-message">{errors.newPassword}</div>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="confirmNewPassword">Confirm New Password</label>
+                    <input
+                      type="password"
+                      id="confirmNewPassword"
+                      value={confirmNewPassword}
+                      onChange={(e) => {
+                        setConfirmNewPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, confirmNewPassword: null }));
+                      }}
+                      placeholder="Confirm your new password"
+                      className={errors.confirmNewPassword ? "error" : ""}
+                    />
+                    {errors.confirmNewPassword && <div className="error-message">{errors.confirmNewPassword}</div>}
+                  </div>
+                  
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      className="save-button"
+                      onClick={handleChangePassword}
+                      disabled={isLoadingPassword}
+                    >
+                      {isLoadingPassword ? (
+                        <>
+                          <span className="spinner"></span>
+                          Updating...
+                        </>
+                      ) : (
+                        "Update Password"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+            
+            {/* Skills Tab (only for students) */}
+            {activeTab === 'skills' && isStudent && (
+              <div className="tab-pane">
+                <h2>My Skills</h2>
+                <p className="tab-description">Manage your skills and competencies</p>
+                <SkillsManager />
+              </div>
+            )}
+          </div>
+        </div>
+        
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -309,378 +555,8 @@ const EditProfile = () => {
           pauseOnHover
           theme="light"
         />
-        <div className="profile-card">
-          <div className="profile-card-header">
-            <h3 className="profile-card-title">Edit Profile</h3>
-          </div>
-          <form onSubmit={handleUpdateUser}>
-            <div className="avatar-container">
-              {profilePicture ? (
-                <img
-                  src={profilePicture}
-                  alt="Profile"
-                  className="avatar"
-                  onError={(e) => {
-                    console.warn("⚠️ Image not found:", profilePicture);
-                    e.target.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
-                  }}
-                />
-              ) : (
-                <div className="avatar-placeholder">
-                  {name ? name[0].toUpperCase() : "U"}
-                </div>
-              )}
-              <input
-                type="file"
-                id="profilePicture"
-                accept="image/jpeg,image/png"
-                onChange={handleProfilePictureChange}
-                className="file-input"
-                aria-describedby={errors.profilePicture ? "profilePictureError" : undefined}
-              />
-              {errors.profilePicture && (
-                <span id="profilePictureError" className="input-error">
-                  <svg
-                    width="16"
-                    height="16"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="#dc2626"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {errors.profilePicture}
-                </span>
-              )}
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="label" htmlFor="name">
-                  Name
-                </label>
-                <input
-                  className={`input ${errors.name ? "border-red-500" : ""}`}
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setErrors((prev) => ({ ...prev, name: null }));
-                  }}
-                  required
-                  aria-required="true"
-                  placeholder="Enter name"
-                  aria-describedby={errors.name ? "nameError" : undefined}
-                />
-                {errors.name && (
-                  <span id="nameError" className="input-error">
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="#dc2626"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                    </svg>
-                    {errors.name}
-                  </span>
-                )}
-              </div>
-              <div className="form-group">
-                <label className="label" htmlFor="email">
-                  Email
-                </label>
-                <input
-                  className={`input ${errors.email ? "border-red-500" : ""}`}
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setErrors((prev) => ({ ...prev, email: null }));
-                  }}
-                  required
-                  aria-required="true"
-                  placeholder="Enter email address"
-                  aria-describedby={errors.email ? "emailError" : undefined}
-                />
-                {errors.email && (
-                  <span id="emailError" className="input-error">
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="#dc2626"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                    </svg>
-                    {errors.email}
-                  </span>
-                )}
-              </div>
-              <div className="form-group">
-                <label className="label" htmlFor="role">
-                  Role
-                </label>
-                <select
-                  className={`input ${errors.role ? "border-red-500" : ""}`}
-                  id="role"
-                  value={role}
-                  onChange={(e) => {
-                    setRole(e.target.value);
-                    setErrors((prev) => ({ ...prev, role: null }));
-                  }}
-                  required
-                  aria-required="true"
-                  aria-describedby={errors.role ? "roleError" : undefined}
-                >
-                  <option value="" disabled>
-                    Select role
-                  </option>
-                  <option value="student">Student</option>
-                  <option value="tutor">Tutor</option>
-                </select>
-                {errors.role && (
-                  <span id="roleError" className="input-error">
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="#dc2626"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                    </svg>
-                    {errors.role}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="button-group">
-              <button
-                className="button-primary"
-                type="submit"
-                disabled={isLoadingProfile}
-                aria-label="Save profile"
-              >
-                {isLoadingProfile ? (
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  "Save Profile"
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <div className="profile-card mt-6">
-          <div className="profile-card-header">
-            <h5 className="profile-card-title">Update Password</h5>
-          </div>
-          <div className="p-6">
-            <div className="form-group">
-              <label className="label" htmlFor="oldPassword">
-                Current Password
-              </label>
-              <input
-                className={`input ${errors.oldPassword ? "border-red-500" : ""}`}
-                type="password"
-                id="oldPassword"
-                placeholder="Enter current password"
-                value={oldPassword}
-                onChange={(e) => {
-                  setOldPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, oldPassword: null }));
-                }}
-                required
-                aria-required="true"
-                aria-describedby={
-                  errors.oldPassword ? "oldPasswordError" : undefined
-                }
-              />
-              {errors.oldPassword && (
-                <span id="oldPasswordError" className="input-error">
-                  <svg
-                    width="16"
-                    height="16"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="#dc2626"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {errors.oldPassword}
-                </span>
-              )}
-            </div>
-            <div className="form-group">
-              <label className="label" htmlFor="newPassword">
-                New Password
-              </label>
-              <input
-                className={`input ${errors.newPassword ? "border-red-500" : ""}`}
-                type="password"
-                id="newPassword"
-                placeholder="Enter new password"
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, newPassword: null }));
-                }}
-                required
-                aria-required="true"
-                aria-describedby={
-                  errors.newPassword ? "newPasswordError" : undefined
-                }
-              />
-              {errors.newPassword && (
-                <span id="newPasswordError" className="input-error">
-                  <svg
-                    width="16"
-                    height="16"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="#dc2626"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {errors.newPassword}
-                </span>
-              )}
-            </div>
-            <div className="form-group">
-              <label className="label" htmlFor="confirmNewPassword">
-                Confirm New Password
-              </label>
-              <input
-                className={`input ${
-                  errors.confirmNewPassword ? "border-red-500" : ""
-                }`}
-                type="password"
-                id="confirmNewPassword"
-                placeholder="Confirm new password"
-                value={confirmNewPassword}
-                onChange={(e) => {
-                  setConfirmNewPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, confirmNewPassword: null }));
-                }}
-                required
-                aria-required="true"
-                aria-describedby={
-                  errors.confirmNewPassword ? "confirmNewPasswordError" : undefined
-                }
-              />
-              {errors.confirmNewPassword && (
-                <span id="confirmNewPasswordError" className="input-error">
-                  <svg
-                    width="16"
-                    height="16"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="#dc2626"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {errors.confirmNewPassword}
-                </span>
-              )}
-            </div>
-            <div className="button-group">
-              <button
-                className="button-primary"
-                type="button"
-                onClick={handleChangePassword}
-                disabled={isLoadingPassword}
-                aria-label="Change password"
-              >
-                {isLoadingPassword ? (
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  "Change Password"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <SkillsManager />
       </div>
-    </LayoutStudent>
+    </>
   );
 };
 
