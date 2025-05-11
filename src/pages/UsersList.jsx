@@ -267,32 +267,7 @@ const UsersList = () => {
                     <option value="admin">Admin</option>
                   </select>
                 </div>
-                <div className="col-md-3">
-                  <ul
-                    className="list-inline mb-0 nav nav-pills border-0 justify-content-end"
-                    id="pills-tab"
-                    role="tablist"
-                  >
-                    <li className="nav-item">
-                      <a
-                        href="#nav-preview-tab-1"
-                        className="nav-link mb-0 me-2 active"
-                        data-bs-toggle="tab"
-                      >
-                        <i className="fas fa-fw fa-th-large" />
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a
-                        href="#nav-html-tab-1"
-                        className="nav-link mb-0"
-                        data-bs-toggle="tab"
-                      >
-                        <i className="fas fa-fw fa-list-ul" />
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                {/* Remove the view toggle buttons */}
               </div>
             </div>
             <div className="card-body">
