@@ -19,8 +19,8 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import SubjectForm from "./pages/dashboard/SubjectForm";
 import SubjectList from "./pages/dashboard/SubjectList";
-import CreateGroup from "./pages/dashboard/CreateGroup";
-import AttendancePerStudent from "./pages/dashboard/AttendancePerStudent";
+import CreateGroup from "./pages/dashboard/CreateGroup";                                                                                                                                
+import AttendancePerStudent from "./pages/dashboard/AttendancePerStudent";  
 
 import GroupAttendance from "./pages/dashboard/GroupAttendance";
 import AttendanceHistory from "./pages/dashboard/AttendanceHistory";
@@ -85,7 +85,10 @@ function App() {
           <Route path="/Subject-Form" element={<SubjectForm />} />
           <Route path="/Subject-List" element={<SubjectList />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
+          <Route path="/AttendancePerStudent" element={<AttendancePerStudent />} />
+      
+          <Route path="/AttendanceHistory" element={<AttendanceHistory />} />
+          <Route path="/group-attendance" element={<GroupAttendance />} />
           <Route path="/usersList" element={<UsersList />} />
           <Route path="/groupList" element={<GroupList />} />
           <Route path="/SubjectAdmin" element={<SubjectAdmin />} />
@@ -104,7 +107,7 @@ function App() {
           <Route path="/deliverables-history" element={<DeliverablesHistory />} />
           <Route path="/tutors-deliverables" element={<TutorsDeliverables />} />
           <Route path="/dashboard-tasks" element={< AdminTaskDashboard />} />
-          <Route path="/report-viewer/:id" element={<ReportViewer />} />
+      
           <Route path="/task-manager-tutor" element={<TaskManagerTutor />} />
           <Route path="/dashboard-stat" element={<Dashboard />} />
           <Route path="/users-table" element={<UsersTable />} />
