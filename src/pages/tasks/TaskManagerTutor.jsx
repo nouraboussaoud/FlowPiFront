@@ -968,7 +968,7 @@ const TaskManagerTutor = () => {
                 </div>
               ))}
             </div>
-            {tasks.length > tasksPerPage && (
+            {tasks.length > 0 && (
               <div className="pagination">
                 <button
                   className="pagination-button"

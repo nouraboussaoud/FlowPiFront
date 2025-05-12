@@ -35,7 +35,7 @@ const LayoutAdmin = ({ children, title }) => {
     { title: "Projects", icon: faProjectDiagram, path: "/ProjectAdmin" },
     { title: "Create Subjects", icon: faBookOpen, path: "/CreateSubjectAdmin" },
     { title: "All Subjects", icon: faList, path: "/SubjectAdmin" },
-    { title: "Settings", icon: faCog, path: "/user-settings" }
+    { title: "Settings", icon: faCog, path: "/edit-profile-admin" }
   ];
 
   useEffect(() => {
@@ -166,7 +166,7 @@ const LayoutAdmin = ({ children, title }) => {
               </div>
               <div className="dropdown-content">
                 <div className="dropdown-item" onClick={() => handleNavigateTo("/edit-profile-admin")}>My Profile</div>
-                <div className="dropdown-item" onClick={() => handleNavigateTo("/user-settings")}>Account Settings</div>
+       
                 <div className="dropdown-divider"></div>
                 <button className="logout-btn" onClick={logoutUser}>
                   <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
