@@ -46,7 +46,8 @@ const LayoutAdmin = ({ children, title }) => {
       icon: faHistory,
       path: "/AttendanceHistoryAdmin" 
     },
-    { title: "Settings", icon: faCog, path: "/user-settings" }
+    
+    { title: "Settings", icon: faCog, path: "/edit-profile-admin" }
   ];
 
   useEffect(() => {
