@@ -108,9 +108,23 @@ const DeliverablesHistory = () => {
                           <td>{new Date(deliverable.submission_date).toLocaleDateString()}</td>
                           <td>{deliverable.description}</td>
                           <td>
-                            {deliverable.evaluation_score !== undefined
-                              ? deliverable.evaluation_score
-                              : 'Not evaluated yet'}
+                            {deliverable.evaluation && deliverable.evaluation.evaluationScore !== undefined ? (
+                              <span
+                                style={{
+                                  color:
+                                    deliverable.evaluation.evaluationScore < 30
+                                      ? '#dc3545' // Red
+                                      : deliverable.evaluation.evaluationScore > 60
+                                      ? '#28a745' // Green
+                                      : '#ffc107', // Yellow
+                                  fontWeight: 'bold',
+                                }}
+                              >
+                                {deliverable.evaluation.evaluationScore}
+                              </span>
+                            ) : (
+                              'Not evaluated yet'
+                            )}
                           </td>
                         </tr>
                       ))}
