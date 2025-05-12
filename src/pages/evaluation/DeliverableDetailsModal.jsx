@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
+const DeliverableDetailsModal = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const navigate = useNavigate();
   // State declarations
   const [aiScore, setAiScore] = useState(null);
@@ -341,7 +341,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                 let utterance = new SpeechSynthesisUtterance(summaryContent);
                 let isPaused = false;
 
-                // Configure utterance settings
                 utterance.lang = 'en-US';
                 utterance.volume = 1;
                 utterance.rate = 1;
@@ -393,7 +392,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   stopBtn.disabled = true;
                 };
 
-                // Cleanup on window close
                 window.onbeforeunload = () => {
                   synth.cancel();
                 };
@@ -534,41 +532,52 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   };
 
   const handleSubmit = async () => {
-    try {
-      setError((prev) => ({ ...prev, submission: null }));
-      setLoading((prev) => ({ ...prev, submission: true }));
+  try {
+    setError((prev) => ({ ...prev, submission: null }));
+    setLoading((prev) => ({ ...prev, submission: true }));
 
-      if (!evaluationScore || isNaN(evaluationScore) || evaluationScore < 0 || evaluationScore > 100) {
-        setError((prev) => ({
-          ...prev,
-          submission: 'Please enter a valid evaluation score between 0 and 100',
-        }));
-        setLoading((prev) => ({ ...prev, submission: false }));
-        return;
+    if (!evaluationScore || isNaN(evaluationScore) || evaluationScore < 0 || evaluationScore > 100) {
+      setError((prev) => ({
+        ...prev,
+        submission: 'Please enter a valid evaluation score between 0 and 100',
+      }));
+      setLoading((prev) => ({ ...prev, submission: false }));
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    const evaluationData = {
+      evaluationScore: parseFloat(evaluationScore), // Changed from 'score' to 'evaluationScore'
+      notes,
+    };
+
+    const response = await axios.post(
+      `/api/deliverables/${deliverable._id}/evaluate`,
+      evaluationData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
+    );
 
-      const evaluationData = {
-        evaluationScore: parseFloat(evaluationScore),
-        notes,
-      };
-
-      await onSubmitEvaluation(deliverable._id, evaluationData);
-
+    if (response.data.message === 'Evaluation submitted successfully') {
+      onSubmitEvaluation(response.data.deliverable); // Pass updated deliverable to parent
       setSubmitSuccess(true);
-
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (error) {
-      console.error('Error submitting evaluation:', error);
-      setError((prev) => ({
-        ...prev,
-        submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.',
-      }));
-    } finally {
-      setLoading((prev) => ({ ...prev, submission: false }));
     }
-  };
+  } catch (error) {
+    console.error('Error submitting evaluation:', error);
+    setError((prev) => ({
+      ...prev,
+      submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.',
+    }));
+  } finally {
+    setLoading((prev) => ({ ...prev, submission: false }));
+  }
+};
 
   // AI detection
   const fetchAiDetectionScore = async () => {
@@ -1576,4 +1585,4 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   );
 };
 
-export default DeliverableDetails;
+export default DeliverableDetailsModal;
