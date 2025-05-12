@@ -7,23 +7,23 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
   const totalAttempts = history.length;
   const passedAttempts = history.filter(attempt => attempt.passed).length;
   const passRate = totalAttempts > 0 ? ((passedAttempts / totalAttempts) * 100).toFixed(1) : 0;
-  
+
   // Calculate average score
   const totalScore = history.reduce((sum, attempt) => sum + attempt.score, 0);
   const averageScore = totalAttempts > 0 ? (totalScore / totalAttempts).toFixed(1) : 0;
-  
+
   // Calculate correct answers
-  const correctAnswers = history.length > 0 && history[0].results 
+  const correctAnswers = history.length > 0 && history[0].results
     ? history.reduce((sum, attempt) => {
-        return sum + attempt.results.filter(result => result.isCorrect).length;
-      }, 0) 
+      return sum + attempt.results.filter(result => result.isCorrect).length;
+    }, 0)
     : 0;
-  
-  const totalQuestions = history.length > 0 && history[0].results 
+
+  const totalQuestions = history.length > 0 && history[0].results
     ? history.reduce((sum, attempt) => sum + attempt.results.length, 0)
     : 0;
-  
-  const accuracy = totalQuestions > 0 
+
+  const accuracy = totalQuestions > 0
     ? ((correctAnswers / totalQuestions) * 100).toFixed(1)
     : 0;
 
@@ -46,7 +46,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
         }}>
           Quiz History & Analytics
         </h2>
-        <button 
+        <button
           onClick={onClose}
           style={{
             background: 'none',
@@ -63,7 +63,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
           <X size={24} />
         </button>
       </div>
-      
+
       <div style={{
         padding: '24px',
         backgroundColor: 'white',
@@ -94,7 +94,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                 Quiz Source
               </h3>
             </div>
-            
+
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -110,18 +110,15 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                   Repository: <strong>{githubInfo.repoOwner}/{githubInfo.repoName}</strong>
                 </span>
               </div>
-              
+
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <GitBranch size={16} color="#4b5563" />
-                <span style={{ fontSize: '0.9rem' }}>
-                  Branch/Commit: <strong>{githubInfo.commitSha}</strong>
-                </span>
+                
               </div>
-              
+
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -140,7 +137,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
             </div>
           </div>
         )}
-        
+
         {/* Analytics Section */}
         <div style={{
           backgroundColor: 'white',
@@ -154,7 +151,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
           }}>
             Analytics
           </h3>
-          
+
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
@@ -185,7 +182,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                 {totalAttempts}
               </h4>
             </div>
-            
+
             {/* Passed Attempts */}
             <div style={{
               backgroundColor: 'white',
@@ -210,7 +207,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                 {passedAttempts}
               </h4>
             </div>
-            
+
             {/* Pass Rate */}
             <div style={{
               backgroundColor: 'white',
@@ -235,7 +232,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                 {passRate}%
               </h4>
             </div>
-            
+
             {/* Average Score */}
             <div style={{
               backgroundColor: 'white',
@@ -260,7 +257,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                 {averageScore}/100
               </h4>
             </div>
-            
+
             {/* Correct Answers */}
             <div style={{
               backgroundColor: 'white',
@@ -285,7 +282,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                 {correctAnswers} / {totalQuestions}
               </h4>
             </div>
-            
+
             {/* Accuracy */}
             <div style={{
               backgroundColor: 'white',
@@ -312,7 +309,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
             </div>
           </div>
         </div>
-        
+
         {/* Attempt History Section */}
         <div style={{
           backgroundColor: 'white',
@@ -326,7 +323,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
           }}>
             Attempt History
           </h3>
-          
+
           {history.length === 0 ? (
             <div style={{
               backgroundColor: 'white',
@@ -387,7 +384,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div style={{
                   backgroundColor: 'white',
                   padding: '16px',
@@ -402,7 +399,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                     Score: {attempt.score}/100
                   </div>
                 </div>
-                
+
                 {attempt.results && attempt.results.length > 0 && (
                   <div style={{
                     backgroundColor: 'white',
@@ -416,7 +413,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                     }}>
                       Question Details:
                     </div>
-                    
+
                     {attempt.results.map((result, qIndex) => (
                       <div key={qIndex} style={{
                         backgroundColor: 'white',
@@ -434,7 +431,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                         }}>
                           {result.question}
                         </div>
-                        
+
                         <div style={{
                           backgroundColor: result.isCorrect ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                           padding: '8px',
@@ -466,7 +463,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                               }}>
                                 <strong>Your answer:</strong> {result.studentAnswer}
                               </div>
-                              
+
                               {!result.isCorrect && (
                                 <div style={{
                                   color: '#10b981',
@@ -479,7 +476,7 @@ const QuizHistoryModal = ({ history, onClose, githubInfo }) => {
                             </div>
                           </div>
                         </div>
-                        
+
                         {result.explanation && (
                           <div style={{
                             backgroundColor: '#f8fafc',
