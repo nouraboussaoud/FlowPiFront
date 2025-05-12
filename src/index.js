@@ -4,12 +4,13 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 
-const root = ReactDOM.createRoot(document.getElementById("root")); // ✅ Use createRoot
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  
+  <HelmetProvider>
     <App />
- 
+  </HelmetProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

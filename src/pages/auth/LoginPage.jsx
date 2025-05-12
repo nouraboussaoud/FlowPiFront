@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faLock, faGoogle, faGithub } from '@fortawesome/free-solid-svg-icons';
+import Loader from "../components/loader";
 import { Toaster, toast } from 'sonner';
-import "./style/LoginPage.css"; // Import your CSS file for styles
-
-
+import './LoginPage.css';
 
 const useAnimatedBackground = (images, duration = 5000) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,7 +33,12 @@ const LoginPage = () => {
   const currentBg = useAnimatedBackground(backgroundImages,5000);
 
   const googleAuth = () => {
-    // Rediriger vers l'authentification Google
+    // Clear any existing auth data before starting new auth flow
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    // Add other items you store during auth
+   
+    
     window.open(`${process.env.REACT_APP_API_URL}/api/users/google`, "_self");
   };
   
@@ -62,7 +69,10 @@ const LoginPage = () => {
         localStorage.setItem("name", data.user.name);
         localStorage.setItem("profilePic", data.user.profilePic);
       
-        toast.success("Welcome " + data.user.name); 
+        toast.success("Welcome " + data.user.name, {
+          position: "top-center",
+          duration: 4000
+        }); 
         const role = data.user.role;
         if (role === "admin") {
           navigate("/admin-dashboard");
@@ -76,151 +86,154 @@ const LoginPage = () => {
       } else {
         // Handle specific error responses based on the message from the server
         if (data.message === "Invalid email or password") {
-          toast.error("Invalid email or password");
+          toast.error("Invalid email or password", {
+            position: "top-center",
+            duration: 4000
+          });
         } else if (data.message === "Please verify your email to activate your account") {
-          toast.error("Please verify your email to activate your account");
+          toast.error("Please verify your email to activate your account", {
+            position: "top-center",
+            duration: 4000
+          });
         } else if (data.message === "Your account is banned") {
-          toast.error("Your account is banned");
+          toast.error("Your account is banned", {
+            position: "top-center",
+            duration: 4000
+          });
         } else {
-          toast.error("An unexpected error occurred");
+          toast.error("An unexpected error occurred", {
+            position: "top-center",
+            duration: 4000
+          });
         }
         localStorage.clear();
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      toast.error("An error occurred, please try again later");
+      toast.error("An error occurred, please try again later", {
+        position: "top-center",
+        duration: 4000
+      });
       localStorage.clear();
     }
   };
 
   return (
     <div className="login-page">
-      <Toaster richColors />
-      <title>FlowPi</title>
-      <meta charSet="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-      
-      <main>
-        <section className="login-section">
-          <div className="container-fluid h-100">
-            <div className="row g-0 h-100">
-              {/* Left Column - Background Images (hidden on mobile) */}
-              <div className="col-lg-6 d-none d-lg-flex login-bg-container">
-                <div 
-                  className="login-bg-image"
-                  style={{
-                    backgroundImage: `url(${currentBg})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    transition: 'background-image 1s ease-in-out',
-                  }}
-                />
+      <Container fluid>
+        <Row className="vh-100">
+          {/* Left side - animated background */}
+          <Col lg={6} className="d-none d-lg-block p-0 position-relative">
+            <div 
+              className="bg-image"
+              style={{
+                backgroundImage: `url(${currentBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                height: '100%',
+                transition: 'background-image 1s ease-in-out'
+              }}
+            >
+              <div className="overlay"></div>
+              <div className="brand-wrapper">
+                <h1 className="brand-name">FlowPi</h1>
+                <p className="brand-tagline">Transform Your Learning Experience</p>
               </div>
-              
-              {/* Right Column - Login Form */}
-              <div className="col-12 col-lg-6 d-flex align-items-center justify-content-center login-form-container">
-                <div className="login-form-wrapper">
-                  <div className="login-header text-center text-lg-start">
-                    <span className="login-emoji">👋</span>
-                    <h1 className="login-title">Login into FlowPi!</h1>
-                    <p className="login-subtitle">Nice to see you! Please log in with your account.</p>
-                  </div>
+            </div>
+          </Col>
+          
+          {/* Right side - login form */}
+          <Col lg={6} className="d-flex align-items-center justify-content-center">
+            <Card className="login-card shadow-lg border-0">
+              <Card.Body className="p-4 p-lg-5">
+                <div className="text-center mb-4">
+                  <h2 className="welcome-text fw-bold">Welcome Back</h2>
+                  <p className="text-muted">Sign in to continue to FlowPi</p>
+                </div>
+                
+                <Form onSubmit={handleLogin}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Email address</Form.Label>
+                    <div className="input-group">
+                      <span className="input-group-text"><FontAwesomeIcon icon={faEnvelope} /></span>
+                      <Form.Control 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                  </Form.Group>
                   
-                  <form onSubmit={handleLogin} className="login-form">
-                    <div className="form-group mb-3">
-                      <label htmlFor="exampleInputEmail1" className="form-label">Email address *</label>
-                      <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0">
-                          <i className="bi bi-envelope-fill" />
-                        </span>
-                        <input 
-                          type="email" 
-                          className="form-control border-start-0" 
-                          placeholder="E-mail" 
-                          id="exampleInputEmail1" 
-                          value={email} 
-                          onChange={(e) => setEmail(e.target.value)} 
-                          required 
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-group mb-3">
-                      <label htmlFor="inputPassword5" className="form-label">Password *</label>
-                      <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0">
-                          <i className="fas fa-lock" />
-                        </span>
-                        <input 
-                          type="password" 
-                          className="form-control border-start-0" 
-                          placeholder="Password" 
-                          id="inputPassword5" 
-                          value={password} 
-                          onChange={(e) => setPassword(e.target.value)} 
-                          required 
-                        />
-                      </div>
-                      <div id="passwordHelpBlock" className="form-text">
-                        Your password must be 8 characters at least
-                      </div>
-                    </div>
-                    
-                    <div className="d-flex justify-content-between mb-3">
-                      <div className="form-check">
-                        <input type="checkbox" className="form-check-input" id="exampleCheck1" />
-                        <label className="form-check-label" htmlFor="exampleCheck1">Remember me</label>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-link p-0 text-decoration-none"
+                  <Form.Group className="mb-3">
+                    <div className="d-flex justify-content-between">
+                      <Form.Label>Password</Form.Label>
+                      <Button 
+                        variant="link" 
+                        className="p-0 forgot-password" 
                         onClick={() => navigate("/forgot-password")}
                       >
                         Forgot password?
-                      </button>
+                      </Button>
                     </div>
-                    
-                    <div className="d-grid mb-3">
-                      <button className="btn btn-primary btn-login" type="submit">Login</button>
+                    <div className="input-group">
+                      <span className="input-group-text"><FontAwesomeIcon icon={faLock} /></span>
+                      <Form.Control 
+                        type="password" 
+                        placeholder="Enter your password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        required 
+                      />
                     </div>
-                    
-                    <div className="text-center mb-3">
-                      <span>Don't have an account? </span>
-                      <button
-                        type="button"
-                        className="btn btn-link p-0 text-decoration-none"
-                        onClick={() => navigate("/register")}
-                      >
-                        Sign up here
-                      </button>
-                    </div>
-                    
-                    <div className="position-relative my-4">
-                      <hr />
-                      <span className="position-absolute top-50 start-50 translate-middle bg-white px-2">Or</span>
-                    </div>
-                    
-                    <div className="row g-2">
-                      <div className="col-12">
-                        <button className="btn btn-google w-100" onClick={googleAuth}>
-                          <i className="fab fa-google me-2"></i>
-                          Login with Google
-                        </button>
-                      </div>
-                      <div className="col-12">
-                        <button className="btn btn-github w-100 mt-2" onClick={handleGitHubLogin}>
-                          <i className="fab fa-github me-2"></i>
-                          Login with GitHub
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+                  </Form.Group>
+                  
+                  <Form.Group className="mb-4">
+                    <Form.Check 
+                      type="checkbox" 
+                      label="Remember me" 
+                      id="rememberMe" 
+                    />
+                  </Form.Group>
+                  
+                  <Button variant="primary" type="submit" className="w-100 mb-3 py-2 fw-medium">
+                    Sign In
+                  </Button>
+                  
+                  <div className="text-center my-3">
+                    <span className="divider">or continue with</span>
+                  </div>
+                  
+                  <Row className="social-buttons mb-4 g-2">
+                    <Col>
+                      <Button variant="outline-danger" className="w-100 d-flex align-items-center justify-content-center" onClick={googleAuth}>
+                        <i className="fab fa-google me-2"></i>Google
+                      </Button>
+                    </Col>
+                    <Col>
+                      <Button variant="outline-dark" className="w-100 d-flex align-items-center justify-content-center" onClick={handleGitHubLogin}>
+                        <i className="fab fa-github me-2"></i>GitHub
+                      </Button>
+                    </Col>
+                  </Row>
+                  
+                  <div className="text-center">
+                    <p>Don't have an account? <Button 
+                      variant="link" 
+                      className="p-0 signup-link" 
+                      onClick={() => navigate("/register")}
+                    >
+                      Sign up
+                    </Button></p>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+      {/* Remove any duplicate Toaster components */}
     </div>
   );
 };

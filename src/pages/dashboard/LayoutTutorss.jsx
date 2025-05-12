@@ -16,6 +16,7 @@ const LayoutTutorss = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeDropdown, setActiveDropdown] = useState(null);
+  
 
   // User state
   const [user, setUser] = useState(null);
@@ -23,7 +24,8 @@ const LayoutTutorss = ({ children }) => {
   const [imgKey, setImgKey] = useState(Date.now());
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState("");
-
+  const pro = localStorage.getItem("profilePic");
+  const photo = `http://localhost:5000/uploads/profiles/${pro}`
   // UI state
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
@@ -78,13 +80,14 @@ const LayoutTutorss = ({ children }) => {
         if (userData.profilePic && userData.profilePic.trim() !== "") {
           newProfilePic = userData.profilePic.startsWith("http")
             ? userData.profilePic
-            : `http://localhost:5000/uploads/${userData.profilePic}`;
+            : `http://localhost:5000/uploads/profiles/${userData.profilePic}`;
         } else {
           const storedProfilePic = localStorage.getItem("profilePic");
+          console.log("test", storedProfilePic );
           if (storedProfilePic) {
             newProfilePic = storedProfilePic.startsWith("http")
               ? storedProfilePic
-              : `http://localhost:5000/uploads/${storedProfilePic}`;
+              : `http://localhost:5000/uploads/profiles/${storedProfilePic}`;
           }
         }
         setProfilePic(newProfilePic);
@@ -334,7 +337,7 @@ const LayoutTutorss = ({ children }) => {
   };
 
   const handleEditProfile = () => {
-    navigate("/edit-profile");
+    navigate("/edit-profile-tutor");
     setActiveDropdown(null);
   };
 
@@ -522,7 +525,66 @@ const LayoutTutorss = ({ children }) => {
                     </ul>
                   )}
                 </li>
+       
+                <li className="nav-item dropdown">
+  <div
+    className={`nav-link dropdown-toggle ${isActive('/group-attendance') || isActive('/AttendanceHistory') ? 'active' : ''}`}
+    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDropdown('attendance');
+    }}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDropdown('attendance');
+      }
+    }}
+    tabIndex={0}
+    role="button"
+    aria-expanded={activeDropdown === 'attendance'}
+  >
+    Attendance Management
+  </div>
 
+  {activeDropdown === 'attendance' && (
+    <div 
+      className="dropdown-menu show"
+      style={{
+        zIndex: 1050, // Plus élevé que les modaux (1060)
+        position: 'absolute'
+      }}
+    >
+      <button
+        className="dropdown-item"
+        onClick={(e) => {
+          e.preventDefault();
+          navigate("/group-attendance");
+          setShowMobileMenu(false);
+          setActiveDropdown(null);
+        }}
+        style={{ cursor: 'pointer' }}
+        type="button"
+      >
+        Record Attendance
+      </button>
+      <button
+        className="dropdown-item"
+        onClick={(e) => {
+          e.preventDefault();
+          navigate("/AttendanceHistory");
+          setShowMobileMenu(false);
+          setActiveDropdown(null);
+        }}
+        style={{ cursor: 'pointer' }}
+        type="button"
+      >
+        View Attendance History
+      </button>
+    </div>
+  )}
+</li>
                 {/* Students */}
                 <li className="nav-item">
                   <div
@@ -558,6 +620,7 @@ const LayoutTutorss = ({ children }) => {
                     Deliverables
                   </div>
                 </li>
+
               </ul>
 
               {/* Right side controls */}
@@ -574,7 +637,7 @@ const LayoutTutorss = ({ children }) => {
                   >
                     <img
                       key={imgKey}
-                      src={profilePic}
+                      src={photo}
                       alt="Profile"
                       className="profile-image"
                       style={{ width: "40px", height: "40px", borderRadius: "50%" }}

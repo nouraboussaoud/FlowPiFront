@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import LayoutTutorss from './LayoutTutorss';
+import DashboardLayout from "./DashboardLayout";
 
-const SubjectAssignment = () => {
+const SubjectAssignmentadmin = () => {
   const navigate = useNavigate();
   
   const [state, setState] = useState({
@@ -122,11 +122,12 @@ const SubjectAssignment = () => {
   };
 
   return (
-    <LayoutTutorss>
-      <br>
-      </br>
-      <br></br>
-      <br></br>
+    <DashboardLayout title="Subject Assignment Admin">
+        <br></br>
+        <br></br>
+        <br></br>
+        <br></br>
+        <br></br>
       <div className="container py-4">
         <div className="card shadow-sm">
           <div className="card-header" style={{ backgroundColor: '#374151', color: 'white' }}>
@@ -354,8 +355,8 @@ const SubjectAssignment = () => {
           </div>
         </div>
       </div>
-    </LayoutTutorss>
+      </DashboardLayout>
   );
 };
 
-export default SubjectAssignment;
+export default SubjectAssignmentadmin;
