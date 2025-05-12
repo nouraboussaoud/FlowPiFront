@@ -52,8 +52,8 @@ const QuizAnalyticsPanel = ({ taskId, onClose, githubInfo: propGithubInfo }) => 
               extractedGithubInfo = {
                 repoOwner: task.repoOwner || 'Unknown',
                 repoName: task.repoName || 'Unknown',
-                commitSha: task.commitSha || task.branchName || 'main',
-                branch: task.branchName || 'main'
+                commitSha: task.commitSha || task.branchName ,
+                branch: task.branchName 
               };
             }
           }
@@ -97,7 +97,10 @@ const QuizAnalyticsPanel = ({ taskId, onClose, githubInfo: propGithubInfo }) => 
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{
+      backgroundColor: 'transparent',
+      backdropFilter: 'blur(4px)'
+    }}>
       <div
         className="modal-content analytics-panel"
         onClick={(e) => e.stopPropagation()}
@@ -292,7 +295,7 @@ const QuizAnalyticsPanel = ({ taskId, onClose, githubInfo: propGithubInfo }) => 
                         <span style={{ fontSize: '0.9rem' }}>
                           Branch/Commit:{' '}
                           <strong>
-                            {githubInfo.commitSha || githubInfo.branch || 'main'}
+                            {githubInfo.commitSha || githubInfo.branch }
                           </strong>
                         </span>
                       </div>

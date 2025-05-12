@@ -177,7 +177,7 @@ const LayoutAdmin = ({ children, title }) => {
               </div>
               <div className="dropdown-content">
                 <div className="dropdown-item" onClick={() => handleNavigateTo("/edit-profile-admin")}>My Profile</div>
-                <div className="dropdown-item" onClick={() => handleNavigateTo("/user-settings")}>Account Settings</div>
+       
                 <div className="dropdown-divider"></div>
                 <button className="logout-btn" onClick={logoutUser}>
                   <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />

@@ -1332,7 +1332,6 @@ const TaskManager = () => {
                     </div>
                     <div className="gauge-labels">
                       <span>Low</span>
-                      <span>Medium</span>
                       <span>High</span>
                     </div>
                   </div>
@@ -1863,10 +1862,10 @@ const TaskManager = () => {
               history={quizHistory}
               onClose={() => setShowQuizHistoryModal(false)}
               githubInfo={selectedTaskId ? {
-                repoOwner: tasks.find(t => t._id === selectedTaskId)?.repoOwner || 'nouraboussaoud',
-                repoName: tasks.find(t => t._id === selectedTaskId)?.repoName || 'FlowPiFront',
-                filePath: tasks.find(t => t._id === selectedTaskId)?.filePath || 'src/pages/tasks/QuizHistoryModal.jsx',
-                commitSha: tasks.find(t => t._id === selectedTaskId)?.commitSha || 'main'
+                repoOwner: tasks.find(t => t._id === selectedTaskId)?.repoOwner,
+                repoName: tasks.find(t => t._id === selectedTaskId)?.repoName ,
+                filePath: tasks.find(t => t._id === selectedTaskId)?.filePath ,
+                commitSha: tasks.find(t => t._id === selectedTaskId)?.commitSha 
               } : null}
             />
           </div>
