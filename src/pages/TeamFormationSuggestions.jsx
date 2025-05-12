@@ -14,6 +14,7 @@ const TeamFormationSuggestions = () => {
     minTeamSize: 2,
     maxTeamSize: 4
   });
+  
 
   
   useEffect(() => {
