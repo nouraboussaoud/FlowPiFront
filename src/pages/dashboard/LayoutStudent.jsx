@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faHome, faTasks, faUsers, faProjectDiagram, 
-  faEnvelope, faBell, faMoon, faSun, faUserEdit, 
+import {
+  faHome, faTasks, faUsers, faProjectDiagram,
+  faEnvelope, faBell, faMoon, faSun, faUserEdit,
   faSignOutAlt, faGraduationCap, faChalkboardTeacher,
   faClipboardList, faFileUpload, faInbox, faCaretDown,
   faCode // For FlowPi logo
@@ -22,9 +22,13 @@ const LayoutStudent = ({ children }) => {
   const [showInstructorDropdown, setShowInstructorDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
-  
+
   // Default profile image
   const DEFAULT_PROFILE_PIC = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+  const pro = localStorage.getItem("profilePic");
+  const photo = `http://localhost:5000/uploads/profiles/${pro}`;
+  console.log("aaa",pro);
+  console.log("aaa",photo);
 
   useEffect(() => {
     // Get user data and profile picture from localStorage
@@ -32,16 +36,17 @@ const LayoutStudent = ({ children }) => {
       try {
         const storedUser = localStorage.getItem("user");
         const storedProfilePic = localStorage.getItem("profilePic");
-        
+
+
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
-          
+
           // Set profile picture with appropriate path
           if (storedProfilePic) {
             setProfilePic(
-              storedProfilePic.startsWith("http") 
-                ? storedProfilePic 
+              storedProfilePic.startsWith("http")
+                ? storedProfilePic
                 : `http://localhost:5000/uploads/${storedProfilePic}`
             );
           } else {
@@ -60,7 +65,7 @@ const LayoutStudent = ({ children }) => {
     const handleStorageChange = () => {
       fetchUserData();
     };
-    
+
     // Listen for custom profile update event
     const handleProfileUpdate = (event) => {
       console.log("Profile update detected:", event.detail);
@@ -76,7 +81,7 @@ const LayoutStudent = ({ children }) => {
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("profileUpdated", handleProfileUpdate);
-    
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("profileUpdated", handleProfileUpdate);
@@ -108,15 +113,15 @@ const LayoutStudent = ({ children }) => {
   useEffect(() => {
     function handleClickOutside(event) {
       // Close dropdowns when clicking outside
-      if (!event.target.closest('.accounts-dropdown-container') && 
-          !event.target.closest('.accounts-toggle')) {
+      if (!event.target.closest('.accounts-dropdown-container') &&
+        !event.target.closest('.accounts-toggle')) {
         setShowAccountsDropdown(false);
         setShowStudentDropdown(false);
         setShowInstructorDropdown(false);
       }
-      
-      if (!event.target.closest('.profile-dropdown') && 
-          !event.target.closest('.profile-section')) {
+
+      if (!event.target.closest('.profile-dropdown') &&
+        !event.target.closest('.profile-section')) {
         setShowProfileDropdown(false);
       }
     }
@@ -127,31 +132,31 @@ const LayoutStudent = ({ children }) => {
 
   // Navigation handlers
   const handleEditProfile = () => {
-    navigate("/edit-profile");
+    navigate("/edit-profile-student");
     setShowProfileDropdown(false);
   };
-  
+
   const handleNavigateToDeliverables = () => {
     navigate("/deliverables-history");
     setShowMobileMenu(false);
     setShowAccountsDropdown(false);
     setShowStudentDropdown(false);
   };
-  
+
   const handleNavigateToReturnDeliverable = () => {
     navigate("/return-deliverable");
     setShowMobileMenu(false);
     setShowAccountsDropdown(false);
     setShowStudentDropdown(false);
   };
-  
+
   const handleNavigateToTutorsDeliverables = () => {
     navigate("/tutors-deliverables");
     setShowMobileMenu(false);
     setShowAccountsDropdown(false);
     setShowInstructorDropdown(false);
   };
-  
+
   const toggleTaskManager = () => {
     setShowTaskManager(!showTaskManager);
     navigate("/tasks");
@@ -299,7 +304,7 @@ const LayoutStudent = ({ children }) => {
               <FontAwesomeIcon icon={faCode} className="me-2" />
               FlowPi
             </div>
-            
+
             {/* Responsive navbar toggler */}
             <button
               className={`navbar-toggler ${showMobileMenu ? 'collapsed' : ''}`}
@@ -310,7 +315,7 @@ const LayoutStudent = ({ children }) => {
             >
               <span className="navbar-toggler-icon"></span>
             </button>
-            
+
             {/* Navbar collapse */}
             <div className={`collapse navbar-collapse ${showMobileMenu ? 'show' : ''}`} id="navbarCollapse">
               <ul className="navbar-nav navbar-nav-scroll mx-auto">
@@ -323,7 +328,7 @@ const LayoutStudent = ({ children }) => {
                   >
                     Accounts
                   </a>
-                  
+
                   {showAccountsDropdown && (
                     <ul className="dropdown-menu show shadow" style={{
                       position: 'absolute',
@@ -340,7 +345,7 @@ const LayoutStudent = ({ children }) => {
                           </span>
                           <FontAwesomeIcon icon={faCaretDown} />
                         </a>
-                        
+
                         {showStudentDropdown && (
                           <ul className="dropdown-menu submenu show shadow" style={{
                             position: 'absolute',
@@ -350,8 +355,8 @@ const LayoutStudent = ({ children }) => {
                             minWidth: '200px'
                           }}>
                             <li>
-                              <div 
-                                className="dropdown-item" 
+                              <div
+                                className="dropdown-item"
                                 onClick={handleNavigateToStudentDashboard}
                                 style={{ cursor: 'pointer' }}
                               >
@@ -359,8 +364,8 @@ const LayoutStudent = ({ children }) => {
                               </div>
                             </li>
                             <li>
-                              <div 
-                                className="dropdown-item" 
+                              <div
+                                className="dropdown-item"
                                 onClick={handleNavigateToDeliverables}
                                 style={{ cursor: 'pointer' }}
                               >
@@ -368,8 +373,8 @@ const LayoutStudent = ({ children }) => {
                               </div>
                             </li>
                             <li>
-                              <div 
-                                className="dropdown-item" 
+                              <div
+                                className="dropdown-item"
                                 onClick={handleNavigateToReturnDeliverable}
                                 style={{ cursor: 'pointer' }}
                               >
@@ -379,8 +384,8 @@ const LayoutStudent = ({ children }) => {
                           </ul>
                         )}
                       </li>
-                      
-                      {/* Instructor section */}
+
+                      {/* Instructor section 
                       <li className="dropdown-item dropdown-submenu position-relative">
                         <a href="#" className="d-flex justify-content-between align-items-center" onClick={toggleInstructorDropdown}>
                           <span>
@@ -388,7 +393,7 @@ const LayoutStudent = ({ children }) => {
                           </span>
                           <FontAwesomeIcon icon={faCaretDown} />
                         </a>
-                        
+
                         {showInstructorDropdown && (
                           <ul className="dropdown-menu submenu show shadow" style={{
                             position: 'absolute',
@@ -398,8 +403,8 @@ const LayoutStudent = ({ children }) => {
                             minWidth: '200px'
                           }}>
                             <li>
-                              <div 
-                                className="dropdown-item" 
+                              <div
+                                className="dropdown-item"
                                 onClick={handleNavigateToTutorsDeliverables}
                                 style={{ cursor: 'pointer' }}
                               >
@@ -408,15 +413,15 @@ const LayoutStudent = ({ children }) => {
                             </li>
                           </ul>
                         )}
-                      </li>
+                      </li>*/}
                     </ul>
                   )}
                 </li>
-                
+
                 {/* Main navigation items */}
                 <li className="nav-item">
-                  <div 
-                    className={`nav-link ${isActive('/InvitationList') ? 'active' : ''}`} 
+                  <div
+                    className={`nav-link ${isActive('/InvitationList') ? 'active' : ''}`}
                     onClick={handleNavigateToInvitations}
                     style={{ cursor: 'pointer', ...navbarStyles.navLink }}
                   >
@@ -424,8 +429,8 @@ const LayoutStudent = ({ children }) => {
                   </div>
                 </li>
                 <li className="nav-item">
-                  <div 
-                    className={`nav-link ${isActive('/create-group') ? 'active' : ''}`} 
+                  <div
+                    className={`nav-link ${isActive('/create-group') ? 'active' : ''}`}
                     onClick={handleNavigateToGroups}
                     style={{ cursor: 'pointer', ...navbarStyles.navLink }}
                   >
@@ -433,8 +438,8 @@ const LayoutStudent = ({ children }) => {
                   </div>
                 </li>
                 <li className="nav-item">
-                  <div 
-                    className={`nav-link ${isActive('/Project-Manager') ? 'active' : ''}`} 
+                  <div
+                    className={`nav-link ${isActive('/Project-Manager') ? 'active' : ''}`}
                     onClick={handleNavigateToProjects}
                     style={{ cursor: 'pointer', ...navbarStyles.navLink }}
                   >
@@ -456,7 +461,7 @@ const LayoutStudent = ({ children }) => {
                     <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
                   </a>
                 </div>
-                
+
 
 
                 {/* Profile dropdown menu */}
@@ -464,7 +469,7 @@ const LayoutStudent = ({ children }) => {
                   <div onClick={toggleProfileDropdown} style={{ cursor: 'pointer' }} className="d-flex align-items-center">
                     {profilePic ? (
                       <img
-                        src={profilePic}
+                        src={photo}
                         alt="Profile"
                         className="profile-image"
                         style={{ width: "40px", height: "40px", borderRadius: "50%" }}
@@ -473,11 +478,11 @@ const LayoutStudent = ({ children }) => {
                         }}
                       />
                     ) : (
-                      <img src={DEFAULT_PROFILE_PIC} alt="Default Profile" style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
+                      <img src={photo} alt="Default Profile" style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
                     )}
                     <FontAwesomeIcon icon={faCaretDown} className="ms-2" />
                   </div>
-                  
+
                   {/* Dropdown menu for profile actions */}
                   {showProfileDropdown && (
                     <div className="profile-dropdown shadow" style={{
@@ -490,16 +495,16 @@ const LayoutStudent = ({ children }) => {
                       width: '200px',
                       zIndex: 1000
                     }}>
-                      <div 
-                        onClick={handleEditProfile} 
+                      <div
+                        onClick={handleEditProfile}
                         className="dropdown-item d-flex align-items-center"
                         style={{ padding: '10px 15px', cursor: 'pointer' }}
                       >
                         <FontAwesomeIcon icon={faUserEdit} className="me-2" />
                         Edit Profile
                       </div>
-                      <div 
-                        onClick={logoutUser} 
+                      <div
+                        onClick={logoutUser}
                         className="dropdown-item d-flex align-items-center text-danger"
                         style={{ padding: '10px 15px', cursor: 'pointer' }}
                       >
@@ -514,9 +519,9 @@ const LayoutStudent = ({ children }) => {
           </div>
         </nav>
       </header>
-      
+
       {/* Add padding to the main content to prevent it from being hidden under the fixed navbar */}
-      <main style={{ 
+      <main style={{
         paddingTop: '80px',
         minHeight: '100vh',
         width: '100%',

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import LayoutStudent from '../dashboard/LayoutStudent';
+import LayoutTutorss from '../dashboard/LayoutTutorss';
 import LeftSideBar from '../components/LeftSideBar';
 import DeliverableDetailsModal from './DeliverableDetailsModal';
 import axios from 'axios';
@@ -12,9 +12,9 @@ const TutorsDeliverables = () => {
     useEffect(() => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     
-      const fetchDeliverables = async () => {
+      {{/*const fetchDeliverables = async () => {
         try {
-          const response = await axios.get('http://localhost:5000/api/deliverables/history', {
+          const response = await axios.get('http://localhost:5000/api/deliverables/getAllDeliverables', {
             headers: {
               Authorization: `Bearer ${token}`
             }
@@ -36,7 +36,26 @@ const TutorsDeliverables = () => {
       };
     
       fetchDeliverables();
-    }, []);
+    }, []);**/}}
+    const fetchDeliverables = async () => {
+      try {
+        const response = await axios.get('/api/deliverables/getAllDeliverables');
+        
+        // Check if response has the expected format
+        if (response.data.success && response.data.data) {
+          setDeliverables(response.data.data); // Use response.data.data
+        } else {
+          throw new Error("Unexpected response format");
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeliverables();
+  }, []);
 
     const handleViewDetails = (deliverable) => {
       console.log('Selected Deliverable:', deliverable);
@@ -53,8 +72,8 @@ const TutorsDeliverables = () => {
   };
 
   return (
-    <LayoutStudent>
-      <div className="container-fluid px-4">
+    <LayoutTutorss>
+      <div className="container-fluid px-4" >
         <div className="row">
           <div className="col-xl-9">
             <div className="card mb-4">
@@ -113,7 +132,7 @@ const TutorsDeliverables = () => {
           onSubmitEvaluation={handleSubmitEvaluation}
         />
       )}
-    </LayoutStudent>
+    </LayoutTutorss>
   );
 };
 
