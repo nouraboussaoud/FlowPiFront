@@ -1332,7 +1332,6 @@ const TaskManager = () => {
                     </div>
                     <div className="gauge-labels">
                       <span>Low</span>
-                      <span>Medium</span>
                       <span>High</span>
                     </div>
                   </div>
