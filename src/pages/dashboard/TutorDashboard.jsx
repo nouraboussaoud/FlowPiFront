@@ -502,32 +502,33 @@ const TutorDashboard = () => {
           <div className="col-lg-6 mb-4 mb-lg-0">
             <div className="card border-0 shadow-sm rounded-3 h-100">
               <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                <h5 className="card-title mb-0">Today's Sessions</h5>
-                <button className="btn btn-sm btn-outline-primary rounded-pill">
-                  <i className="bi bi-calendar me-1"></i> View All
+                <h5 className="card-title mb-0">Recent Student Activity</h5>
+                <button className="btn btn-sm btn-outline-primary rounded-pill" onClick={() => navigate('/users-table')}>
+                  <i className="bi bi-people me-1"></i> View All Students
                 </button>
               </div>
               <div className="card-body p-0">
-                {todaySessions.length > 0 ? (
+                {students.length > 0 ? (
                   <div className="list-group list-group-flush">
-                    {todaySessions.map(session => (
-                      <div key={session.id} className="list-group-item border-0 py-3">
+                    {students.slice(0, 3).map(student => (
+                      <div key={student._id} className="list-group-item border-0 py-3">
                         <div className="d-flex align-items-center">
-                          <div className="session-icon rounded-circle p-2 me-3" 
-                               style={{backgroundColor: session.subject === 'Mathematics' ? 'rgba(54, 162, 235, 0.2)' : 
-                                      session.subject === 'English' ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 206, 86, 0.2)'}}>
-                            <i className={`bi ${session.subject === 'Mathematics' ? 'bi-calculator' : 
-                                           session.subject === 'English' ? 'bi-book' : 'bi-flask'}`} 
-                               style={{fontSize: '1.2rem', color: session.subject === 'Mathematics' ? '#3498db' : 
-                                      session.subject === 'English' ? '#2ecc71' : '#f1c40f'}}></i>
+                          <div className="student-avatar rounded-circle p-2 me-3" 
+                               style={{backgroundColor: 'rgba(54, 162, 235, 0.2)'}}>
+                            <i className="bi bi-person" 
+                               style={{fontSize: '1.2rem', color: '#3498db'}}></i>
                           </div>
-                          <div className="session-details">
-                            <h6 className="mb-0 fw-bold">{session.subject}</h6>
-                            <div className="small text-muted">with {session.student}</div>
+                          <div className="student-details">
+                            <h6 className="mb-0 fw-bold">{student.name || `${student.firstName} ${student.lastName}`}</h6>
+                            <div className="small text-muted">Last active: {new Date(student.lastActive || Date.now()).toLocaleDateString()}</div>
                           </div>
-                          <div className="ms-auto text-end">
-                            <div className="fw-bold">{session.time}</div>
-                            <div className="small text-muted">{session.duration}</div>
+                          <div className="ms-auto">
+                            <button 
+                              className="btn btn-sm btn-outline-primary rounded-pill"
+                              onClick={() => navigate(`/student/${student._id}`)}
+                            >
+                              View Profile
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -536,10 +537,10 @@ const TutorDashboard = () => {
                 ) : (
                   <div className="text-center p-4">
                     <div className="mb-3">
-                      <i className="bi bi-calendar-check text-muted" style={{fontSize: '2rem'}}></i>
+                      <i className="bi bi-people text-muted" style={{fontSize: '2rem'}}></i>
                     </div>
-                    <h6>No sessions scheduled for today</h6>
-                    <p className="text-muted small">Enjoy your free time or schedule new sessions</p>
+                    <h6>No students found</h6>
+                    <p className="text-muted small">Add students to see their activity here</p>
                   </div>
                 )}
               </div>
