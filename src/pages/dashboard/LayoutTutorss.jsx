@@ -332,7 +332,7 @@ const LayoutTutorss = ({ children }) => {
   };
 
   const handleNavigateToDeliverables = () => {
-    navigate("");
+    navigate("/tutors-deliverables");
     setShowMobileMenu(false);
   };
 

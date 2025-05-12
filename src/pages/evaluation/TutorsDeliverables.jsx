@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
-import LayoutStudent from '../dashboard/LayoutStudent';
+import LayoutTutorss from '../dashboard/LayoutTutorss';
 import LeftSideBar from '../components/LeftSideBar';
-import DeliverableDetailsModal from './DeliverableDetailsModal';
+import DeliverableDetails from './DeliverableDetailsModal';
 import axios from 'axios';
 
 const TutorsDeliverables = () => {
@@ -9,51 +10,51 @@ const TutorsDeliverables = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
 
-    useEffect(() => {
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-    
-      const fetchDeliverables = async () => {
-        try {
-          const response = await axios.get('http://localhost:5000/api/deliverables/history', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-    
-          // Access the 'deliverables' property from the response
-          if (response.data && Array.isArray(response.data.deliverables)) {
-            setDeliverables(response.data.deliverables);
-          } else {
-            console.error('Unexpected response format:', response.data);
-            setDeliverables([]); // Set an empty array if the response is not valid
-          }
-        } catch (error) {
-          console.error('Error fetching deliverables:', error);
-          setDeliverables([]); // Set an empty array on error
-        } finally {
-          setLoading(false);
-        }
-      };
-    
-      fetchDeliverables();
-    }, []);
+  useEffect(() => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
 
-    const handleViewDetails = (deliverable) => {
-      console.log('Selected Deliverable:', deliverable);
-      setSelectedDeliverable(deliverable);
+    const fetchDeliverables = async () => {
+      try {
+        const response = await axios.get('/api/deliverables/getAllDeliverables', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Check if response has the expected format
+        if (response.data.success && response.data.data) {
+          setDeliverables(response.data.data);
+        } else {
+          throw new Error('Unexpected response format');
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setDeliverables([]);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchDeliverables();
+  }, []);
+
+  const handleViewDetails = (deliverable) => {
+    console.log('Selected Deliverable:', deliverable);
+    setSelectedDeliverable(deliverable);
+  };
 
   const handleCloseModal = () => {
     setSelectedDeliverable(null);
   };
 
-  const handleSubmitEvaluation = (mark, checklist) => {
-    console.log('Evaluation Submitted:', { mark, checklist });
-    // Here you can send the evaluation data to the backend
+  const handleSubmitEvaluation = (updatedDeliverable) => {
+    setDeliverables((prev) =>
+      prev.map((d) => (d._id === updatedDeliverable._id ? updatedDeliverable : d))
+    );
   };
 
   return (
-    <LayoutStudent>
+    <LayoutTutorss>
       <div className="container-fluid px-4">
         <div className="row">
           <div className="col-xl-9">
@@ -84,9 +85,23 @@ const TutorsDeliverables = () => {
                           <td>{new Date(deliverable.submission_date).toLocaleDateString()}</td>
                           <td>{deliverable.description}</td>
                           <td>
-                            {deliverable.evaluation_score !== undefined
-                              ? deliverable.evaluation_score
-                              : 'Not evaluated yet'}
+                            {deliverable.evaluation && deliverable.evaluation.evaluationScore !== undefined ? (
+                              <span
+                                style={{
+                                  color:
+                                    deliverable.evaluation.evaluationScore < 30
+                                      ? '#dc3545' // Red
+                                      : deliverable.evaluation.evaluationScore > 60
+                                      ? '#28a745' // Green
+                                      : '#ffc107', // Yellow
+                                  fontWeight: 'bold',
+                                }}
+                              >
+                                {deliverable.evaluation.evaluationScore}
+                              </span>
+                            ) : (
+                              'Not evaluated yet'
+                            )}
                           </td>
                           <td>
                             <button
@@ -107,13 +122,13 @@ const TutorsDeliverables = () => {
         </div>
       </div>
       {selectedDeliverable && (
-        <DeliverableDetailsModal
+        <DeliverableDetails
           deliverable={selectedDeliverable}
           onClose={handleCloseModal}
           onSubmitEvaluation={handleSubmitEvaluation}
         />
       )}
-    </LayoutStudent>
+    </LayoutTutorss>
   );
 };
 

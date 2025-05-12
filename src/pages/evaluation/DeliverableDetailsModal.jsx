@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import axios from 'axios';
-import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress, FaPlay, FaPause, FaStop } from 'react-icons/fa';
+import { FaFolder, FaFolderOpen, FaFile, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 import Editor from '@monaco-editor/react';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
+const DeliverableDetailsModal = ({ deliverable, onClose, onSubmitEvaluation }) => {
   const navigate = useNavigate();
   // State declarations
   const [aiScore, setAiScore] = useState(null);
@@ -240,10 +240,9 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       const response = await axios.post('http://localhost:5000/api/summary', {
         fileUrl: fileUrl,
         includeSummary: true,
-        includeAudio: true,
       });
 
-      const { summary, audioUrl } = response.data;
+      const { summary } = response.data;
       if (summary) {
         const newWindow = window.open('', '_blank', 'width=800,height=600');
         if (newWindow) {
@@ -279,33 +278,27 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   margin-bottom: 20px;
                   color: #666;
                 }
-                .audio-controls {
+                .tts-controls {
                   margin-top: 20px;
                   display: flex;
                   gap: 10px;
                 }
-                .audio-controls button {
+                .tts-button {
                   background-color: #007bff;
                   color: white;
                   border: none;
-                  padding: 8px 15px;
+                  padding: 10px 20px;
                   border-radius: 4px;
                   cursor: pointer;
                   font-size: 14px;
-                  display: flex;
-                  align-items: center;
-                  gap: 5px;
                   transition: background-color 0.2s;
                 }
-                .audio-controls button:hover {
+                .tts-button:hover:not(:disabled) {
                   background-color: #0056b3;
                 }
-                .audio-controls button:disabled {
-                  background-color: #6c757d;
+                .tts-button:disabled {
+                  background-color: #cccccc;
                   cursor: not-allowed;
-                }
-                .audio-player {
-                  margin-top: 20px;
                 }
                 .print-button {
                   background-color: #28a745;
@@ -315,14 +308,14 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
                   border-radius: 4px;
                   cursor: pointer;
                   font-size: 14px;
-                  margin-top: 10px;
+                  margin-left: 10px;
                   transition: background-color 0.2s;
                 }
                 .print-button:hover {
                   background-color: #218838;
                 }
                 @media print {
-                  .audio-controls, .audio-player, .print-button {
+                  .tts-controls, .print-button {
                     display: none;
                   }
                 }
@@ -333,72 +326,75 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               <div class="file-info">
                 <strong>Original File:</strong> ${deliverable.file.url.split('/').pop()}
               </div>
-              <div class="summary-content">
+              <div class="summary-content" id="summary-content">
                 ${summary.replace(/\n/g, '<br>')}
               </div>
-              ${audioUrl ? `
-                <div class="audio-player">
-                  <audio id="audio-player" src="${audioUrl}" controls>
-                    Your browser does not support the audio element.
-                  </audio>
-                  <div class="audio-controls">
-                    <button id="play-btn"><FaPlay /> Play</button>
-                    <button id="pause-btn" disabled><FaPause /> Pause</button>
-                    <button id="stop-btn" disabled><FaStop /> Stop</button>
-                  </div>
-                </div>
-              ` : '<p>No audio available.</p>'}
-              <button class="print-button" onclick="window.print()">Print Summary</button>
+              <div class="tts-controls">
+                <button class="tts-button" id="play-btn">Play</button>
+                <button class="tts-button" id="pause-btn" disabled>Pause</button>
+                <button class="tts-button" id="stop-btn" disabled>Stop</button>
+                <button class="print-button" onclick="window.print()">Print Summary</button>
+              </div>
               <script>
-                const audio = document.getElementById('audio-player');
-                let isPlaying = false;
+                const summaryContent = document.getElementById('summary-content').innerText;
+                const synth = window.speechSynthesis;
+                let utterance = new SpeechSynthesisUtterance(summaryContent);
+                let isPaused = false;
 
-                if (audio) {
-                  document.getElementById('play-btn').addEventListener('click', () => {
-                    if (!isPlaying) {
-                      audio.play();
-                      isPlaying = true;
-                      document.getElementById('play-btn').disabled = true;
-                      document.getElementById('pause-btn').disabled = false;
-                      document.getElementById('stop-btn').disabled = false;
-                    }
-                  });
+                utterance.lang = 'en-US';
+                utterance.volume = 1;
+                utterance.rate = 1;
+                utterance.pitch = 1;
 
-                  document.getElementById('pause-btn').addEventListener('click', () => {
-                    if (isPlaying) {
-                      audio.pause();
-                      isPlaying = false;
-                      document.getElementById('play-btn').disabled = false;
-                      document.getElementById('pause-btn').disabled = true;
-                    }
-                  });
+                const playBtn = document.getElementById('play-btn');
+                const pauseBtn = document.getElementById('pause-btn');
+                const stopBtn = document.getElementById('stop-btn');
 
-                  document.getElementById('stop-btn').addEventListener('click', () => {
-                    if (isPlaying || !audio.paused) {
-                      audio.pause();
-                      audio.currentTime = 0;
-                      isPlaying = false;
-                      document.getElementById('play-btn').disabled = false;
-                      document.getElementById('pause-btn').disabled = true;
-                      document.getElementById('stop-btn').disabled = true;
-                    }
-                  });
-
-                  audio.onended = () => {
-                    isPlaying = false;
-                    document.getElementById('play-btn').disabled = false;
-                    document.getElementById('pause-btn').disabled = true;
-                    document.getElementById('stop-btn').disabled = true;
-                  };
-                }
-
-                // Cleanup on window close
-                window.addEventListener('beforeunload', () => {
-                  if (audio && (isPlaying || !audio.paused)) {
-                    audio.pause();
-                    audio.currentTime = 0;
+                playBtn.addEventListener('click', () => {
+                  if (isPaused) {
+                    synth.resume();
+                    isPaused = false;
+                  } else {
+                    synth.speak(utterance);
                   }
+                  playBtn.disabled = true;
+                  pauseBtn.disabled = false;
+                  stopBtn.disabled = false;
                 });
+
+                pauseBtn.addEventListener('click', () => {
+                  synth.pause();
+                  isPaused = true;
+                  playBtn.disabled = false;
+                  pauseBtn.disabled = true;
+                });
+
+                stopBtn.addEventListener('click', () => {
+                  synth.cancel();
+                  isPaused = false;
+                  playBtn.disabled = false;
+                  pauseBtn.disabled = true;
+                  stopBtn.disabled = true;
+                });
+
+                utterance.onend = () => {
+                  playBtn.disabled = false;
+                  pauseBtn.disabled = true;
+                  stopBtn.disabled = true;
+                  isPaused = false;
+                };
+
+                utterance.onerror = (event) => {
+                  console.error('Speech synthesis error:', event.error);
+                  alert('An error occurred during speech synthesis: ' + event.error);
+                  playBtn.disabled = false;
+                  pauseBtn.disabled = true;
+                  stopBtn.disabled = true;
+                };
+
+                window.onbeforeunload = () => {
+                  synth.cancel();
+                };
               </script>
             </body>
             </html>
@@ -408,7 +404,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
       }
     } catch (error) {
       console.error('Failed to summarize the document:', error);
-      alert('Failed to summarize the document. Please check if the file is accessible or contact support.');
+      alert('Failed to summarize the document. Please check if the file is accessible.');
     } finally {
       setIsLoading(false);
     }
@@ -536,41 +532,52 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   };
 
   const handleSubmit = async () => {
-    try {
-      setError((prev) => ({ ...prev, submission: null }));
-      setLoading((prev) => ({ ...prev, submission: true }));
+  try {
+    setError((prev) => ({ ...prev, submission: null }));
+    setLoading((prev) => ({ ...prev, submission: true }));
 
-      if (!evaluationScore || isNaN(evaluationScore) || evaluationScore < 0 || evaluationScore > 100) {
-        setError((prev) => ({
-          ...prev,
-          submission: 'Please enter a valid evaluation score between 0 and 100',
-        }));
-        setLoading((prev) => ({ ...prev, submission: false }));
-        return;
+    if (!evaluationScore || isNaN(evaluationScore) || evaluationScore < 0 || evaluationScore > 100) {
+      setError((prev) => ({
+        ...prev,
+        submission: 'Please enter a valid evaluation score between 0 and 100',
+      }));
+      setLoading((prev) => ({ ...prev, submission: false }));
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    const evaluationData = {
+      evaluationScore: parseFloat(evaluationScore), // Changed from 'score' to 'evaluationScore'
+      notes,
+    };
+
+    const response = await axios.post(
+      `/api/deliverables/${deliverable._id}/evaluate`,
+      evaluationData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
+    );
 
-      const evaluationData = {
-        evaluationScore: parseFloat(evaluationScore),
-        notes,
-      };
-
-      await onSubmitEvaluation(deliverable._id, evaluationData);
-
+    if (response.data.message === 'Evaluation submitted successfully') {
+      onSubmitEvaluation(response.data.deliverable); // Pass updated deliverable to parent
       setSubmitSuccess(true);
-
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (error) {
-      console.error('Error submitting evaluation:', error);
-      setError((prev) => ({
-        ...prev,
-        submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.',
-      }));
-    } finally {
-      setLoading((prev) => ({ ...prev, submission: false }));
     }
-  };
+  } catch (error) {
+    console.error('Error submitting evaluation:', error);
+    setError((prev) => ({
+      ...prev,
+      submission: error.response?.data?.message || 'Failed to submit evaluation. Please try again.',
+    }));
+  } finally {
+    setLoading((prev) => ({ ...prev, submission: false }));
+  }
+};
 
   // AI detection
   const fetchAiDetectionScore = async () => {
@@ -1106,7 +1113,7 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
 
                 <div style={{ margin: '15px 0' }}>
                   <h5>Quick Links</h5>
-                  <ul style={{ listStyle: 'none', padding: '0' }}>
+                  <ul style={{ listStyle: 'none', padding: 0 }}>
                     <li style={{ marginBottom: '5px' }}>
                       <a
                         href={commitURL}
@@ -1243,55 +1250,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
             {/* Evaluation Area */}
             <div style={{ flex: 1, minWidth: '250px' }}>
               <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Evaluation</h3>
-
-              <div style={{ marginBottom: '20px' }}>
-                <h5>Checklist</h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      name="requirement1"
-                      checked={checklist.requirement1}
-                      onChange={handleChecklistChange}
-                    />
-                    Requirement 1
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      name="requirement2"
-                      checked={checklist.requirement2}
-                      onChange={handleChecklistChange}
-                    />
-                    Requirement 2
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      name="requirement3"
-                      checked={checklist.requirement3}
-                      onChange={handleChecklistChange}
-                    />
-                    Requirement 3
-                  </label>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <h5>Notes</h5>
-                <textarea
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    minHeight: '100px',
-                  }}
-                  placeholder="Write your feedback here..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                ></textarea>
-              </div>
 
               <div style={{ marginBottom: '20px' }}>
                 {selectedFilePath && (
@@ -1627,4 +1585,4 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
   );
 };
 
-export default DeliverableDetails;
+export default DeliverableDetailsModal;

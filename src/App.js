@@ -122,7 +122,6 @@ function App() {
           <Route path="/users-table" element={<UsersTable />} />
           <Route path="/project-recommendations" element={<ProjectRecommendations />} />
           <Route path="/team-formation/:projectId" element={<TeamFormationSuggestions />} />
-
           <Route path="/edit-profile-tutor" element={<EditProfileTutor />} />
           <Route path="/edit-profile-admin" element={<EditProfileAdmin />} />
           <Route path="/edit-profile-student" element={<EditProfileStudent />} />
