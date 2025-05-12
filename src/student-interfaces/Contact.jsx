@@ -147,7 +147,7 @@ function ContactList({ tutors, onSelectTutor }) {
     }
     return profilePic.startsWith("http")
       ? profilePic
-      : `http://localhost:5000/uploads/${profilePic}`;
+      : `http://localhost:5000/uploads/profiles/${profilePic}`;
   };
 
   useEffect(() => {

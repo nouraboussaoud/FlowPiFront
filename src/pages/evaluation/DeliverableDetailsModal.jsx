@@ -1243,55 +1243,6 @@ const DeliverableDetails = ({ deliverable, onClose, onSubmitEvaluation }) => {
               <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Evaluation</h3>
 
               <div style={{ marginBottom: '20px' }}>
-                <h5>Checklist</h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      name="requirement1"
-                      checked={checklist.requirement1}
-                      onChange={handleChecklistChange}
-                    />
-                    Requirement 1
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      name="requirement2"
-                      checked={checklist.requirement2}
-                      onChange={handleChecklistChange}
-                    />
-                    Requirement 2
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      name="requirement3"
-                      checked={checklist.requirement3}
-                      onChange={handleChecklistChange}
-                    />
-                    Requirement 3
-                  </label>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <h5>Notes</h5>
-                <textarea
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    minHeight: '100px',
-                  }}
-                  placeholder="Write your feedback here..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                ></textarea>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
                 {selectedFilePath && (
                   <>
                     <h5>report :</h5>

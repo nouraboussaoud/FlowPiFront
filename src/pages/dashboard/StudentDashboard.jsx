@@ -304,21 +304,7 @@ function StudentDashboard() {
   };
 
   // Prepare polar area data for task completion trend
-  const taskCompletionPolarData = {
-    labels: taskCompletionTrend.labels,
-    datasets: [
-      {
-        data: taskCompletionTrend.data,
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(255, 99, 132, 0.7)'
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  // Removed
 
   // Chart options
   const pieOptions = {
@@ -374,29 +360,7 @@ function StudentDashboard() {
     }
   };
 
-  const polarAreaOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right',
-        labels: {
-          padding: 20,
-          boxWidth: 10,
-          font: {
-            size: 12
-          }
-        }
-      }
-    },
-    scales: {
-      r: {
-        ticks: {
-          display: false
-        }
-      }
-    }
-  };
+  // Removed polarAreaOptions
 
   return (
     <LayoutStudent>
@@ -547,13 +511,7 @@ function StudentDashboard() {
           </div>
         </div>
 
-        {/* Weekly Task Completion Chart - Full Width */}
-        <div className="chart-card weekly-chart">
-          <h3>Weekly Task Completion</h3>
-          <div className="chart-container">
-            <PolarArea data={taskCompletionPolarData} options={polarAreaOptions} />
-          </div>
-        </div>
+        {/* Removed Weekly Task Completion Chart */}
 
         {/* Chat functionality */}
         <div className="chat-bubble-container">

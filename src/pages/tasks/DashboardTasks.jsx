@@ -3,12 +3,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import LayoutStudent from "../dashboard/LayoutStudent";
 import "./Tasks.css";
-import { Folder, Clock, BarChart2, Edit, AlertCircle, Eye } from "lucide-react";
+import { Folder, Clock, BarChart2, Edit, AlertCircle, Eye, BookOpen } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Contact from "../../student-interfaces/Contact";
 import { get, post } from "../../apiHelper";
 import Chatbox from "../tutor-interfaces/chatbox/ChatBox";
+import QuizModal from "./QuizModal";
+import QuizHistoryModal from "./QuizHistoryModal";
 
 const TaskManager = () => {
   const location = useLocation();
@@ -59,7 +61,12 @@ const TaskManager = () => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 6;
-
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showQuizHistoryModal, setShowQuizHistoryModal] = useState(false);
+  const [quizData, setQuizData] = useState(null);
+  const [quizHistory, setQuizHistory] = useState([]);
+  const [tasksWithPassedQuizzes, setTasksWithPassedQuizzes] = useState([]);
+  const [tasksWithQuizAttempts, setTasksWithQuizAttempts] = useState([]);
   const statusOptions = ["pending", "in-progress", "completed"];
 
   const totalPages = Math.ceil(tasks.length / tasksPerPage);
@@ -210,12 +217,10 @@ const TaskManager = () => {
           confidence: task.riskConfidence,
           explanation:
             task.riskExplanation ||
-            `AI analysis based on task details: "${
-              task.taskDetails || "No details provided"
-            }". ${
-              task.risk.toLowerCase() === "high risk"
-                ? "Identified potential challenges that may delay completion."
-                : "Task appears manageable with minimal obstacles."
+            `AI analysis based on task details: "${task.taskDetails || "No details provided"
+            }". ${task.risk.toLowerCase() === "high risk"
+              ? "Identified potential challenges that may delay completion."
+              : "Task appears manageable with minimal obstacles."
             }`,
         });
         setShowRiskModal(true);
@@ -323,65 +328,7 @@ const TaskManager = () => {
     }
   };
 
-  const trackCommits = async (taskId) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("No token found. Please login.");
-        return;
-      }
-
-      setIsLoading(true);
-
-      const taskResponse = await axios.get(
-        `http://localhost:5000/api/tasks/getTaskById/${taskId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const task = taskResponse.data;
-      if (!task.repoOwner || !task.repoName || !task.branchName) {
-        throw new Error("GitHub repository information is incomplete");
-      }
-
-      const githubResponse = await axios.get(
-        `http://localhost:5000/api/tasks/track-commits/${taskId}`,
-        {
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        }
-      );
-
-      if (!githubResponse.data) {
-        throw new Error("No GitHub data received");
-      }
-
-      const { commits, pull_requests } = githubResponse.data;
-
-      const calculatedProgress = calculateProgress(commits, pull_requests, task.status);
-
-      setTasks((prevTasks) =>
-        prevTasks.map((t) =>
-          t._id === taskId ? { ...t, progressPercentage: calculatedProgress } : t
-        )
-      );
-
-      await axios.post(
-        `http://localhost:5000/api/tasks/updateTaskProgress/${taskId}`,
-        { progressPercentage: calculatedProgress },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setGithubData({ commits: commits || [], pull_requests: pull_requests || [] });
-      setShowCommitsModal(true);
-      setError(null);
-    } catch (error) {
-      console.error("Error tracking GitHub activity:", error);
-      setError(
-        error.response?.data?.message || error.message || "Error tracking GitHub activity"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Removed or commented out the trackCommits function
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -695,6 +642,201 @@ const TaskManager = () => {
     completed: tasks.filter((t) => t.status === "completed").length,
   };
 
+  const openQuizModal = async (taskId) => {
+    try {
+      setIsLoading(true);
+      console.log("Opening quiz modal for task:", taskId);
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No token found. Please login.");
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await axios.post(
+        `http://localhost:5000/api/tasks/generateQuiz/${taskId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Quiz data received:", response.data);
+
+      if (response.data.alreadyPassed) {
+        toast.info("You've already passed a quiz for this task. No further quizzes allowed.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!response.data.quizId && !response.data.questions) {
+        console.error("No quiz data received from server");
+        setError("Error: Quiz data not received from server");
+        setIsLoading(false);
+        return;
+      }
+
+      // Make sure we're setting the taskId and quizId correctly
+      setQuizData({
+        questions: response.data.questions,
+        quizId: response.data.quizId,
+        taskId: taskId  // This is important!
+      });
+      setSelectedTaskId(taskId);
+      setShowQuizModal(true);
+
+      console.log("Modal state set:", {
+        showQuizModal: true,
+        quizData: {
+          questions: response.data.questions,
+          quizId: response.data.quizId,
+          taskId: taskId
+        }
+      });
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      setError(error.response?.data?.message || "Error generating quiz");
+      toast.error("Failed to generate quiz. Please try again later.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openQuizHistoryModal = async (taskId) => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No token found. Please login.");
+        return;
+      }
+
+      const response = await axios.get(
+        `http://localhost:5000/api/tasks/myQuizAttempts/${taskId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setQuizHistory(response.data.attempts || []);
+      setSelectedTaskId(taskId);
+      setShowQuizHistoryModal(true);
+    } catch (error) {
+      console.error("Error fetching quiz history:", error);
+      setError(error.response?.data?.message || "Error fetching quiz history");
+      toast.error("Failed to fetch quiz history. Please try again later.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchQuizHistory = async (taskId) => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No token found. Please login.");
+        return;
+      }
+
+      const response = await axios.get(
+        `http://localhost:5000/api/tasks/myQuizAttempts/${taskId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setQuizHistory(response.data.attempts || []);
+    } catch (error) {
+      console.error("Error fetching quiz history:", error);
+      setError(error.response?.data?.message || "Error fetching quiz history");
+      toast.error("Failed to fetch quiz history. Please try again later.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuizSubmit = async (quizResult) => {
+    try {
+      setShowQuizModal(false);
+
+      // Show appropriate toast notification based on result
+      if (quizResult.alreadyPassed) {
+        toast.info("You've already passed this quiz previously.");
+      } else if (quizResult.passed) {
+        toast.success(`Quiz passed with a score of ${quizResult.score}! Task progress updated.`);
+
+        // Update the task's progress in the local state
+        setTasks(prevTasks =>
+          prevTasks.map(task =>
+            task._id === selectedTaskId
+              ? { ...task, progressPercentage: quizResult.progressPercentage }
+              : task
+          )
+        );
+      }
+
+      // Fetch updated quiz status and history
+      if (selectedTaskId) {
+        await fetchQuizStatus(); // Refresh tasksWithQuizAttempts
+        fetchQuizHistory(selectedTaskId);
+      }
+    } catch (error) {
+      console.error("Error handling quiz submission:", error);
+      toast.error("Error processing quiz results");
+    }
+    
+  };
+
+  const fetchQuizStatus = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No token found. Please login.");
+        return;
+      }
+
+      // Use the myTasks endpoint which already filters for the current user
+      const tasksResponse = await axios.get(
+        "http://localhost:5000/api/tasks/myTasks",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const taskIds = tasksResponse.data.map(task => task._id);
+      const tasksWithAttempts = [];
+
+      // For each task, check if there's any quiz attempt
+      for (const taskId of taskIds) {
+        try {
+          const quizResponse = await axios.get(
+            `http://localhost:5000/api/tasks/myQuizAttempts/${taskId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          // If there are any attempts, add the task ID to the list
+          if (quizResponse.data.attempts && quizResponse.data.attempts.length > 0) {
+            tasksWithAttempts.push(taskId);
+          }
+        } catch (error) {
+          // Ignore errors for individual tasks
+          console.log(`Could not fetch quiz status for task ${taskId}`);
+        }
+      }
+
+      setTasksWithQuizAttempts(tasksWithAttempts);
+    } catch (error) {
+      console.error("Error fetching quiz status:", error);
+    }
+  };
+  useEffect(() => {
+    if (tasks.length > 0 && !isLoading) {
+      fetchQuizStatus();
+    }
+  }, [tasks, isLoading]);
   useEffect(() => {
     fetchData();
 
@@ -746,6 +888,20 @@ const TaskManager = () => {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
+
+  useEffect(() => {
+    console.log("Testing modal visibility");
+    // Uncomment this to test if modals work at all
+    // setTimeout(() => {
+    //   setShowModal(true);
+    // }, 3000);
+  }, []);
+
+  useEffect(() => {
+    if (tasks.length > 0 && !isLoading) {
+      fetchQuizStatus();
+    }
+  }, [tasks, isLoading]);
 
   return (
     <LayoutStudent>
@@ -1176,7 +1332,6 @@ const TaskManager = () => {
                     </div>
                     <div className="gauge-labels">
                       <span>Low</span>
-                      <span>Medium</span>
                       <span>High</span>
                     </div>
                   </div>
@@ -1470,7 +1625,7 @@ const TaskManager = () => {
                     </span>
                   </div>
                   {typeof task.progressPercentage === "number" &&
-                  task.progressPercentage > 0 ? (
+                    task.progressPercentage > 0 ? (
                     <div
                       className="task-progress"
                       title="Progress based on GitHub activity"
@@ -1519,7 +1674,7 @@ const TaskManager = () => {
                       >
                         {task.priority
                           ? task.priority.charAt(0).toUpperCase() +
-                            task.priority.slice(1)
+                          task.priority.slice(1)
                           : "Medium"}
                       </span>
                       <span className="margin-left-half">
@@ -1589,6 +1744,22 @@ const TaskManager = () => {
                           />
                         </svg>
                       </button>
+                      <button
+                        className="button button-info"
+                        onClick={() => openQuizModal(task._id)}
+                        disabled={isLoading || tasksWithQuizAttempts.includes(task._id)}
+                        title={tasksWithQuizAttempts.includes(task._id) ? "Only one quiz attempt allowed" : "Take Quiz"}
+                      >
+                        <BookOpen size={14} />
+                      </button>
+                      <button
+                        className="button button-secondary"
+                        onClick={() => openQuizHistoryModal(task._id)}
+                        disabled={isLoading}
+                        title="View Quiz History"
+                      >
+                        <BarChart2 size={14} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1607,9 +1778,8 @@ const TaskManager = () => {
                   {getPageNumbers().map((page, index) => (
                     <button
                       key={index}
-                      className={`pagination-page ${
-                        page === currentPage ? "active" : ""
-                      } ${page === "..." ? "ellipsis" : ""}`}
+                      className={`pagination-page ${page === currentPage ? "active" : ""
+                        } ${page === "..." ? "ellipsis" : ""}`}
                       onClick={() => typeof page === "number" && goToPage(page)}
                       disabled={page === "..."}
                     >
@@ -1656,6 +1826,51 @@ const TaskManager = () => {
           </div>
         )}
       </div>
+
+      {/* Quiz Modal */}
+      {showQuizModal && quizData && (
+        <div className="modal-overlay">
+          <div className="modal-content quiz-modal" onClick={(e) => e.stopPropagation()}>
+            <QuizModal
+              quiz={quizData}
+              taskId={selectedTaskId}
+              onClose={() => setShowQuizModal(false)}
+              onSubmit={handleQuizSubmit}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Quiz History Modal */}
+      {showQuizHistoryModal && (
+        <div className="modal-overlay" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <div
+            className="modal-content quiz-history-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'white',
+              color: '#1f2937',
+              maxWidth: '900px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+            }}
+          >
+            <QuizHistoryModal
+              history={quizHistory}
+              onClose={() => setShowQuizHistoryModal(false)}
+              githubInfo={selectedTaskId ? {
+                repoOwner: tasks.find(t => t._id === selectedTaskId)?.repoOwner,
+                repoName: tasks.find(t => t._id === selectedTaskId)?.repoName ,
+                filePath: tasks.find(t => t._id === selectedTaskId)?.filePath ,
+                commitSha: tasks.find(t => t._id === selectedTaskId)?.commitSha 
+              } : null}
+            />
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .simple-header {

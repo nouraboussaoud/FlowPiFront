@@ -1,15 +1,46 @@
 // ForgotPasswordPage.js
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { toast, Toaster } from "sonner";
 import Loader from "../components/loader";
+import './LoginPage.css';
+
+// Custom loading animation component
+const LoadingSpinner = () => (
+  <div className="loading-overlay">
+    <div className="loading-spinner"></div>
+    <p className="loading-text">Sending reset link...</p>
+  </div>
+);
+
+const useAnimatedBackground = (images, duration = 5000) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }, duration);
+    return () => clearInterval(interval);
+  }, [images.length, duration]);
+  
+  return images[currentIndex];
+};
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  
+  const backgroundImages = [
+    "/assets/images/2885174.jpg",
+    "/assets/images/image3.png",
+    "/assets/images/Data_security_05.jpg",
+  ];
+  const currentBg = useAnimatedBackground(backgroundImages, 5000);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -24,103 +55,180 @@ const ForgotPasswordPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("A password reset link has been sent to your email.");
+        toast.success("A password reset link has been sent to your email.", {
+          position: "top-center",
+          duration: 4000
+        });
       } else {
-        toast.error(data.message || "Failed to send reset link.");
+        toast.error(data.message || "Failed to send reset link.", {
+          position: "top-center",
+          duration: 4000
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Something went wrong. Please try again later.");
-    } finally{
+      toast.error("Something went wrong. Please try again later.", {
+        position: "top-center",
+        duration: 4000
+      });
+    } finally {
       setLoading(false);
     }
   };
 
+  // Add CSS for loading animation
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      /* Enhanced loading animation */
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        border-radius: 0.5rem;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(79, 70, 229, 0.2);
+        border-radius: 50%;
+        border-top-color: #4f46e5;
+        animation: spin 1s linear infinite;
+      }
+      
+      .loading-text {
+        margin-top: 1rem;
+        font-weight: 500;
+        color: #4f46e5;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Match login page label style */
+      .form-label {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.9rem;
+      }
+      
+      /* Custom back to login button styling */
+      .back-to-login-btn {
+        border-color: #e5e7eb;
+        color: #6b7280;
+        transition: all 0.2s ease;
+      }
+      
+      .back-to-login-btn:hover {
+        background-color: #f3f4f6;
+        border-color: #d1d5db;
+        color: #374151;
+        transform: translateY(-2px);
+      }
+      
+      /* Dark mode support */
+      [data-theme="dark"] .back-to-login-btn {
+        border-color: #374151;
+        color: #d1d5db;
+      }
+      
+      [data-theme="dark"] .back-to-login-btn:hover {
+        background-color: #1f2937;
+        border-color: #4b5563;
+        color: #f9fafb;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
-    <div>
-      <title>Eduport - LMS, Education and Course Theme</title>
-      <meta charSet="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-      <meta name="author" content="Webestica.com" />
-      <meta name="description" content="Eduport- LMS, Education and Course Theme" />
-      <link rel="shortcut icon" href="assets/images/favicon.ico" />
-      <link rel="preconnect" href="https://fonts.googleapis.com/" />
-      <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin />
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/font-awesome/css/all.min.css" />
-      <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap-icons/bootstrap-icons.css" />
-      <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
-      <main>
-        <section className="p-0 d-flex align-items-center position-relative overflow-hidden">
-          <div className="container-fluid">
-            <div className="row">
-              <div className="col-12 col-lg-6 d-md-flex align-items-center justify-content-center bg-primary bg-opacity-10 vh-lg-100">
-                <div className="p-3 p-lg-5">
-                  <div className="text-center">
-                    <h2 className="fw-bold">Welcome to our largest community</h2>
-                    <p className="mb-0 h6 fw-light">Let's learn something new today!</p>
-                  </div>
-                  <img src="assets/images/element/02.svg" className="mt-5" alt="" />
-                  <div className="d-sm-flex mt-5 align-items-center justify-content-center">
-                    <ul className="avatar-group mb-2 mb-sm-0">
-                      <li className="avatar avatar-sm"><img className="avatar-img rounded-circle" src="assets/images/avatar/01.jpg" alt="avatar" /></li>
-                      <li className="avatar avatar-sm"><img className="avatar-img rounded-circle" src="assets/images/avatar/02.jpg" alt="avatar" /></li>
-                      <li className="avatar avatar-sm"><img className="avatar-img rounded-circle" src="assets/images/avatar/03.jpg" alt="avatar" /></li>
-                      <li className="avatar avatar-sm"><img className="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="avatar" /></li>
-                    </ul>
-                    <p className="mb-0 h6 fw-light ms-0 ms-sm-3">4k+ Students joined us, now it's your turn.</p>
-                  </div>
-                </div>
-              </div>
-              <div className="col-12 col-lg-6 d-flex justify-content-center">
-                <div className="row my-5">
-                  <div className="col-sm-10 col-xl-12 m-auto">
-                    <span className="mb-0 fs-1">🤔</span>
-                    <h1 className="fs-2">Forgot Password?</h1>
-                    <h5 className="fw-light mb-4">To receive a new password, enter your email address below.</h5>
-                    <form onSubmit={handleForgotPassword}>
-                      <div className="mb-4">
-                        <label htmlFor="exampleInputEmail1" className="form-label">Email address *</label>
-                        <div className="input-group input-group-lg">
-                          <span className="input-group-text bg-light rounded-start border-0 text-secondary px-3"><i className="bi bi-envelope-fill" /></span>
-                          <input
-                            type="email"
-                            className="form-control border-0 bg-light rounded-end ps-1"
-                            placeholder="E-mail"
-                            id="exampleInputEmail1"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="align-items-center">
-                        <div className="d-grid">
-                          {loading && (
-                            <div className="d-flex justify-content-center mb-3">
-                              <Loader />
-                            </div>
-                          )}
-                          <button className="btn btn-primary mb-0" type="submit">Reset password</button>
-                        </div>
-                      </div>
-                    </form>
-                    <div className="intro-x mt-5 text-center">
-                      <button
-                        className="btn btn-outline-secondary py-3 px-4 w-full mt-3"
-                        onClick={() => navigate("/login")}
-                      >
-                        Back to Login
-                      </button>
-                    </div>
-                  </div>
-                </div>
+    <div className="login-page">
+      <Container fluid>
+        <Row className="vh-100">
+          {/* Left side - animated background */}
+          <Col lg={6} className="d-none d-lg-block p-0 position-relative">
+            <div 
+              className="bg-image"
+              style={{
+                backgroundImage: `url(${currentBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                height: '100%',
+                transition: 'background-image 1s ease-in-out'
+              }}
+            >
+              <div className="overlay"></div>
+              <div className="brand-wrapper">
+                <h1 className="brand-name">FlowPi</h1>
+                <p className="brand-tagline">Transform Your Learning Experience</p>
               </div>
             </div>
-          </div>
-        </section>
-      </main>
-      <div className="back-top"><i className="bi bi-arrow-up-short position-absolute top-50 start-50 translate-middle" /></div>
+          </Col>
+          
+          {/* Right side - forgot password form */}
+          <Col lg={6} className="d-flex align-items-center justify-content-center">
+            <Card className="login-card shadow-lg border-0">
+              <Card.Body className="p-4 p-lg-5 position-relative">
+                {loading && <LoadingSpinner />}
+                <div className="text-center mb-4">
+                  <h2 className="welcome-text fw-bold">Forgot Password?</h2>
+                  <p className="text-muted">Enter your email to receive a password reset link</p>
+                </div>
+                
+                <Form onSubmit={handleForgotPassword}>
+                  <Form.Group className="mb-4">
+                    <Form.Label>Email address</Form.Label>
+                    <div className="input-group">
+                      <span className="input-group-text"><FontAwesomeIcon icon={faEnvelope} /></span>
+                      <Form.Control 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                  </Form.Group>
+                  
+                  <Button 
+                    variant="primary" 
+                    type="submit" 
+                    className="w-100 mb-4 py-2 fw-medium"
+                    disabled={loading}
+                  >
+                    Send Reset Link
+                  </Button>
+                  
+                  <div className="text-center">
+                    <Button 
+                      variant="outline-secondary" 
+                      className="w-100 py-2 back-to-login-btn"
+                      onClick={() => navigate("/login")}
+                    >
+                      Back to Login
+                    </Button>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+      {/* Remove any duplicate Toaster components */}
     </div>
   );
 };
