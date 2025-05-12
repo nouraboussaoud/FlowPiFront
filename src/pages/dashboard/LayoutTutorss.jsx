@@ -90,6 +90,7 @@ const LayoutTutorss = ({ children }) => {
               : `http://localhost:5000/uploads/profiles/${storedProfilePic}`;
           }
         }
+        
         setProfilePic(newProfilePic);
       } catch (err) {
         console.error("Error parsing user data:", err);
