@@ -97,7 +97,10 @@ const QuizAnalyticsPanel = ({ taskId, onClose, githubInfo: propGithubInfo }) => 
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{
+      backgroundColor: 'transparent',
+      backdropFilter: 'blur(4px)'
+    }}>
       <div
         className="modal-content analytics-panel"
         onClick={(e) => e.stopPropagation()}
