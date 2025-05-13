@@ -1,70 +1,134 @@
-# Getting Started with Create React App
+# 🚀 FlowPi - AI-Driven Student Project Management Platform
+🧠 Overview
+FlowPi is an intelligent, full-stack project management platform developed as part of the Software Engineering coursework at Esprit School of Engineering. 
+Designed for academic institutions, FlowPi leverages:
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+🤖 AI-powered automation
+🧑‍🤝‍🧑 Real-time collaboration tools
+♿ Accessibility features
 
-## Available Scripts
+The goal: enhance student learning and simplify project oversight for educators.
+🛠️ Built with modern technologies: React.js, Node.js, and MongoDB
+✨ Features
 
-In the project directory, you can run:
+AI-Powered Project Matching: Recommends projects based on student skills and interests.
+Automated Team Formation: Forms optimal teams using compatibility analysis.
+Live Progress Tracking: Interactive dashboards using WebSockets.
+Git Integration: Analyzes contributions via Git logs.
+AI-Driven Evaluation: Uses NLP for code quality assessment & feedback.
+Accessibility First: Screen reader support & audio notifications.
+Smart Quiz Generator: Creates quizzes from codebases.
 
-### `npm start`
+# ⚙️ Tech Stack
+🔹 Frontend
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+React.js: Component-based UI.
+CSS3: Custom styling.
+Axios: API communication.
+React Router: Navigation.
+Lucide React: Accessible icons.
+React Toastify: Notifications.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+🔹 Backend
 
-### `npm test`
+Node.js: Runtime environment.
+Express.js: API routing.
+MongoDB: NoSQL database.
+JWT: Authentication.
+Ollama: Local AI integration.
+TensorFlow.js: Machine learning models.
+bcrypt: Password hashing.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+🔹 DevOps & Tools
 
-### `npm run build`
+Docker: Containerization.
+GitHub Actions: CI/CD.
+SonarCloud: Code quality.
+Jenkins: Continuous integration.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠️ Getting Started
+✅ Prerequisites
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Node.js (v22+)
+MongoDB (local/cloud)
+Docker (optional)
+Git
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+📦 Installation
+# Clone the repository
+git clone https://github.com/nouraboussaoud/IntegratedProjectManagementApplication.git
+cd FlowPi
 
-### `npm run eject`
+# Backend setup
+cd server
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Frontend setup
+cd ../client
+npm install
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+⚙️ Environment Variables
+Copy .env.example to .env in both server/ and client/ folders:
+# server/.env
+MONGO_URI=mongodb://localhost:27017/flowpi
+JWT_SECRET=your_jwt_secret
+PORT=5000
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# client/.env
+REACT_APP_API_URL=http://localhost:5000/api
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Ensure MongoDB is running locally or via MongoDB Atlas.
+▶️ Run Locally
+Start Development Servers
+# Start backend
+cd server
+npm run dev
 
-## Learn More
+# Start frontend
+cd ../client
+npm start
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+🐳 Docker Deployment
+# Make sure Docker is installed
+cd FlowPi
+docker-compose up --build
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Access:
 
-### Code Splitting
+Frontend: http://localhost:3000
+API: http://localhost:5000/api
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+To stop containers:
+docker-compose down
 
-### Analyzing the Bundle Size
+# 🔖 GitHub Topics
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+react
+node-js
+mongodb
+artificial-intelligence
+web-development
+project-management
+esprit-school
 
-### Making a Progressive Web App
+# 🙏 Acknowledgments
+This project was developed under the guidance of the Software Engineering faculty at Esprit School of Engineering. 
+Special thanks to:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Professors and mentors
+Fellow classmates and reviewers
 
-### Advanced Configuration
+# 🤝 Contributing
+Contributions are welcome!
+Steps to contribute:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Fork the repo
+git checkout -b feature/your-feature
+git commit -m "Add your feature"
+git push origin feature/your-feature
+Open a Pull Request
 
-### Deployment
+📬 Contact
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+📧 Email: flowpi@esprit.tn
+🐛 Issues: Open one on GitHub
