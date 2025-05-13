@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LayoutStudent from '../dashboard/LayoutStudent';
+import Contact from "../../student-interfaces/Contact";
+import Chatbox from "../tutor-interfaces/chatbox/ChatBox";
+import { get } from "../../apiHelper";
 
 const ReturnDeliverable = () => {
   const [title, setTitle] = useState("");
@@ -13,6 +16,13 @@ const ReturnDeliverable = () => {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
+  
+  // Chat functionality states
+  const [tutors, setTutors] = useState([]);
+  const [selectedTutor, setSelectedTutor] = useState(null);
+  const [showContactList, setShowContactList] = useState(false);
+  const [showChatBubble, setShowChatBubble] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
   // Try multiple possible token keys
@@ -36,7 +46,61 @@ const ReturnDeliverable = () => {
     };
 
     fetchRepositories();
+    
+    // Fetch tutors for chat
+    fetchTutors();
+    
+    // Fetch unread messages count
+    fetchUnreadMessagesCount();
+    
+    // Set up message polling interval
+    const messageInterval = setInterval(fetchUnreadMessagesCount, 30000);
+    
+    return () => {
+      clearInterval(messageInterval);
+    };
   }, []);
+  
+  // Chat functionality methods
+  const fetchTutors = () => {
+    get("/users/tutors")
+      .then((data) => {
+        setTutors(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching tutors:", error);
+      });
+  };
+  
+  const fetchUnreadMessagesCount = () => {
+    get("/messages/unread")
+      .then((data) => {
+        setUnreadMessages(data?.count || 0);
+      })
+      .catch((error) => {
+        console.error("Error fetching unread messages:", error);
+      });
+  };
+  
+  const toggleContactList = () => {
+    setShowContactList(!showContactList);
+  };
+  
+  const closeContactList = () => {
+    setShowContactList(false);
+  };
+  
+  const handleSelectTutor = (tutor) => {
+    setSelectedTutor(tutor);
+    setShowContactList(false);
+    setShowChatBubble(false); // Keep bubble hidden when chatbox is open
+    setUnreadMessages(prev => Math.max(0, prev - 1));
+  };
+  
+  const handleCloseChatbox = () => {
+    setSelectedTutor(null);
+    setShowChatBubble(true);
+  };
 
   const handleRepoChange = async (e) => {
     const repoName = e.target.value;
@@ -266,6 +330,122 @@ const ReturnDeliverable = () => {
           </div>
         </div>
       </div>
+      
+      {/* Chat functionality */}
+      <div className="chat-bubble-container">
+        {showChatBubble && !selectedTutor && (
+          <div
+            className={`chat-bubble ${showContactList ? 'active' : ''}`}
+            onClick={toggleContactList}
+          >
+            <i className="fas fa-comments"></i>
+            {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
+          </div>
+        )}
+
+        {showContactList && (
+          <div className="contact-list-panel">
+            <div className="panel-header">
+              <h3>Contacts</h3>
+              <button className="close-btn" onClick={closeContactList}>×</button>
+            </div>
+            <div className="panel-body">
+              <Contact tutors={tutors} onSelectTutor={handleSelectTutor} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {selectedTutor && (
+        <Chatbox user={selectedTutor} onClose={handleCloseChatbox} />
+      )}
+      
+      <style jsx>{`
+        .chat-bubble-container {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          z-index: 1000;
+        }
+        
+        .chat-bubble {
+          width: 60px;
+          height: 60px;
+          background-color: #007bff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 24px;
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          transition: all 0.3s ease;
+          position: relative;
+        }
+        
+        .chat-bubble:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chat-bubble.active {
+          background-color: #0056b3;
+        }
+        
+        .badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background-color: #ff4136;
+          color: white;
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .contact-list-panel {
+          position: absolute;
+          bottom: 70px;
+          right: 0;
+          width: 300px;
+          background-color: white;
+          border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+        }
+        
+        .panel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px;
+          background-color: #f8f9fa;
+          border-bottom: 1px solid #e9ecef;
+        }
+        
+        .panel-header h3 {
+          margin: 0;
+          font-size: 18px;
+        }
+        
+        .close-btn {
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          color: #6c757d;
+        }
+        
+        .panel-body {
+          max-height: 300px;
+          overflow-y: auto;
+        }
+      `}</style>
     </LayoutStudent>
   );
 };

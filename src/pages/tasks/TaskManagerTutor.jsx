@@ -90,45 +90,7 @@ const TaskManagerTutor = () => {
     }
   };
 
-  // Helper function to calculate progress
-  const calculateProgress = (commits, pull_requests, taskStatus, quizScore) => {
-    let progress = 0;
-
-    if (taskStatus === "completed") {
-      return 100;
-    } else if (taskStatus === "pending") {
-      progress = Math.min(progress, 10);
-    }
-
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    commits.forEach((commit) => {
-      const commitDate = new Date(commit.date);
-      const isRecent = commitDate > oneWeekAgo;
-      progress += isRecent ? 2 : 1;
-    });
-    progress = Math.min(progress, 50);
-
-    pull_requests.forEach((pr) => {
-      const prDate = new Date(pr.merge_date);
-      const isRecent = prDate > oneWeekAgo;
-      progress += isRecent ? 15 : 10;
-    });
-    progress = Math.min(progress, 90);
-
-    if (quizScore !== undefined) {
-      progress = Math.min(progress + quizScore * 0.5, 90);
-    }
-
-    const hasRecentActivity = commits.some((c) => new Date(c.date) > oneWeekAgo) ||
-                             pull_requests.some((pr) => new Date(pr.merge_date) > oneWeekAgo);
-    if (!hasRecentActivity && taskStatus !== "completed") {
-      progress = Math.min(progress, 30);
-    }
-
-    return Math.round(Math.min(progress, 100));
-  };
+  // Remove the calculateProgress function entirely
 
   const openRiskModal = async (taskId) => {
     try {
@@ -216,16 +178,10 @@ const TaskManagerTutor = () => {
         quizPassed = null;
       }
 
-      const calculatedProgress = calculateProgress(
-        commits,
-        pull_requests,
-        task.status,
-        quizScore
-      );
-
+      // Update task with quiz data only, not progress
       setTasks((prevTasks) =>
         prevTasks.map((t) =>
-          t._id === taskId ? { ...t, progressPercentage: calculatedProgress, quizScore, quizPassed } : t
+          t._id === taskId ? { ...t, quizScore, quizPassed } : t
         )
       );
 
@@ -806,60 +762,60 @@ const TaskManagerTutor = () => {
                     </p>
                   )}
 
-                  <div className="task-status">
-                    <span
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(task.status) }}
-                    >
-                      {task.status
-                        ? task.status.charAt(0).toUpperCase() + task.status.slice(1)
-                        : "Pending"}
-                    </span>
-                  </div>
-
-                  {typeof task.progressPercentage === "number" &&
-                  task.progressPercentage > 0 ? (
-                    <div className="task-progress" title="Progress based on GitHub activity and quiz results">
-                      <div className="progress-label">
-                        <BarChart2 size={14} />
-                        <span>Progress: {task.progressPercentage}%</span>
-                        {isTaskStalled(task) && (
-                          <AlertCircle size={14} color="#ef4444" title="No recent activity" />
-                        )}
-                      </div>
-                      <div className="progress-bar-container">
-                        <div
-                          className="progress-bar"
-                          style={{
-                            width: `${task.progressPercentage}%`,
-                            backgroundColor: getProgressColor(task.progressPercentage),
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="task-progress" title="Progress based on GitHub activity">
-                      <div className="progress-label">
-                        <BarChart2 size={14} />
-                        <span>Progress: Awaiting activity</span>
-                        <AlertCircle size={14} color="#ef4444" title="No activity detected" />
-                      </div>
-                    </div>
-                  )}
-
-                  {task.quizScore !== undefined && (
-                    <div className="task-quiz-status">
-                      <BookOpen size={14} />
-                      <span>
-                        Quiz: {task.quizScore}/100 (
-                        {task.quizPassed ? (
-                          <span style={{ color: '#10b981' }}>Passed</span>
-                        ) : (
-                          <span style={{ color: '#ef4444' }}>Failed</span>
-                        )})
+                  <div className="task-status-info">
+                    {/* Status badge */}
+                    <div className="task-status">
+                      <span
+                        className="status-badge"
+                        style={{ 
+                          backgroundColor: getStatusColor(task.status),
+                          borderRadius: '20px',
+                          padding: '4px 12px',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {task.status
+                          ? task.status.charAt(0).toUpperCase() + task.status.slice(1)
+                          : "Pending"}
                       </span>
                     </div>
-                  )}
+
+                    {/* Progress line */}
+                    <div className="task-progress" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      margin: '12px 0',
+                      color: '#4b5563',
+                      fontSize: '14px'
+                    }}>
+                      <BarChart2 size={14} />
+                      <span>Progress: Awaiting activity</span>
+                      <AlertCircle size={14} color="#ef4444" />
+                    </div>
+
+                    {/* Quiz result line */}
+                    {task.quizScore !== undefined && (
+                      <div className="task-quiz-status" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: '#4b5563',
+                        fontSize: '14px'
+                      }}>
+                        <BookOpen size={14} />
+                        <span>
+                          Quiz: {task.quizScore}/100 (
+                          {task.quizPassed ? (
+                            <span style={{ color: '#10b981' }}>Passed</span>
+                          ) : (
+                            <span style={{ color: '#ef4444' }}>Failed</span>
+                          )})
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="task-meta">
                     <div>
@@ -1091,21 +1047,10 @@ const TaskManagerTutor = () => {
                       </span>
                     </div>
                   )}
-                  {typeof selectedTaskDetails.progressPercentage === "number" && (
-                    <div className="detail-item">
-                      <span className="detail-label">Progress:</span>
-                      <div className="progress-container">
-                        <div 
-                          className="progress-bar" 
-                          style={{
-                            width: `${selectedTaskDetails.progressPercentage}%`,
-                            backgroundColor: getProgressColor(selectedTaskDetails.progressPercentage)
-                          }}
-                        ></div>
-                      </div>
-                      <span className="progress-text">{selectedTaskDetails.progressPercentage}%</span>
-                    </div>
-                  )}
+                  <div className="detail-item">
+                    <span className="detail-label">Progress:</span>
+                    <span className="detail-value">Awaiting activity</span>
+                  </div>
                   {selectedTaskDetails.quizScore !== undefined && (
                     <div className="detail-item">
                       <span className="detail-label">Quiz Result:</span>
@@ -1154,6 +1099,45 @@ const TaskManagerTutor = () => {
                     <h4 className="student-name">{getUserInfo(selectedTaskDetails.assignedTo).name}</h4>
                     <p className="student-email">{getUserInfo(selectedTaskDetails.assignedTo).email}</p>
                   </div>
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3 className="section-title">Task Status</h3>
+                <div className="task-status-info">
+                  {/* Status badge */}
+                  <div className="task-status" style={{ marginBottom: '12px' }}>
+                    <span 
+                      className="status-badge"
+                      style={{ backgroundColor: getStatusColor(selectedTaskDetails.status) }}
+                    >
+                      {selectedTaskDetails.status
+                        ? selectedTaskDetails.status.charAt(0).toUpperCase() + selectedTaskDetails.status.slice(1)
+                        : "Pending"}
+                    </span>
+                  </div>
+
+                  {/* Progress line */}
+                  <div className="task-progress">
+                    <BarChart2 size={14} />
+                    <span>Progress: Awaiting activity</span>
+                    <AlertCircle size={14} color="#ef4444" />
+                  </div>
+
+                  {/* Quiz result line */}
+                  {selectedTaskDetails.quizScore !== undefined && (
+                    <div className="task-quiz-status">
+                      <BookOpen size={14} />
+                      <span>
+                        Quiz: {selectedTaskDetails.quizScore}/100 (
+                        {selectedTaskDetails.quizPassed ? (
+                          <span style={{ color: '#10b981' }}>Passed</span>
+                        ) : (
+                          <span style={{ color: '#ef4444' }}>Failed</span>
+                        )})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

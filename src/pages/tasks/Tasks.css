@@ -2739,6 +2739,55 @@ body .modal-overlay .quiz-history-modal .analytics-item p {
 
 /* Status badges for passed/failed */
 .passed-badge {
+  background-color: #10b981;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.failed-badge {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Add these styles for the task status info section */
+.task-status-info {
+  margin: 16px 0;
+}
+
+.status-badge {
+  display: inline-block;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.task-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.task-quiz-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.passed-badge {
   background-color: rgba(16, 185, 129, 0.2);
   color: #10b981;
   padding: 4px 10px;

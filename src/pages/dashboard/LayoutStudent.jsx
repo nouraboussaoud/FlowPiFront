@@ -23,6 +23,7 @@ const LayoutStudent = ({ children }) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
   const [showGroupsDropdown, setShowGroupsDropdown] = useState(false);
+  const [showDeliverableDropdown, setShowDeliverableDropdown] = useState(false);
 
   // Default profile image
   const DEFAULT_PROFILE_PIC = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
@@ -330,70 +331,6 @@ const handleNavigateToAttendance = () => {
             {/* Navbar collapse */}
             <div className={`collapse navbar-collapse ${showMobileMenu ? 'show' : ''}`} id="navbarCollapse">
               <ul className="navbar-nav navbar-nav-scroll mx-auto">
-                {/* Account dropdown */}
-                <li className="nav-item dropdown accounts-dropdown-container position-relative">
-                  <a
-                    className="nav-link dropdown-toggle accounts-toggle"
-                    href="#"
-                    onClick={toggleAccountsDropdown}
-                  >
-                    Accounts
-                  </a>
-
-                  {showAccountsDropdown && (
-                    <ul className="dropdown-menu show shadow" style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      zIndex: 1000,
-                      minWidth: '200px'
-                    }}>
-                      {/* Student section */}
-                      <li className="dropdown-item dropdown-submenu position-relative">
-                        <a href="#" className="d-flex justify-content-between align-items-center" onClick={toggleStudentDropdown}>
-                          <span>
-                            Student
-                          </span>
-                          <FontAwesomeIcon icon={faCaretDown} />
-                        </a>
-
-                        {showStudentDropdown && (
-                          <ul className="dropdown-menu submenu show shadow" style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: '100%',
-                            zIndex: 1001,
-                            minWidth: '200px'
-                          }}>
-
-                            <li>
-                              <div
-                                className="dropdown-item"
-                                onClick={handleNavigateToDeliverables}
-                                style={{ cursor: 'pointer' }}
-                              >
-                                My Deliverables
-                              </div>
-                            </li>
-                            <li>
-                              <div
-                                className="dropdown-item"
-                                onClick={handleNavigateToReturnDeliverable}
-                                style={{ cursor: 'pointer' }}
-                              >
-                                Add Deliverable
-                              </div>
-                            </li>
-                          </ul>
-                        )}
-                      </li>
-
-                      {/* Instructor section */}
-                      
-                    </ul>
-                  )}
-                </li>
-
                 {/* Main navigation items */}
                 <li className="nav-item">
                   <div
@@ -453,9 +390,57 @@ const handleNavigateToAttendance = () => {
                   </div>
                 </li>
                 <li className="nav-item">
-                  <a className={`nav-link ${isActive('/tasks') ? 'active' : ''}`} onClick={toggleTaskManager} style={{ cursor: 'pointer' }}>
+                  <a 
+                    className={`nav-link ${isActive('/tasks') ? 'active' : ''}`} 
+                    onClick={toggleTaskManager} 
+                    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+                  >
                     Tasks
                   </a>
+                </li>
+                
+                {/* Add Deliverables dropdown after Tasks */}
+                <li className="nav-item dropdown position-relative">
+                  <a
+                    className={`nav-link dropdown-toggle ${isActive('/deliverables-history') || isActive('/return-deliverable') ? 'active' : ''}`}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowDeliverableDropdown(!showDeliverableDropdown);
+                    }}
+                    style={{ cursor: 'pointer', ...navbarStyles.navLink }}
+                  >
+                    Deliverables
+                  </a>
+
+                  {showDeliverableDropdown && (
+                    <ul className="dropdown-menu show shadow" style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      zIndex: 1000,
+                      minWidth: '200px'
+                    }}>
+                      <li>
+                        <div
+                          className="dropdown-item"
+                          onClick={handleNavigateToDeliverables}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          My Deliverables
+                        </div>
+                      </li>
+                      <li>
+                        <div
+                          className="dropdown-item"
+                          onClick={handleNavigateToReturnDeliverable}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Add Deliverable
+                        </div>
+                      </li>
+                    </ul>
+                  )}
                 </li>
               </ul>
 
